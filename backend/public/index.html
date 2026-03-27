@@ -1141,14 +1141,6 @@ body.theme-light .pwa-banner{background:#fff;border-color:#dcdce8;box-shadow:0 8
   -webkit-backdrop-filter:saturate(180%) blur(18px);
   border-bottom:1px solid rgba(255,255,255,.05);
 }
-.nav-logo{
-  font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;
-  background:linear-gradient(120deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  cursor:pointer;
-}
-/* 라이트 모드 nav-logo */
-body.theme-light .nav-logo{-webkit-text-fill-color:transparent}
 
 /* 하단 nav 개선 */
 .bottom-nav{backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px)}
@@ -1156,27 +1148,6 @@ body.theme-light .nav-logo{-webkit-text-fill-color:transparent}
 .bn-item.active .bn-label{color:var(--accent);font-weight:700}
 .bn-item{transition:transform .15s}
 .bn-item:active{transform:scale(.9)}
-
-/* 랜딩 페이지 강화 */
-.landing-hero{
-  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(108,99,255,.18) 0%, transparent 70%),
-             radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,101,132,.1) 0%, transparent 60%),
-             var(--bg);
-}
-.landing-logo{
-  font-family:'Syne',sans-serif;font-size:clamp(2.4rem,8vw,4rem);font-weight:900;
-  background:linear-gradient(120deg,var(--accent) 0%,var(--accent2) 50%,var(--accent3) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:-2px;margin-bottom:8px;line-height:1.1;
-}
-.landing-feat{
-  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
-  border-radius:14px;padding:16px;transition:border-color .2s,background .2s;
-}
-.landing-feat:hover{border-color:rgba(108,99,255,.3);background:rgba(108,99,255,.06)}
-.landing-feat-icon{font-size:1.6rem;flex-shrink:0}
-body.theme-light .landing-feat{background:#fff;border-color:#dcdce8}
-body.theme-light .landing-feat:hover{border-color:rgba(108,99,255,.3)}
 
 /* 인증 카드 강화 */
 .auth-card{
