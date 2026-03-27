@@ -749,7 +749,7 @@ body.theme-light .ss-bottom-bar{background:rgba(255,209,102,.04);border-color:rg
 /* ── LANDING PAGE ── */
 .landing-hero{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;position:relative;overflow:hidden}
 .landing-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 120% 60% at 50% 0%,rgba(108,99,255,.15) 0%,transparent 70%),radial-gradient(ellipse 80% 50% at 90% 100%,rgba(255,101,132,.1) 0%,transparent 70%)}
-.landing-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.5rem,10vw,4.5rem);background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-3px;margin-bottom:16px}
+.landing-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.5rem,10vw,4.5rem);background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-3px;margin-bottom:16px;line-height:1.1}
 .landing-sub{font-size:clamp(1rem,3vw,1.3rem);color:var(--text2);margin-bottom:12px;max-width:480px}
 .landing-desc{font-size:.92rem;color:var(--text3);line-height:1.7;max-width:420px;margin:0 auto 36px}
 .landing-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:60px}
@@ -880,9 +880,9 @@ body.theme-light .upm-name{color:#111120}
 /* ── 문의 종류 선택 ── */
 .inq-type-row{display:flex;gap:8px;margin-bottom:14px}
 .inq-type-btn{flex:1;padding:9px 4px;border-radius:10px;font-size:.8rem;font-weight:600;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;text-align:center;transition:all .15s}
-.inq-type-btn.active-건의{border-color:var(--accent3);background:rgba(67,233,123,.1);color:var(--accent3)}
-.inq-type-btn.active-문의{border-color:var(--accent);background:rgba(var(--accent-rgb),.1);color:var(--accent)}
-.inq-type-btn.active-신고{border-color:var(--accent2);background:rgba(255,101,132,.1);color:var(--accent2)}
+.inq-type-btn.active-s{border-color:var(--accent3);background:rgba(67,233,123,.1);color:var(--accent3)}
+.inq-type-btn.active-i{border-color:var(--accent);background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+.inq-type-btn.active-r{border-color:var(--accent2);background:rgba(255,101,132,.1);color:var(--accent2)}
 .inq-type-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700;margin-right:4px}
 .inq-type-tag.건의{background:rgba(67,233,123,.15);color:var(--accent3)}
 .inq-type-tag.문의{background:rgba(108,99,255,.15);color:var(--accent)}
@@ -1179,15 +1179,9 @@ body.theme-light .auth-card{
 .social-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .social-btn:active{transform:translateY(0)}
 
-/* 로딩 화면 */
+/* 로딩 화면 배경만 개선 (폰트는 원본 유지) */
 #loading{
   background:linear-gradient(135deg,#0a0a0f 0%,#111118 100%);
-}
-.ld-logo{
-  font-family:'Syne',sans-serif;font-weight:900;font-size:1.8rem;
-  background:linear-gradient(120deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:20px;
 }
 
 /* 통계 카드 그라디언트 */
@@ -1223,8 +1217,12 @@ body.theme-light .ss-row.selected{background:rgba(108,99,255,.06)!important}
 /* PC 최적화 */
 @media(min-width:768px){
   .auth-card{max-width:460px;border-radius:24px}
-  .landing-hero{max-width:720px;margin:0 auto;padding:60px 32px 40px}
-  .landing-features{grid-template-columns:1fr 1fr}
+  .landing-hero{padding:80px 48px 60px}
+  .landing-logo{font-size:clamp(3rem,5vw,5.5rem)}
+  .landing-sub{font-size:1.2rem;max-width:560px}
+  .landing-desc{font-size:1rem;max-width:520px}
+  .landing-features{grid-template-columns:1fr 1fr;max-width:680px}
+  .landing-btns .btn{font-size:1.05rem;padding:15px 40px}
   .test-card:hover{transform:translateY(-4px)}
 }
 
@@ -1635,7 +1633,13 @@ function renderAuthForm(t){
   if(t==='l'){
     c.innerHTML=`
       <div class="form-group"><label class="form-label">이메일</label><input type="email" autocomplete="email" inputmode="email" class="form-input" id="l-em" placeholder="example@email.com"/></div>
-      <div class="form-group"><label class="form-label">비밀번호</label><input type="password" autocomplete="current-password" class="form-input" id="l-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label class="form-label" style="margin:0">비밀번호</label>
+          <button type="button" onclick="showForgotPassword()" style="background:none;border:none;color:var(--accent);font-size:.75rem;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px">비밀번호 찾기</button>
+        </div>
+        <input type="password" autocomplete="current-password" class="form-input" id="l-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
       <button class="btn primary full" onclick="doLogin()">로그인</button>
       <div class="naver-divider">또는</div>
       <button class="naver-btn" onclick="naverLogin()">
@@ -1726,6 +1730,100 @@ async function doRegister(){
 }
 
 /* ============================================================
+   비밀번호 찾기
+============================================================ */
+function showForgotPassword(){
+  showModal(`
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 비밀번호 찾기</div>
+    <p style="font-size:.85rem;color:var(--text2);margin-bottom:16px;line-height:1.6">가입하신 이메일 주소를 입력하시면 인증 코드를 보내드립니다.</p>
+    <div class="form-group">
+      <label class="form-label">이메일</label>
+      <input type="email" class="form-input" id="fp-email" placeholder="가입한 이메일 입력" inputmode="email"
+        onkeydown="if(event.key==='Enter')sendForgotCode()"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">취소</button>
+      <button class="btn primary" id="fp-send-btn" onclick="sendForgotCode()">코드 발송</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('fp-email')?.focus(),100);
+}
+
+async function sendForgotCode(){
+  const email = document.getElementById('fp-email')?.value?.trim();
+  if(!email){ toast('이메일을 입력해주세요.','error'); return; }
+  const btn = document.getElementById('fp-send-btn');
+  if(btn){ btn.disabled=true; btn.textContent='발송 중...'; }
+  try{
+    const res = await apiFetch('POST','/auth/forgot-password',{email});
+    if(!res.token){
+      toast('해당 이메일로 가입된 이메일 계정을 찾을 수 없습니다.','error');
+      if(btn){ btn.disabled=false; btn.textContent='코드 발송'; }
+      return;
+    }
+    closeModal();
+    showResetPassword(email, res.token);
+  }catch(e){
+    toast(e.message,'error');
+    if(btn){ btn.disabled=false; btn.textContent='코드 발송'; }
+  }
+}
+
+function showResetPassword(email, token){
+  showModal(`
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔐 새 비밀번호 설정</div>
+    <div class="verify-sent-wrap" style="text-align:left;padding:0 0 8px">
+      <p style="font-size:.83rem;color:var(--text2);margin-bottom:14px;line-height:1.6">
+        <strong style="color:var(--accent)">${esc(email)}</strong>로 발송된<br>6자리 인증 코드를 입력해주세요.
+      </p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">인증 코드</label>
+      <input type="text" class="form-input" id="rp-code" placeholder="6자리 코드"
+        maxlength="6" inputmode="numeric" style="text-align:center;font-size:1.3rem;letter-spacing:8px;font-weight:700"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">새 비밀번호 <small style="color:var(--text3)">(영문+숫자 8자 이상)</small></label>
+      <input type="password" class="form-input" id="rp-pw" placeholder="새 비밀번호 입력"
+        onkeydown="if(event.key==='Enter')submitResetPassword('${token}')"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">비밀번호 확인</label>
+      <input type="password" class="form-input" id="rp-pw2" placeholder="비밀번호 재입력"
+        onkeydown="if(event.key==='Enter')submitResetPassword('${token}')"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">취소</button>
+      <button class="btn primary" id="rp-btn" onclick="submitResetPassword('${token}')">비밀번호 변경</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('rp-code')?.focus(),100);
+}
+
+async function submitResetPassword(token){
+  const code = document.getElementById('rp-code')?.value?.trim();
+  const pw   = document.getElementById('rp-pw')?.value;
+  const pw2  = document.getElementById('rp-pw2')?.value;
+  if(!code||code.length!==6){ toast('6자리 코드를 입력해주세요.','error'); return; }
+  if(!pw||pw.length<8){ toast('비밀번호는 8자 이상이어야 합니다.','error'); return; }
+  if(!/[A-Za-z]/.test(pw)||!/[0-9]/.test(pw)){ toast('비밀번호는 영문과 숫자를 포함해야 합니다.','error'); return; }
+  if(pw!==pw2){ toast('비밀번호가 일치하지 않습니다.','error'); return; }
+  const btn = document.getElementById('rp-btn');
+  if(btn){ btn.disabled=true; btn.textContent='변경 중...'; }
+  try{
+    const res = await apiFetch('POST','/auth/reset-password',{token, code, newPassword:pw});
+    toast(res.message,'success');
+    closeModal();
+    renderPage('auth');
+  }catch(e){
+    toast(e.message,'error');
+    if(btn){ btn.disabled=false; btn.textContent='비밀번호 변경'; }
+  }
+}
+
+/* ============================================================
    HOME — 내 성적 인라인 + 전체 테스트 최하단
 ============================================================ */
 function buildHome(app){
@@ -1746,7 +1844,7 @@ function buildHome(app){
 
       <!-- 공지사항 배너 -->
       ${S.notices?.filter(n=>n.isPinned).slice(0,1).map(n=>`
-        <div style="margin:0 16px 12px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;padding:11px 16px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="renderPage('notice')">
+        <div style="margin:0 16px 12px;max-width:480px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;padding:11px 16px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="renderPage('notice')">
           <span style="font-size:1rem">📢</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:.8rem;font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.title)}</div>
@@ -3907,9 +4005,9 @@ function showInquiryForm(){
     <div class="form-group" style="margin-bottom:10px">
       <label class="form-label">문의 종류</label>
       <div class="inq-type-row" id="inq-type-row">
-        <button class="inq-type-btn" id="itype-건의" onclick="selectInqType('건의')">💡 건의</button>
-        <button class="inq-type-btn active-문의" id="itype-문의" onclick="selectInqType('문의')">❓ 문의</button>
-        <button class="inq-type-btn" id="itype-신고" onclick="selectInqType('신고')">🚨 신고</button>
+        <button type="button" class="inq-type-btn" id="itype-s" onclick="selectInqType('건의','s')">💡 건의</button>
+        <button type="button" class="inq-type-btn active-i" id="itype-i" onclick="selectInqType('문의','i')">❓ 문의</button>
+        <button type="button" class="inq-type-btn" id="itype-r" onclick="selectInqType('신고','r')">🚨 신고</button>
       </div>
       <input type="hidden" id="inq-type" value="문의"/>
     </div>
@@ -3922,12 +4020,13 @@ function showInquiryForm(){
   `);
 }
 
-function selectInqType(type){
-  document.getElementById('inq-type').value = type;
-  ['건의','문의','신고'].forEach(t=>{
-    const btn = document.getElementById('itype-'+t);
+function selectInqType(type, key){
+  const inp = document.getElementById('inq-type');
+  if(inp) inp.value = type;
+  [['건의','s'],['문의','i'],['신고','r']].forEach(([t,k])=>{
+    const btn = document.getElementById('itype-'+k);
     if(!btn) return;
-    btn.className = 'inq-type-btn' + (t===type ? ' active-'+t : '');
+    btn.className = 'inq-type-btn' + (k===key ? ' active-'+k : '');
   });
 }
 

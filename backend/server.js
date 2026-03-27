@@ -256,8 +256,17 @@ const WrongNoteSchema = new mongoose.Schema({
   savedAt:   { type: Date, default: Date.now }
 });
 
+const PasswordResetSchema = new mongoose.Schema({
+  email:     { type: String, required: true },
+  token:     { type: String, required: true, unique: true },
+  code:      { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+});
+PasswordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 const User              = mongoose.model('User', UserSchema);
 const EmailVerification = mongoose.model('EmailVerification', EmailVerificationSchema);
+const PasswordReset     = mongoose.model('PasswordReset', PasswordResetSchema);
 const FriendRequest     = mongoose.model('FriendRequest', FriendRequestSchema);
 const Test              = mongoose.model('Test', TestSchema);
 const Result            = mongoose.model('Result', ResultSchema);
@@ -494,6 +503,93 @@ app.post('/api/auth/resend-code',
     res.json({ message: '새 인증 코드를 발송했습니다.' });
   } catch (e) {
     console.error('resend-code error:', e);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// ==================== 비밀번호 찾기 ====================
+app.post('/api/auth/forgot-password',
+  createRateLimit(5, 60 * 60 * 1000, '비밀번호 찾기 요청이 너무 많습니다. 1시간 후 다시 시도해주세요.'),
+  async (req, res) => {
+  try {
+    const email = sanitizeString(req.body.email || '', 254).toLowerCase();
+    if (!email || !isValidEmail(email))
+      return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
+
+    const user = await User.findOne({ email });
+    // 보안상 존재 여부와 무관하게 성공 응답
+    if (!user || user.loginType !== 'local') {
+      return res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token: '' });
+    }
+
+    await PasswordReset.deleteMany({ email });
+    const code  = String(Math.floor(100000 + Math.random() * 900000));
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await new PasswordReset({ email, token, code, expiresAt }).save();
+
+    const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#f4f4f8;font-family:'Noto Sans KR',sans-serif}
+  .wrap{max-width:520px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+  .header{background:linear-gradient(135deg,#6c63ff,#ff6584);padding:36px 32px;text-align:center}
+  .header h1{margin:0;color:white;font-size:26px;font-weight:800}
+  .body{padding:36px 32px}
+  .code-box{background:linear-gradient(135deg,#f0eeff,#fff0f4);border:2px solid #6c63ff;border-radius:14px;padding:28px;text-align:center;margin:0 0 24px}
+  .code{font-size:42px;font-weight:900;letter-spacing:10px;color:#6c63ff;font-family:monospace}
+  .expire-box{background:#fff8e8;border:1px solid #ffd166;border-radius:10px;padding:12px 16px;font-size:13px;color:#8a6400;margin-bottom:20px;text-align:center}
+  .footer{background:#f8f8ff;padding:18px 32px;text-align:center;font-size:12px;color:#aaa;border-top:1px solid #eee}
+</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>영단마스터</h1><p style="margin:8px 0 0;color:rgba(255,255,255,.85);font-size:13px">비밀번호 재설정</p></div>
+  <div class="body">
+    <p style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:12px">안녕하세요! 👋</p>
+    <p style="font-size:14px;color:#555;line-height:1.7;margin-bottom:24px">아래 6자리 코드를 입력하여 비밀번호를 재설정해주세요.</p>
+    <div class="code-box"><div class="code">${code}</div></div>
+    <div class="expire-box">⏰ 이 코드는 <strong>10분</strong> 후 만료됩니다.</div>
+    <p style="font-size:13px;color:#999">본인이 요청하지 않은 경우 이 메일을 무시하세요.</p>
+  </div>
+  <div class="footer"><strong style="color:#6c63ff">영단마스터</strong> — 나만의 영어 단어 테스트 플랫폼</div>
+</div></body></html>`;
+
+    await transporter.sendMail({
+      from: `"영단마스터" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: `[영단마스터] 비밀번호 재설정 코드: ${code}`,
+      html,
+    });
+    res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token });
+  } catch(e) {
+    console.error('forgot-password error:', e.message);
+    res.status(500).json({ message: '오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
+  }
+});
+
+app.post('/api/auth/reset-password',
+  createRateLimit(10, 10 * 60 * 1000, '요청이 너무 많습니다. 10분 후 다시 시도해주세요.'),
+  async (req, res) => {
+  try {
+    const { token, code, newPassword } = req.body;
+    if (!token || !code || !newPassword)
+      return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
+    if (newPassword.length < 8 || !isStrongPassword(newPassword))
+      return res.status(400).json({ message: '비밀번호는 영문과 숫자를 포함한 8자 이상이어야 합니다.' });
+
+    const record = await PasswordReset.findOne({ token });
+    if (!record) return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다. 다시 시도해주세요.' });
+    if (record.expiresAt < new Date()) {
+      await PasswordReset.deleteOne({ token });
+      return res.status(400).json({ message: '코드가 만료되었습니다. 다시 시도해주세요.' });
+    }
+    if (record.code !== String(code).trim())
+      return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await User.updateOne({ email: record.email }, { $set: { password: hashed } });
+    await PasswordReset.deleteOne({ token });
+    res.json({ message: '비밀번호가 성공적으로 변경되었습니다. 로그인해주세요.' });
+  } catch(e) {
+    console.error('reset-password error:', e.message);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
