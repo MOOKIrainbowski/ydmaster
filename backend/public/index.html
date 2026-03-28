@@ -1872,6 +1872,17 @@ function buildHome(app){
   app.innerHTML=topNav('home')+`
   <div class="page active">
     <div class="scroll-body">
+
+      <!-- 공지사항 배너 -->
+      ${S.notices?.filter(n=>n.isPinned).slice(0,1).map(n=>`
+        <div style="margin:12px 16px;max-width:480px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;padding:11px 16px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="renderPage('notice')">
+          <span style="font-size:1rem">📢</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.8rem;font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.title)}</div>
+          </div>
+          <span style="font-size:.72rem;color:var(--text3);flex-shrink:0">자세히 →</span>
+        </div>`).join('')}
+
       <div class="home-hero">
         <div class="hero-badge"><span class="hero-dot"></span>단어 테스트 플랫폼</div>
         <h1 class="hero-title">영어 단어,<br>재미있게 <span class="grad">마스터</span>해요</h1>
@@ -1881,16 +1892,6 @@ function buildHome(app){
           <button class="btn ghost" id="grades-toggle-btn" onclick="toggleGrades()">📊 내 성적 보기</button>
         </div>
       </div>
-
-      <!-- 공지사항 배너 -->
-      ${S.notices?.filter(n=>n.isPinned).slice(0,1).map(n=>`
-        <div style="margin:0 16px 12px;max-width:480px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;padding:11px 16px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="renderPage('notice')">
-          <span style="font-size:1rem">📢</span>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.8rem;font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.title)}</div>
-          </div>
-          <span style="font-size:.72rem;color:var(--text3);flex-shrink:0">자세히 →</span>
-        </div>`).join('')}
 
       <!-- 내 성적 인라인 패널 -->
       <div id="grades-panel-wrap"></div>
