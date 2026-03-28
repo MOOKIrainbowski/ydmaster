@@ -129,6 +129,14 @@ function isStrongPassword(password) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /[0-9]/.test(password);
 }
 
+function isValidPhone(phone) {
+  return /^01[016789]\d{7,8}$/.test(phone.replace(/[-\s]/g, ''));
+}
+
+function normalizePhone(phone) {
+  return phone.replace(/[-\s]/g, '');
+}
+
 function isValidBase64Image(str) {
   if (!str) return true;
   return /^data:image\/(jpeg|jpg|png|webp|gif);base64,/.test(str);
@@ -160,6 +168,7 @@ transporter.verify((err, success) => {
 const UserSchema = new mongoose.Schema({
   username:       { type: String, required: true, unique: true, trim: true },
   email:          { type: String, required: true, unique: true, lowercase: true },
+  phone:          { type: String, default: '' },
   password:       { type: String, default: '' },
   isVerified:     { type: Boolean, default: false },
   naverId:        { type: String, default: '' },
@@ -175,7 +184,8 @@ const UserSchema = new mongoose.Schema({
 });
 
 const EmailVerificationSchema = new mongoose.Schema({
-  email:     { type: String, required: true },
+  email:     { type: String, default: '' },
+  phone:     { type: String, default: '' },
   username:  { type: String, required: true },
   password:  { type: String, required: true },
   token:     { type: String, required: true },
@@ -192,12 +202,14 @@ const FriendRequestSchema = new mongoose.Schema({
 });
 
 const QuestionSchema = new mongoose.Schema({
-  question:     { type: String, required: true },
-  answer:       { type: String, required: true },
-  options:      [{ type: String }],
-  correctAnswer:{ type: Number, default: 0 },
-  questionType: { type: String, enum: ['en-to-ko', 'ko-to-en'], default: 'en-to-ko' },
-  timeLimit:    { type: Number, default: 0 }
+  question:      { type: String, required: true },
+  answer:        { type: String, required: true },
+  options:       [{ type: String }],
+  correctAnswer: { type: Number, default: 0 },
+  questionType:  { type: String, enum: ['en-to-ko', 'ko-to-en'], default: 'en-to-ko' },
+  timeLimit:     { type: Number, default: 0 },
+  keywords:      [{ type: String }],
+  answerContext: { type: String, default: '' }
 });
 
 const TestSchema = new mongoose.Schema({
@@ -205,7 +217,8 @@ const TestSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   author:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   questions:   [QuestionSchema],
-  format:      { type: String, enum: ['section', 'cell'], default: 'section' },
+  format:       { type: String, enum: ['section', 'cell', 'essay'], default: 'section' },
+  testTimeLimit:{ type: Number, default: 0 },
   isPublic:    { type: Boolean, default: true },
   isFriendOnly:{ type: Boolean, default: false },
   tags:        [String],
@@ -399,16 +412,20 @@ app.post('/api/auth/register',
   async (req, res) => {
   try {
     const username = sanitizeString(req.body.username, 20);
-    const email    = sanitizeString(req.body.email, 254).toLowerCase();
+    const email    = sanitizeString(req.body.email || '', 254).toLowerCase();
+    const phone    = normalizePhone(sanitizeString(req.body.phone || '', 20));
     const password = req.body.password || '';
     const { agreedToTerms } = req.body;
+    const usePhone = !!phone && !email;
 
-    if (!username || !email || !password)
+    if (!username || (!email && !phone) || !password)
       return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
     if (!isValidUsername(username))
       return res.status(400).json({ message: '사용자명은 2~20자의 영문, 한글, 숫자, 언더스코어만 사용 가능합니다.' });
-    if (!isValidEmail(email))
+    if (!usePhone && !isValidEmail(email))
       return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
+    if (usePhone && !isValidPhone(phone))
+      return res.status(400).json({ message: '유효한 전화번호를 입력해주세요. (예: 010-1234-5678)' });
     if (password.length < 8)
       return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' });
     if (!isStrongPassword(password))
@@ -416,28 +433,42 @@ app.post('/api/auth/register',
     if (!agreedToTerms)
       return res.status(400).json({ message: '개인정보 수집·이용에 동의해주세요.' });
 
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS)
+    if (!usePhone && (!process.env.GMAIL_USER || !process.env.GMAIL_PASS))
       return res.status(500).json({ message: '메일 서버 설정이 완료되지 않았습니다. 관리자에게 문의하세요.' });
 
-    const existsUser = await User.findOne({ $or: [{ email }, { username }] });
+    const query = usePhone
+      ? { $or: [{ phone }, { username }] }
+      : { $or: [{ email }, { username }] };
+    const existsUser = await User.findOne(query);
     if (existsUser) return res.status(400).json({
-      message: existsUser.email === email ? '이미 사용 중인 이메일입니다.' : '이미 사용 중인 사용자명입니다.'
+      message: existsUser.username === username ? '이미 사용 중인 사용자명입니다.'
+        : usePhone ? '이미 사용 중인 전화번호입니다.' : '이미 사용 중인 이메일입니다.'
     });
 
-    await EmailVerification.deleteMany({ email });
+    if (usePhone) await EmailVerification.deleteMany({ phone });
+    else await EmailVerification.deleteMany({ email });
 
     const code  = String(Math.floor(100000 + Math.random() * 900000));
     const token = crypto.randomBytes(32).toString('hex');
     const hashed = await bcrypt.hash(password, 12);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await new EmailVerification({ email, username, password: hashed, token, code, expiresAt }).save();
-    await sendVerificationEmail(email, username, code);
+    const verifyData = { username, password: hashed, token, code, expiresAt };
+    if (usePhone) verifyData.phone = phone;
+    else verifyData.email = email;
+    await new EmailVerification(verifyData).save();
 
-    res.status(200).json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token });
+    if (usePhone) {
+      // SMS 인증 코드 발송
+      console.log(`[SMS 인증] ${phone} → 코드: ${code}`);
+      res.status(200).json({ message: '인증 코드를 발송했습니다.', token, verifyType: 'phone', devCode: code });
+    } else {
+      await sendVerificationEmail(email, username, code);
+      res.status(200).json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token, verifyType: 'email' });
+    }
   } catch (e) {
     console.error('register error:', e.message);
-    res.status(500).json({ message: e.message || '메일 발송 중 오류가 발생했습니다.' });
+    res.status(500).json({ message: e.message || '인증 코드 발송 중 오류가 발생했습니다.' });
   }
 });
 
@@ -459,18 +490,28 @@ app.post('/api/auth/verify-code',
     if (record.code !== String(code).trim())
       return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
 
-    const exists = await User.findOne({ $or: [{ email: record.email }, { username: record.username }] });
+    const usePhone = !!record.phone && !record.email;
+    const existQuery = usePhone
+      ? { $or: [{ phone: record.phone }, { username: record.username }] }
+      : { $or: [{ email: record.email }, { username: record.username }] };
+    const exists = await User.findOne(existQuery);
     if (exists) {
       await EmailVerification.deleteOne({ token });
-      return res.status(400).json({ message: '이미 가입된 이메일 또는 사용자명입니다.' });
+      return res.status(400).json({ message: '이미 가입된 계정 또는 사용자명입니다.' });
     }
 
-    await new User({
+    const newUserData = {
       username: record.username,
-      email: record.email,
       password: record.password,
       isVerified: true
-    }).save();
+    };
+    if (usePhone) {
+      newUserData.phone = record.phone;
+      newUserData.email = `phone_${record.phone}@ydmaster.local`;
+    } else {
+      newUserData.email = record.email;
+    }
+    await new User(newUserData).save();
 
     await EmailVerification.deleteOne({ token });
 
@@ -668,22 +709,26 @@ app.post('/api/auth/login',
   createRateLimit(10, 15 * 60 * 1000, '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'),
   async (req, res) => {
   try {
-    const email    = sanitizeString(req.body.email, 254).toLowerCase();
-    const password = req.body.password || '';
+    const identifier = sanitizeString(req.body.email, 254).toLowerCase();
+    const password   = req.body.password || '';
 
-    if (!email || !password)
-      return res.status(400).json({ message: '이메일과 비밀번호를 입력해주세요.' });
-    if (!isValidEmail(email))
-      return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
+    if (!identifier || !password)
+      return res.status(400).json({ message: '이메일/전화번호와 비밀번호를 입력해주세요.' });
 
-    const user = await User.findOne({ email });
+    const isPhone = isValidPhone(identifier);
+    if (!isPhone && !isValidEmail(identifier))
+      return res.status(400).json({ message: '유효한 이메일 또는 전화번호를 입력해주세요.' });
+
+    const user = isPhone
+      ? await User.findOne({ phone: normalizePhone(identifier) })
+      : await User.findOne({ email: identifier });
     const dummyHash = '$2a$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
     const passwordMatch = user
       ? await bcrypt.compare(password, user.password || dummyHash)
       : await bcrypt.compare(password, dummyHash).then(() => false);
 
     if (!user || !passwordMatch)
-      return res.status(400).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+      return res.status(400).json({ message: '계정 정보 또는 비밀번호가 올바르지 않습니다.' });
     if (!user.isVerified && user.loginType === 'local')
       return res.status(403).json({ message: '이메일 인증이 필요합니다. 메일함을 확인해주세요.' });
 

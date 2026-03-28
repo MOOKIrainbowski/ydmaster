@@ -781,8 +781,9 @@ body.theme-light .ss-bottom-bar{background:rgba(255,209,102,.04);border-color:rg
 .inquiry-status.answered{background:rgba(67,233,123,.12);color:var(--accent3)}
 .inquiry-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:4px}
 .inquiry-content{font-size:.85rem;color:var(--text2);line-height:1.7;margin-top:8px;white-space:pre-wrap}
-.inquiry-answer{background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.2);border-radius:10px;padding:12px;margin-top:12px;font-size:.85rem;color:var(--text2);line-height:1.7;white-space:pre-wrap}
-.inquiry-answer-label{font-size:.72rem;font-weight:700;color:var(--accent);margin-bottom:6px}
+.inquiry-answer{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px;margin-top:14px;font-size:.85rem;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.inquiry-answer-label{font-size:.75rem;font-weight:700;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.inquiry-answer-date{font-size:.7rem;color:var(--text3);margin-top:8px;text-align:right}
 .admin-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
 .admin-stat{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
 .admin-stat-num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent)}
@@ -1370,21 +1371,26 @@ async function apiFetch(method, path, body){
 /* ============================================================
    AUTH
 ============================================================ */
-async function register(username,email,password){
-  const res = await apiFetch('POST','/auth/register',{username,email,password,agreedToTerms:true});
-  // 코드 입력 화면으로 전환
-  showCodeInput(email, res.token);
+async function register(username,email,password,phone){
+  const body = {username,password,agreedToTerms:true};
+  if(phone) body.phone=phone; else body.email=email;
+  const res = await apiFetch('POST','/auth/register',body);
+  if(res.verifyType==='phone' && res.devCode){
+    toast(`인증 코드: ${res.devCode} (SMS 미설정 — 개발 모드)`,'ok');
+  }
+  showCodeInput(phone||email, res.token);
 }
 
-function showCodeInput(email, sessionToken){
+function showCodeInput(contact, sessionToken){
+  const isPhone = /^01[016789]/.test(contact.replace(/[-\s]/g,''));
   const c = document.getElementById('auth-form');
   if(!c) return;
   c.innerHTML=`
     <div class="verify-sent-wrap">
-      <span class="verify-sent-emoji">📨</span>
+      <span class="verify-sent-emoji">${isPhone?'📱':'📨'}</span>
       <div class="verify-sent-title">인증 코드를 입력해주세요</div>
-      <div class="verify-sent-email">${esc(email)}</div>
-      <div class="verify-sent-desc" style="margin-bottom:18px">위 이메일로 6자리 인증 코드를 발송했습니다.<br>코드는 <strong style="color:var(--accent)">10분</strong> 동안 유효합니다.</div>
+      <div class="verify-sent-email">${esc(contact)}</div>
+      <div class="verify-sent-desc" style="margin-bottom:18px">${isPhone?'위 전화번호로':'위 이메일로'} 6자리 인증 코드를 발송했습니다.<br>코드는 <strong style="color:var(--accent)">10분</strong> 동안 유효합니다.</div>
       <div style="display:flex;gap:8px;margin-bottom:12px">
         <input type="text" class="form-input" id="verify-code-input"
           placeholder="6자리 코드 입력"
@@ -1672,7 +1678,7 @@ function renderAuthForm(t){
   const c=document.getElementById('auth-form');
   if(t==='l'){
     c.innerHTML=`
-      <div class="form-group"><label class="form-label">이메일</label><input type="email" autocomplete="email" inputmode="email" class="form-input" id="l-em" placeholder="example@email.com"/></div>
+      <div class="form-group"><label class="form-label">이메일 또는 전화번호</label><input type="text" autocomplete="email" class="form-input" id="l-em" placeholder="이메일 또는 전화번호"/></div>
       <div class="form-group">
         <label class="form-label">비밀번호</label>
         <input type="password" autocomplete="current-password" class="form-input" id="l-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()"/>
@@ -1693,7 +1699,7 @@ function renderAuthForm(t){
   } else {
     c.innerHTML=`
       <div class="form-group"><label class="form-label">사용자명</label><input type="text" autocomplete="username" class="form-input" id="r-nm" placeholder="사용자명 입력"/></div>
-      <div class="form-group"><label class="form-label">이메일</label><input type="email" autocomplete="email" inputmode="email" class="form-input" id="r-em" placeholder="example@email.com"/></div>
+      <div class="form-group"><label class="form-label">이메일 또는 전화번호</label><input type="text" autocomplete="email" class="form-input" id="r-em" placeholder="이메일 또는 전화번호 입력"/></div>
       <div class="form-group"><label class="form-label">비밀번호 <small style="color:var(--text3)">(영문+숫자 8자 이상)</small></label><input type="password" autocomplete="new-password" class="form-input" id="r-pw" placeholder="영문+숫자 조합 8자 이상" onkeydown="if(event.key==='Enter')doRegister()"/></div>
       <div style="margin-bottom:14px">
         <div class="terms-box">개인정보 수집·이용 동의서
@@ -1701,7 +1707,7 @@ function renderAuthForm(t){
 【영단마스터 개인정보 수집·이용 안내】
 
 ■ 수집 항목
-- 필수: 사용자명, 이메일 주소, 비밀번호(암호화 저장)
+- 필수: 사용자명, 이메일 주소 또는 전화번호, 비밀번호(암호화 저장)
 - 선택: 프로필 사진, 배너 이미지
 
 ■ 수집 및 이용 목적
@@ -1754,15 +1760,16 @@ async function doRegister(){
   const agree = document.getElementById('r-agree');
   if(!agree?.checked){ toast('개인정보 수집·이용에 동의해주세요.','error'); return; }
   const nm = document.getElementById('r-nm')?.value?.trim();
-  const em = document.getElementById('r-em')?.value?.trim();
+  const contact = document.getElementById('r-em')?.value?.trim();
   const pw = document.getElementById('r-pw')?.value;
-  if(!nm||!em||!pw){ toast('모든 항목을 입력해주세요.','error'); return; }
+  if(!nm||!contact||!pw){ toast('모든 항목을 입력해주세요.','error'); return; }
   if(pw.length<8){ toast('비밀번호는 8자 이상이어야 합니다.','error'); return; }
   if(!/[A-Za-z]/.test(pw)||!/[0-9]/.test(pw)){ toast('비밀번호는 영문과 숫자를 포함해야 합니다.','error'); return; }
+  const isPhone = /^01[016789]/.test(contact.replace(/[-\s]/g,''));
   const btn = document.querySelector('#auth-form .btn.primary.full');
   if(btn){ btn.disabled=true; btn.textContent='처리 중...'; }
   try{
-    await register(nm, em, pw);
+    await register(nm, isPhone?'':contact, pw, isPhone?contact:'');
   } catch(e){
     toast(e.message||'오류가 발생했습니다.','error');
     if(btn){ btn.disabled=false; btn.textContent='회원가입'; }
@@ -1903,6 +1910,10 @@ function buildHome(app){
         <div class="stat-card"><div class="stat-num" style="color:var(--accent3)">${stats.bestScore}%</div><div class="stat-label">최고 정답률</div></div>
       </div>
 
+      <div style="margin:0 16px 16px;max-width:480px">
+        <button class="btn ghost" style="width:100%;border:1px dashed rgba(108,99,255,.3);color:var(--accent);font-size:.85rem;padding:12px;border-radius:12px" onclick="showSponsor()">💛 개발자 후원하기</button>
+      </div>
+
       ${myTests.length>0?`
       <div class="section">
         <div class="sec-header">
@@ -1929,6 +1940,20 @@ function buildHome(app){
 
   // 성적 패널 상태 복원
   if(S.gradesOpen) renderGradesPanel();
+}
+
+function showSponsor(){
+  showModal(`
+    <div class="modal-handle"></div>
+    <div class="modal-title">💛 개발자 후원하기</div>
+    <p style="text-align:center;font-size:.85rem;color:var(--text2);line-height:1.7;margin-bottom:20px">영단마스터를 사용해주셔서 감사합니다!<br>후원금은 서비스 운영에 사용됩니다.</p>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center">
+      <div style="font-size:.78rem;color:var(--text3);margin-bottom:8px">카카오뱅크</div>
+      <div style="font-family:monospace;font-size:1.3rem;font-weight:700;color:var(--text);letter-spacing:1.5px;margin-bottom:14px">3333-36-7333532</div>
+      <button class="btn primary sm" onclick="navigator.clipboard.writeText('3333367333532').then(()=>toast('계좌번호가 복사되었습니다!','ok')).catch(()=>toast('복사 실패','error'))">📋 계좌번호 복사</button>
+    </div>
+    <div class="modal-actions" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">닫기</button></div>
+  `);
 }
 
 function toggleGrades(){
@@ -1980,7 +2005,9 @@ function testCard(t){
     : t.isPublic
       ? `<span class="tc-visibility public">🌐 전체 공개</span>`
       : `<span class="tc-visibility private">🔒 비공개</span>`;
-  const fmtBadge = t.format==='cell'
+  const fmtBadge = t.format==='essay'
+    ? `<span class="tc-badge" style="color:var(--accent3)">📝 주관식/서술형</span>`
+    : t.format==='cell'
     ? `<span class="tc-badge" style="color:var(--accent4)">⚡ 셀 방식</span>`
     : `<span class="tc-badge">📋 섹션 방식</span>`;
   return `<div class="test-card">
@@ -2208,13 +2235,18 @@ async function openTestMethodPicker(testId){
       <input type="number" class="count-input" id="tc-count" value="${qCount}" min="1" max="${qCount}">
       <span style="font-size:.82rem;color:var(--text3)">/ ${qCount}문항</span>
     </div>
-    ${qCount>=5?`
+    ${qCount>=5 && meta?.format!=='essay'?`
     <div style="background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.2);border-radius:12px;padding:12px 14px;margin-bottom:4px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:.85rem;font-weight:600;color:var(--text)">✏️ 주관식 문항 포함</span>
         <div class="toggle ${S.includeSubjective?'on':''}" id="subj-toggle" onclick="toggleSubjective()"></div>
       </div>
-      <div style="font-size:.75rem;color:var(--text3);line-height:1.5">전체 문항 중 5~10문항을 주관식(직접 입력)으로 출제합니다.<br>주관식 문항은 타이머 없이 진행됩니다.</div>
+      <div style="font-size:.75rem;color:var(--text3);line-height:1.5">전체 문항 중 10%를 주관식(직접 입력)으로 출제합니다.<br>주관식 문항은 타이머 없이 진행됩니다.</div>
+    </div>`:''}
+    ${meta?.format==='essay'?`
+    <div style="background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.2);border-radius:12px;padding:12px 14px;margin-bottom:4px">
+      <div style="font-size:.85rem;font-weight:600;color:var(--accent);margin-bottom:4px">📝 주관식/서술형 테스트</div>
+      <div style="font-size:.75rem;color:var(--text3);line-height:1.5">모든 문항이 주관식으로 출제됩니다. 키워드 기반으로 자동 채점됩니다.</div>
     </div>`:''}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">취소</button>
@@ -2274,10 +2306,16 @@ function buildEditorEntry(app){
           <div class="fmt-name">셀 방식</div>
           <div class="fmt-desc">스프레드시트처럼 단어-뜻을 빠르게 입력, 보기를 자동 구성</div>
         </div>
+        <div class="fmt-card" onclick="chooseFormat('essay')">
+          <div class="fmt-check">✓</div>
+          <div class="fmt-icon">📝</div>
+          <div class="fmt-name">주관식/서술형</div>
+          <div class="fmt-desc">주관식·서술형 문제를 출제하고 키워드로 자동 채점</div>
+        </div>
       </div>
       <div style="background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);border-radius:12px;padding:14px 16px;margin-top:4px">
-        <div style="font-size:.8rem;color:var(--accent);font-weight:600;margin-bottom:5px">💡 셀 방식이란?</div>
-        <div style="font-size:.78rem;color:var(--text2);line-height:1.6">A열에 단어(문제), B열에 정답을 입력하면 시험 칠 때 다른 문항의 정답들을 오답 보기로 활용해 총 5개의 보기를 제시합니다.</div>
+        <div style="font-size:.8rem;color:var(--accent);font-weight:600;margin-bottom:5px">💡 방식 안내</div>
+        <div style="font-size:.78rem;color:var(--text2);line-height:1.6"><b>셀 방식:</b> A열에 단어, B열에 정답을 입력하면 보기를 자동 구성합니다.<br><b>주관식/서술형:</b> 문제와 정답 키워드를 입력하면 키워드 기반으로 자동 채점합니다. 테스트 전체에 시간 제한을 설정할 수 있습니다.</div>
       </div>
     </div>
   </div>`;
@@ -2289,10 +2327,84 @@ function chooseFormat(fmt){
 }
 
 /* ============================================================
+   ESSAY EDITOR
+============================================================ */
+function buildEssayEditor(app){
+  const t=S.editorTest;
+  if(!t.questions.length) t.questions.push({question:'',answer:'',keywords:[],answerContext:'',options:[]});
+  app.innerHTML=`
+  <div class="page active" style="flex-direction:column;height:100dvh;overflow:hidden">
+    <div class="editor-topbar">
+      <button class="nav-btn ghost" style="padding:7px 12px;font-size:.8rem" onclick="cancelEditor()">← 취소</button>
+      <h2>${S.editing?'테스트 수정':'주관식/서술형'} 📝</h2>
+      <button class="nav-btn primary" style="padding:7px 14px;font-size:.8rem" onclick="saveTest()">저장</button>
+    </div>
+    <div class="editor-scroll" id="ed-scroll">
+      <div class="editor-meta">
+        <div class="editor-meta-title">기본 정보</div>
+        <div class="form-group"><label class="form-label">테스트 제목 *</label><input type="text" class="form-input" id="et-title" value="${esc(t.title)}" placeholder="예: 영어 서술형 평가"/></div>
+        <div class="form-group"><label class="form-label">설명</label><input type="text" class="form-input" id="et-desc" value="${esc(t.description)}" placeholder="간단한 설명을 입력하세요"/></div>
+        <div class="form-group"><label class="form-label">⏱ 시험 시간 제한 (분, 0=무제한)</label><input type="number" class="form-input" id="et-timelimit" value="${Math.floor((t.testTimeLimit||0)/60)}" min="0" max="180" placeholder="0"/></div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">🌐 전체 공개</span>
+          <div class="toggle ${t.isPublic&&!t.isFriendOnly?'on':''}" id="pub-tog" onclick="togglePub()"></div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">👥 친구만 공개</span>
+          <div class="toggle ${t.isFriendOnly?'on':''}" id="fri-tog" onclick="toggleFriend()"></div>
+        </div>
+      </div>
+      <div class="editor-meta-title" style="margin:16px 0 8px">문항 (${t.questions.length})</div>
+      <div id="essay-questions">
+        ${t.questions.map((q,i)=>`
+        <div class="q-card" data-qi="${i}">
+          <div class="q-header">
+            <span class="q-num">Q${i+1}</span>
+            ${t.questions.length>1?`<button class="q-del" onclick="delEssayQ(${i})">✕</button>`:''}
+          </div>
+          <div class="form-group"><label class="form-label">문제 *</label><textarea class="form-input essay-q" rows="2" placeholder="문제를 입력하세요" data-qi="${i}">${esc(q.question)}</textarea></div>
+          <div class="form-group"><label class="form-label">정답 (참고용)</label><input type="text" class="form-input essay-a" value="${esc(q.answer)}" placeholder="정답 또는 모범 답안" data-qi="${i}"/></div>
+          <div class="form-group"><label class="form-label">채점 키워드 <small style="color:var(--text3)">(쉼표로 구분)</small></label><input type="text" class="form-input essay-kw" value="${(q.keywords||[]).join(', ')}" placeholder="키워드1, 키워드2, ..." data-qi="${i}"/></div>
+          <div class="form-group"><label class="form-label">채점 맥락/기준 <small style="color:var(--text3)">(선택)</small></label><input type="text" class="form-input essay-ctx" value="${esc(q.answerContext||'')}" placeholder="이 문제의 채점 기준을 설명하세요" data-qi="${i}"/></div>
+        </div>`).join('')}
+      </div>
+      <button class="btn ghost full" style="margin-top:8px" onclick="addEssayQ()">+ 문항 추가하기</button>
+    </div>
+  </div>`;
+}
+function syncEssayQuestions(){
+  const t=S.editorTest;
+  document.querySelectorAll('.essay-q').forEach(el=>{
+    const i=+el.dataset.qi; if(t.questions[i]) t.questions[i].question=el.value;
+  });
+  document.querySelectorAll('.essay-a').forEach(el=>{
+    const i=+el.dataset.qi; if(t.questions[i]) t.questions[i].answer=el.value;
+  });
+  document.querySelectorAll('.essay-kw').forEach(el=>{
+    const i=+el.dataset.qi; if(t.questions[i]) t.questions[i].keywords=el.value.split(',').map(s=>s.trim()).filter(Boolean);
+  });
+  document.querySelectorAll('.essay-ctx').forEach(el=>{
+    const i=+el.dataset.qi; if(t.questions[i]) t.questions[i].answerContext=el.value;
+  });
+}
+function addEssayQ(){
+  syncEssayQuestions();
+  S.editorTest.questions.push({question:'',answer:'',keywords:[],answerContext:'',options:[]});
+  buildEssayEditor(document.getElementById('app'));
+  setTimeout(()=>{const s=document.getElementById('ed-scroll');if(s)s.scrollTop=s.scrollHeight;},50);
+}
+function delEssayQ(i){
+  syncEssayQuestions();
+  S.editorTest.questions.splice(i,1);
+  buildEssayEditor(document.getElementById('app'));
+}
+
+/* ============================================================
    EDITOR
 ============================================================ */
 function buildEditor(app){
   const t=S.editorTest;
+  if(t.format==='essay'){ buildEssayEditor(app); return; }
   const isSec=t.format==='section';
   app.innerHTML=`
   <div class="page active" style="flex-direction:column;height:100dvh;overflow:hidden">
@@ -2846,7 +2958,12 @@ async function saveTest(){
   const t=S.editorTest;
   t.title=document.getElementById('et-title')?.value?.trim()||'';
   t.description=document.getElementById('et-desc')?.value?.trim()||'';
-  if(t.format==='section'){
+  if(t.format==='essay'){
+    syncEssayQuestions();
+    const tlMin=parseInt(document.getElementById('et-timelimit')?.value)||0;
+    t.testTimeLimit=tlMin*60;
+    t.questions=t.questions.filter(q=>q.question.trim());
+  } else if(t.format==='section'){
     t.questions.forEach((q,qi)=>{
       q.question=document.getElementById(`qt-txt-${qi}`)?.value?.trim()||q.question;
       q.options=q.options.map((_,oi)=>document.getElementById(`or-${qi}-${oi}`)?.querySelector('input')?.value??_);
@@ -2854,7 +2971,6 @@ async function saveTest(){
       q.answer=q.options[q.correctAnswer]||'';
     });
   } else {
-    // 스프레드시트 방식 — 입력 필드에서 최신값 강제 동기화
     t.questions.forEach((q,i)=>{
       q.question=(document.getElementById(`ss-q-${i}`)?.value??q.question).trim();
       q.answer=(document.getElementById(`ss-a-${i}`)?.value??q.answer).trim();
@@ -2864,7 +2980,12 @@ async function saveTest(){
   }
   if(!t.title){toast('테스트 제목을 입력해주세요.','error');return;}
   if(t.questions.length===0){toast('문항을 1개 이상 추가해주세요.','error');return;}
-  if(t.format==='section'){
+  if(t.format==='essay'){
+    for(const[i,q] of t.questions.entries()){
+      if(!q.question.trim()){toast(`${i+1}번 문항의 문제를 입력해주세요.`,'error');return;}
+      if(!q.keywords?.length&&!q.answer?.trim()){toast(`${i+1}번 문항의 키워드 또는 정답을 입력해주세요.`,'error');return;}
+    }
+  } else if(t.format==='section'){
     for(const[i,q] of t.questions.entries()){
       if(!q.question.trim()){toast(`${i+1}번 문항의 단어를 입력해주세요.`,'error');return;}
       if(q.options.some(o=>!o.trim())){toast(`${i+1}번 문항의 모든 보기를 입력해주세요.`,'error');return;}
@@ -2904,13 +3025,17 @@ async function startTest(id, orderMode='shuffle', countLimit=9999){
     S.startTime=Date.now(); S.elapsed=0;
     S.generatedOptions=[];
 
-    // 주관식 문항 랜덤 지정 (5~10문항, 전체 문항 수가 충분할 때만)
-    if(S.includeSubjective && test.questions.length >= 5){
-      const subjCount = Math.min(10, Math.max(5, Math.floor(test.questions.length * 0.3)));
+    S.testTimeLimitSec = 0;
+    // 주관식/서술형 문항 지정
+    if(test.format==='essay'){
+      test.questions.forEach(q => { q.isSubjective = true; q.timeLimit = 0; });
+      S.testTimeLimitSec = test.testTimeLimit || 0;
+    } else if(S.includeSubjective && test.questions.length >= 5){
+      const subjCount = Math.max(1, Math.round(test.questions.length * 0.1));
       const indices = shuffle([...Array(test.questions.length).keys()]).slice(0, subjCount);
       test.questions.forEach((q, i) => {
         q.isSubjective = indices.includes(i);
-        if(q.isSubjective) q.timeLimit = 0; // 주관식은 타이머 없음
+        if(q.isSubjective) q.timeLimit = 0;
       });
     } else {
       test.questions.forEach(q => { q.isSubjective = false; });
@@ -2950,7 +3075,14 @@ function startGlobalTimer(){
   S.timer=setInterval(()=>{
     S.elapsed=Math.floor((Date.now()-S.startTime)/1000);
     const el=document.getElementById('g-timer');
-    if(el) el.textContent=fmtTime(S.elapsed);
+    if(S.testTimeLimitSec && S.testTimeLimitSec > 0){
+      const remaining = S.testTimeLimitSec - S.elapsed;
+      if(el) el.textContent = remaining > 0 ? fmtTime(remaining) : '00:00';
+      if(el && remaining <= 60) el.style.color = 'var(--accent2)';
+      if(remaining <= 0){ clearInterval(S.timer); toast('시간이 종료되었습니다!','error'); finishTest(); return; }
+    } else {
+      if(el) el.textContent=fmtTime(S.elapsed);
+    }
   },1000);
 }
 
@@ -3093,9 +3225,15 @@ function submitSubjective(){
   if(!val){ toast('정답을 입력해주세요.','error'); return; }
 
   const q = S.activeTest.questions[S.activeQIdx];
-  // 정답 비교 — 대소문자 무관, 공백 제거
-  const correct = (q.answer || q.options?.[q.correctAnswer] || '').trim().toLowerCase();
-  const ok = val.toLowerCase() === correct;
+  let ok;
+  if(S.activeTest.format==='essay' && q.keywords?.length > 0){
+    const lv = val.toLowerCase();
+    const matched = q.keywords.filter(kw => lv.includes(kw.toLowerCase()));
+    ok = matched.length >= q.keywords.length;
+  } else {
+    const correct = (q.answer || q.options?.[q.correctAnswer] || '').trim().toLowerCase();
+    ok = val.toLowerCase() === correct;
+  }
 
   S.answered = true; S.selectedOpt = -2; // -2 = 주관식
   if(ok) S.correct++; else S.wrong++;
@@ -4031,8 +4169,9 @@ async function loadMyInquiries(){
         <div class="inquiry-content">${esc(q.content)}</div>
         ${q.status==='answered'?`
           <div class="inquiry-answer">
-            <div class="inquiry-answer-label">💬 관리자 답변 · ${new Date(q.answeredAt).toLocaleDateString('ko-KR')}</div>
+            <div class="inquiry-answer-label">💬 관리자 답변</div>
             ${esc(q.answer)}
+            <div class="inquiry-answer-date">${new Date(q.answeredAt).toLocaleDateString('ko-KR')}</div>
           </div>`:``}
       </div>`;}).join('');
   }catch(e){toast(e.message,'error');}
