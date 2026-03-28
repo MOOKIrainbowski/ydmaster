@@ -659,7 +659,7 @@ body.theme-light .ss-bottom-bar{background:rgba(255,209,102,.04);border-color:rg
   .section{max-width:1100px;margin-left:auto;margin-right:auto;padding:0 24px 40px}
   .grades-inline-panel{max-width:1100px;margin-left:auto;margin-right:auto}
   .tests-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-  .editor-scroll{max-width:720px;margin:0 auto;padding:22px 22px 140px}
+  .editor-scroll{max-width:960px;margin:0 auto;padding:22px 22px 140px}
   .save-bar{justify-content:flex-end}
   .save-bar .btn.ghost{flex:0 0 110px}
   .save-bar .btn.primary{flex:0 0 170px}
@@ -1910,10 +1910,6 @@ function buildHome(app){
         <div class="stat-card"><div class="stat-num" style="color:var(--accent3)">${stats.bestScore}%</div><div class="stat-label">최고 정답률</div></div>
       </div>
 
-      <div style="margin:0 16px 16px;max-width:480px">
-        <button class="btn ghost" style="width:100%;border:1px dashed rgba(108,99,255,.3);color:var(--accent);font-size:.85rem;padding:12px;border-radius:12px" onclick="showSponsor()">💛 개발자 후원하기</button>
-      </div>
-
       ${myTests.length>0?`
       <div class="section">
         <div class="sec-header">
@@ -1940,20 +1936,6 @@ function buildHome(app){
 
   // 성적 패널 상태 복원
   if(S.gradesOpen) renderGradesPanel();
-}
-
-function showSponsor(){
-  showModal(`
-    <div class="modal-handle"></div>
-    <div class="modal-title">💛 개발자 후원하기</div>
-    <p style="text-align:center;font-size:.85rem;color:var(--text2);line-height:1.7;margin-bottom:20px">영단마스터를 사용해주셔서 감사합니다!<br>후원금은 서비스 운영에 사용됩니다.</p>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center">
-      <div style="font-size:.78rem;color:var(--text3);margin-bottom:8px">카카오뱅크</div>
-      <div style="font-family:monospace;font-size:1.3rem;font-weight:700;color:var(--text);letter-spacing:1.5px;margin-bottom:14px">3333-36-7333532</div>
-      <button class="btn primary sm" onclick="navigator.clipboard.writeText('3333367333532').then(()=>toast('계좌번호가 복사되었습니다!','ok')).catch(()=>toast('복사 실패','error'))">📋 계좌번호 복사</button>
-    </div>
-    <div class="modal-actions" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">닫기</button></div>
-  `);
 }
 
 function toggleGrades(){
