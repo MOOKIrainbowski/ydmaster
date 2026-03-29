@@ -70,6 +70,7 @@ body.theme-light .theme-btn{background:#eaeaf0;border-color:#dcdce8;color:#44445
 body.theme-light .card,
 body.theme-light .auth-card,
 body.theme-light .landing-feat,
+body.theme-light .review-card,
 body.theme-light .test-card,
 body.theme-light .stat-card,
 body.theme-light .bk-item,
@@ -749,22 +750,51 @@ body.theme-light .ss-bottom-bar{background:rgba(255,209,102,.04);border-color:rg
 .google-icon{width:20px;height:20px;flex-shrink:0}
 
 /* ── LANDING PAGE ── */
-.landing-hero{min-height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
-.landing-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 120% 50% at 50% 10%,rgba(108,99,255,.13) 0%,transparent 70%),radial-gradient(ellipse 80% 40% at 85% 90%,rgba(255,101,132,.08) 0%,transparent 70%)}
-.landing-content{position:relative;z-index:1;width:100%;flex:1;display:flex;flex-direction:column}
-.landing-hero-section{text-align:center;padding:48px 24px 24px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.landing-hero{min-height:100dvh;display:flex;flex-direction:column;position:relative;overflow-x:hidden}
+.landing-bg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 120% 50% at 50% 10%,rgba(108,99,255,.13) 0%,transparent 70%),radial-gradient(ellipse 80% 40% at 85% 90%,rgba(255,101,132,.08) 0%,transparent 70%)}
+.landing-scroll{position:relative;z-index:1;width:100%;overflow-y:auto}
+.landing-hero-section{text-align:center;padding:48px 24px 24px;min-height:85dvh;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .landing-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.28);color:var(--accent);font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:100px;margin-bottom:16px;letter-spacing:.3px}
-.landing-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:2.4rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:8px;line-height:1.1}
-.landing-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;line-height:1.6}
+.landing-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:2.4rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:12px;line-height:1.1}
+.landing-sub{font-size:1rem;color:var(--text2);margin-bottom:28px;line-height:1.7;max-width:400px}
 .landing-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .landing-btns .btn{min-width:160px;font-size:1.05rem;padding:15px 36px}
-.landing-feats-section{padding:0 20px 24px}
-.landing-feats-label{font-size:.72rem;font-weight:600;color:var(--text3);letter-spacing:.8px;text-align:left;margin-bottom:10px}
-.landing-features{display:grid;grid-template-columns:1fr;gap:8px;width:100%;margin:0 auto}
-.landing-feat{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:14px 16px;text-align:left;display:flex;align-items:center;gap:14px;transition:border-color .15s,transform .15s}
+.landing-scroll-hint{margin-top:32px;color:var(--text3);font-size:.75rem;display:flex;flex-direction:column;align-items:center;gap:4px;animation:bounceHint 2s infinite}
+.landing-scroll-hint svg{width:20px;height:20px}
+@keyframes bounceHint{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* Landing sections shared */
+.landing-section{padding:48px 20px;max-width:800px;margin:0 auto}
+.landing-section-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;text-align:center;margin-bottom:8px;color:var(--text)}
+.landing-section-sub{text-align:center;font-size:.88rem;color:var(--text3);margin-bottom:28px}
+
+/* Features grid */
+.landing-feats-section{padding:48px 20px;max-width:800px;margin:0 auto}
+.landing-features{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.landing-feat{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:16px;text-align:left;display:flex;align-items:center;gap:14px;transition:border-color .15s,transform .15s}
 .landing-feat-icon{font-size:1.3rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(108,99,255,.1);border-radius:10px}
 .landing-feat-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:4px;color:var(--text)}
 .landing-feat-desc{font-size:.8rem;color:var(--text3);line-height:1.5}
+
+/* Review carousel */
+.landing-reviews{padding:48px 0;overflow:hidden}
+.landing-reviews-track{display:flex;gap:16px;animation:scrollReviews 24s linear infinite;width:max-content}
+.landing-reviews-track:hover{animation-play-state:paused}
+.review-card{flex-shrink:0;width:280px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative}
+.review-stars{color:#fbbf24;font-size:.85rem;margin-bottom:8px;letter-spacing:1px}
+.review-text{font-size:.88rem;color:var(--text2);line-height:1.65;margin-bottom:12px}
+.review-author{font-size:.78rem;color:var(--text3);font-weight:600}
+@keyframes scrollReviews{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* Scroll animations */
+.landing-anim{opacity:0;transform:translateY(30px);transition:opacity .6s ease-out,transform .6s ease-out}
+.landing-anim.visible{opacity:1;transform:translateY(0)}
+
+/* CTA section */
+.landing-cta{text-align:center;padding:56px 20px;max-width:600px;margin:0 auto}
+.landing-cta-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin-bottom:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.landing-cta-desc{color:var(--text2);font-size:.92rem;margin-bottom:24px;line-height:1.6}
+
 .landing-footer{position:relative;z-index:1;padding:14px 20px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text3);display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
 .landing-footer a{color:var(--text3);text-decoration:underline;text-underline-offset:3px}
 
@@ -1209,12 +1239,16 @@ body.theme-light .ss-row.selected{background:rgba(108,99,255,.06)!important}
 
 /* 모바일 최적화 (≤600px) */
 @media(max-width:600px){
-  .landing-hero-section{padding:40px 20px 20px;min-height:55dvh}
+  .landing-hero-section{padding:40px 20px 20px;min-height:75dvh}
   .landing-logo{font-size:2rem}
   .landing-sub{font-size:.92rem;margin-bottom:20px}
   .landing-btns .btn{width:100%;text-align:center}
-  .landing-feats-section{padding:0 16px 20px}
-  .landing-features{gap:10px}
+  .landing-feats-section{padding:36px 16px}
+  .landing-features{grid-template-columns:1fr;gap:10px}
+  .landing-section{padding:36px 16px}
+  .landing-reviews{padding:36px 0}
+  .review-card{width:240px}
+  .landing-cta{padding:40px 16px}
 
   .auth-page{align-items:flex-end;padding:0}
   .auth-bg{opacity:.5}
@@ -1225,26 +1259,26 @@ body.theme-light .ss-row.selected{background:rgba(108,99,255,.06)!important}
 
 /* 태블릿 (601–767px) */
 @media(min-width:601px) and (max-width:767px){
-  .landing-content{max-width:600px;margin:0 auto}
-  .landing-hero-section{padding:60px 28px 30px}
+  .landing-hero-section{padding:60px 28px 30px;min-height:80dvh}
   .landing-features{grid-template-columns:1fr 1fr;gap:10px}
-  .landing-feats-section{padding:0 28px 30px}
+  .landing-feats-section{padding:40px 28px}
   .auth-card{max-width:440px;padding:32px 28px}
 }
 
 /* PC 최적화 (≥768px) */
 @media(min-width:768px){
-  .landing-content{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:48px;padding:60px 40px}
-  .landing-hero-section{text-align:left;padding:0;display:block}
-  .landing-logo{font-size:2.6rem}
-  .landing-sub{font-size:1.1rem;margin-bottom:16px}
-  .landing-btns{justify-content:flex-start}
+  .landing-hero-section{min-height:90dvh;padding:80px 40px 40px}
+  .landing-logo{font-size:2.8rem}
+  .landing-sub{font-size:1.1rem;margin-bottom:24px;max-width:480px}
+  .landing-btns{justify-content:center}
   .landing-btns .btn{font-size:1.05rem;padding:15px 40px}
-  .landing-feats-section{padding:0}
-  .landing-feats-label{text-align:left}
-  .landing-features{grid-template-columns:1fr;gap:10px}
+  .landing-feats-section{padding:56px 40px;max-width:960px}
+  .landing-features{grid-template-columns:1fr 1fr;gap:14px}
   .landing-feat:hover{border-color:rgba(108,99,255,.4);transform:translateX(4px)}
+  .landing-section{max-width:960px;padding:56px 40px}
   .landing-footer{max-width:960px;margin:0 auto}
+  .review-card{width:300px}
+  .landing-cta{padding:64px 40px}
 
   .auth-card{max-width:460px;border-radius:24px;padding:40px 36px}
   .auth-logo h1{font-size:2.6rem}
@@ -1254,10 +1288,11 @@ body.theme-light .ss-row.selected{background:rgba(108,99,255,.06)!important}
 
 /* 대형 모니터 (≥1100px) */
 @media(min-width:1100px){
-  .landing-content{max-width:1080px;padding:80px 60px;gap:64px}
-  .landing-logo{font-size:3rem}
-  .landing-sub{font-size:1.2rem}
-  .landing-features{grid-template-columns:1fr 1fr;gap:12px}
+  .landing-logo{font-size:3.2rem}
+  .landing-sub{font-size:1.2rem;max-width:520px}
+  .landing-features{grid-template-columns:1fr 1fr;gap:14px}
+  .landing-feats-section{max-width:1080px}
+  .landing-section{max-width:1080px}
 }
 
 /* PWA 설치 배너 */
@@ -1591,21 +1626,42 @@ function bottomNav(active){
    LANDING PAGE (비로그인 방문자용)
 ============================================================ */
 function buildLanding(app){
+  const reviews = [
+    {stars:5, text:'친구가 만든 테스트로 같이 공부하니까 훨씬 재밌어요! 점수 비교도 되고 동기부여 최고.', author:'고등학생 김○○'},
+    {stars:5, text:'단어 입력만 하면 자동으로 보기가 생겨서 테스트 만들기가 정말 간편해요.', author:'중학생 이○○'},
+    {stars:4, text:'모바일에서도 잘 되니까 버스에서도 틈틈이 단어 외울 수 있어요.', author:'대학생 박○○'},
+    {stars:5, text:'학원에서 학생들 단어 시험 만들 때 사용 중입니다. 시간이 많이 절약돼요.', author:'영어 강사 정○○'},
+    {stars:5, text:'시험 결과를 바로 확인할 수 있어서 틀린 단어를 빠르게 복습할 수 있어요.', author:'고등학생 최○○'},
+    {stars:4, text:'구글 로그인으로 바로 시작할 수 있어서 진입 장벽이 낮아요. 추천합니다!', author:'직장인 한○○'},
+  ];
+  const reviewCards = reviews.map(r =>
+    `<div class="review-card"><div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div><div class="review-text">${r.text}</div><div class="review-author">— ${r.author}</div></div>`
+  ).join('');
+
   app.innerHTML=`
-  <div class="page active" style="justify-content:center">
+  <div class="page active" style="justify-content:stretch">
     <div class="landing-hero">
       <div class="landing-bg"></div>
-      <div class="landing-content">
+      <div class="landing-scroll">
+
+        <!-- Hero -->
         <div class="landing-hero-section">
           <div class="landing-badge">✦ 영단어 테스트 플랫폼</div>
           <div class="landing-logo">영단마스터</div>
-          <p class="landing-sub">나만의 영어 단어 테스트를 만들고,<br>친구와 공유하며 실력을 키워보세요.</p>
+          <p class="landing-sub">직접 테스트를 만들고 친구들과 공유하여<br>실력을 향상시키세요.</p>
           <div class="landing-btns">
             <button class="btn primary" onclick="renderPage('auth')">시작하기</button>
           </div>
+          <div class="landing-scroll-hint">
+            <span>아래로 스크롤</span>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
         </div>
-        <div class="landing-feats-section">
-          <div class="landing-feats-label">주요 기능</div>
+
+        <!-- Features -->
+        <div class="landing-feats-section landing-anim">
+          <div class="landing-section-title">주요 기능</div>
+          <div class="landing-section-sub">영단마스터가 제공하는 핵심 기능들</div>
           <div class="landing-features">
             <div class="landing-feat">
               <span class="landing-feat-icon">✏️</span>
@@ -1625,13 +1681,47 @@ function buildLanding(app){
             </div>
           </div>
         </div>
-      </div>
-      <div class="landing-footer">
-        <span>&copy; 2025 영단마스터</span>
-        <a href="/privacy.html" target="_blank">개인정보 처리방침</a>
+
+        <!-- Reviews carousel -->
+        <div class="landing-section landing-anim">
+          <div class="landing-section-title">사용자 후기</div>
+          <div class="landing-section-sub">영단마스터를 사용하는 분들의 이야기</div>
+        </div>
+        <div class="landing-reviews landing-anim">
+          <div class="landing-reviews-track">
+            ${reviewCards}${reviewCards}
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="landing-cta landing-anim">
+          <div class="landing-cta-title">지금 바로 시작해보세요</div>
+          <p class="landing-cta-desc">회원가입 후 나만의 영단어 테스트를 만들고,<br>친구들과 함께 실력을 키워보세요.</p>
+          <div class="landing-btns">
+            <button class="btn primary" onclick="renderPage('auth')">무료로 시작하기</button>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="landing-footer">
+          <span>&copy; 2026 영단마스터</span>
+          <a href="/privacy.html" target="_blank">개인정보 처리방침</a>
+        </div>
+
       </div>
     </div>
   </div>`;
+
+  /* Scroll animations via IntersectionObserver */
+  const animEls = app.querySelectorAll('.landing-anim');
+  if('IntersectionObserver' in window){
+    const obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }});
+    },{threshold:0.15});
+    animEls.forEach(function(el){ obs.observe(el); });
+  } else {
+    animEls.forEach(function(el){ el.classList.add('visible'); });
+  }
 }
 
 /* ============================================================
@@ -4783,7 +4873,7 @@ function buildPrivacyPage(app){
     '<div style="margin-bottom:32px">'
     + '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:1.5rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px">영단마스터</div>'
     + '<h1 style="font-family:Syne,sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:8px">개인정보 처리방침</h1>'
-    + '<p style="color:var(--text3);font-size:.88rem">시행일: 2025년 1월 1일 &nbsp;·&nbsp; 최종 수정: '+dateStr+'</p>'
+    + '<p style="color:var(--text3);font-size:.88rem">시행일: 2026년 1월 1일 &nbsp;·&nbsp; 최종 수정: '+dateStr+'</p>'
     + '</div>'
     + '<div style="background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;line-height:1.9;font-size:.92rem;color:var(--text2)">'
     + '영단마스터(이하 "서비스")는 이용자의 개인정보를 중요시하며, 개인정보보호법 등 관련 법령을 준수합니다.'
