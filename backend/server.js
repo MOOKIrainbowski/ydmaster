@@ -25,12 +25,12 @@ function pushLog(level, message) {
 }
 
 // Console 프록시
-const _origLog   = console.log.bind(console);
+const _origLog = console.log.bind(console);
 const _origError = console.error.bind(console);
-const _origWarn  = console.warn.bind(console);
-console.log   = (...a) => { const m = a.map(String).join(' '); pushLog('info',  m); _origLog(m);   };
+const _origWarn = console.warn.bind(console);
+console.log = (...a) => { const m = a.map(String).join(' '); pushLog('info', m); _origLog(m); };
 console.error = (...a) => { const m = a.map(String).join(' '); pushLog('error', m); _origError(m); };
-console.warn  = (...a) => { const m = a.map(String).join(' '); pushLog('warn',  m); _origWarn(m);  };
+console.warn = (...a) => { const m = a.map(String).join(' '); pushLog('warn', m); _origWarn(m); };
 
 // HTTP 요청 로그 미들웨어
 function requestLogger(req, res, next) {
@@ -166,126 +166,126 @@ transporter.verify((err, success) => {
 
 // ==================== SCHEMAS ====================
 const UserSchema = new mongoose.Schema({
-  username:       { type: String, required: true, unique: true, trim: true },
-  email:          { type: String, required: true, unique: true, lowercase: true },
-  phone:          { type: String, default: '' },
-  password:       { type: String, default: '' },
-  isVerified:     { type: Boolean, default: false },
-  naverId:        { type: String, default: '' },
-  loginType:      { type: String, enum: ['local', 'naver', 'google'], default: 'local' },
-  googleId:       { type: String, default: '' },
-  friends:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  avatarImage:    { type: String, default: '' },
-  bannerImage:    { type: String, default: '' },
+  username: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  phone: { type: String, default: '' },
+  password: { type: String, default: '' },
+  isVerified: { type: Boolean, default: false },
+  naverId: { type: String, default: '' },
+  loginType: { type: String, enum: ['local', 'naver', 'google'], default: 'local' },
+  googleId: { type: String, default: '' },
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  avatarImage: { type: String, default: '' },
+  bannerImage: { type: String, default: '' },
   bannerGradient: { type: String, default: 'linear-gradient(135deg,#6c63ff,#ff6584)' },
-  isAdmin:        { type: Boolean, default: false },
-  favorites:      [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],
-  createdAt:      { type: Date, default: Date.now }
+  isAdmin: { type: Boolean, default: false },
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],
+  createdAt: { type: Date, default: Date.now }
 });
 
 const EmailVerificationSchema = new mongoose.Schema({
-  email:     { type: String, default: '' },
-  phone:     { type: String, default: '' },
-  username:  { type: String, required: true },
-  password:  { type: String, required: true },
-  token:     { type: String, required: true },
-  code:      { type: String, default: '' },
+  email: { type: String, default: '' },
+  phone: { type: String, default: '' },
+  username: { type: String, required: true },
+  password: { type: String, required: true },
+  token: { type: String, required: true },
+  code: { type: String, default: '' },
   expiresAt: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now, expires: 3600 }
 });
 
 const FriendRequestSchema = new mongoose.Schema({
-  from:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  to:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  from: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  to: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
   createdAt: { type: Date, default: Date.now }
 });
 
 const QuestionSchema = new mongoose.Schema({
-  question:      { type: String, required: true },
-  answer:        { type: String, required: true },
-  options:       [{ type: String }],
+  question: { type: String, required: true },
+  answer: { type: String, required: true },
+  options: [{ type: String }],
   correctAnswer: { type: Number, default: 0 },
-  questionType:  { type: String, enum: ['en-to-ko', 'ko-to-en'], default: 'en-to-ko' },
-  timeLimit:     { type: Number, default: 0 },
-  keywords:      [{ type: String }],
+  questionType: { type: String, enum: ['en-to-ko', 'ko-to-en'], default: 'en-to-ko' },
+  timeLimit: { type: Number, default: 0 },
+  keywords: [{ type: String }],
   answerContext: { type: String, default: '' }
 });
 
 const TestSchema = new mongoose.Schema({
-  title:       { type: String, required: true },
+  title: { type: String, required: true },
   description: { type: String, default: '' },
-  author:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  questions:   [QuestionSchema],
-  format:       { type: String, enum: ['section', 'cell', 'essay'], default: 'section' },
-  testTimeLimit:{ type: Number, default: 0 },
-  isPublic:    { type: Boolean, default: true },
-  isFriendOnly:{ type: Boolean, default: false },
-  tags:        [String],
-  playCount:   { type: Number, default: 0 },
-  createdAt:   { type: Date, default: Date.now },
-  updatedAt:   { type: Date, default: Date.now }
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  questions: [QuestionSchema],
+  format: { type: String, enum: ['section', 'cell', 'essay'], default: 'section' },
+  testTimeLimit: { type: Number, default: 0 },
+  isPublic: { type: Boolean, default: true },
+  isFriendOnly: { type: Boolean, default: false },
+  tags: [String],
+  playCount: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 const ResultSchema = new mongoose.Schema({
-  user:           { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  test:           { type: mongoose.Schema.Types.ObjectId, ref: 'Test', required: true },
-  testTitle:      { type: String },
-  score:          { type: Number, required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  test: { type: mongoose.Schema.Types.ObjectId, ref: 'Test', required: true },
+  testTitle: { type: String },
+  score: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
   correctAnswers: { type: Number, required: true },
-  wrongAnswers:   { type: Number, required: true },
-  percentage:     { type: Number, required: true },
-  answers:        [{ questionIndex: Number, selectedAnswer: Number, isCorrect: Boolean }],
-  timeTaken:      { type: Number, default: 0 },
-  createdAt:      { type: Date, default: Date.now }
+  wrongAnswers: { type: Number, required: true },
+  percentage: { type: Number, required: true },
+  answers: [{ questionIndex: Number, selectedAnswer: Number, isCorrect: Boolean }],
+  timeTaken: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
 });
 
 const NoticeSchema = new mongoose.Schema({
-  title:     { type: String, required: true },
-  content:   { type: String, required: true },
-  author:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  isPinned:  { type: Boolean, default: false },
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  isPinned: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
 const InquirySchema = new mongoose.Schema({
-  user:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  title:      { type: String, required: true },
-  content:    { type: String, required: true },
-  status:     { type: String, enum: ['pending', 'answered'], default: 'pending' },
-  answer:     { type: String, default: '' },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  status: { type: String, enum: ['pending', 'answered'], default: 'pending' },
+  answer: { type: String, default: '' },
   answeredAt: { type: Date },
   answeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  createdAt:  { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now }
 });
 
 const WrongNoteSchema = new mongoose.Schema({
-  user:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  testId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Test' },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  testId: { type: mongoose.Schema.Types.ObjectId, ref: 'Test' },
   testTitle: { type: String, default: '' },
-  words:     [{ question: String, answer: String }],
-  savedAt:   { type: Date, default: Date.now }
+  words: [{ question: String, answer: String }],
+  savedAt: { type: Date, default: Date.now }
 });
 
 const PasswordResetSchema = new mongoose.Schema({
-  email:     { type: String, required: true },
-  token:     { type: String, required: true, unique: true },
-  code:      { type: String, required: true },
+  email: { type: String, required: true },
+  token: { type: String, required: true, unique: true },
+  code: { type: String, required: true },
   expiresAt: { type: Date, required: true },
 });
 PasswordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const User              = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 const EmailVerification = mongoose.model('EmailVerification', EmailVerificationSchema);
-const PasswordReset     = mongoose.model('PasswordReset', PasswordResetSchema);
-const FriendRequest     = mongoose.model('FriendRequest', FriendRequestSchema);
-const Test              = mongoose.model('Test', TestSchema);
-const Result            = mongoose.model('Result', ResultSchema);
-const Notice            = mongoose.model('Notice', NoticeSchema);
-const Inquiry           = mongoose.model('Inquiry', InquirySchema);
-const WrongNote         = mongoose.model('WrongNote', WrongNoteSchema);
+const PasswordReset = mongoose.model('PasswordReset', PasswordResetSchema);
+const FriendRequest = mongoose.model('FriendRequest', FriendRequestSchema);
+const Test = mongoose.model('Test', TestSchema);
+const Result = mongoose.model('Result', ResultSchema);
+const Notice = mongoose.model('Notice', NoticeSchema);
+const Inquiry = mongoose.model('Inquiry', InquirySchema);
+const WrongNote = mongoose.model('WrongNote', WrongNoteSchema);
 
 // ==================== MIDDLEWARE ====================
 const auth = async (req, res, next) => {
@@ -330,12 +330,12 @@ mongoose.connection.once('open', async () => {
   try {
     await User.updateMany({ email: { $in: ADMIN_EMAILS } }, { $set: { isAdmin: true } });
     console.log('관리자 권한 설정 완료');
-  } catch(e) { console.error('관리자 설정 오류:', e.message); }
+  } catch (e) { console.error('관리자 설정 오류:', e.message); }
 });
 
 // ==================== 이메일 발송 헬퍼 ====================
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ydmaster.onrender.com';
-const BACKEND_URL  = process.env.BACKEND_URL  || 'https://ydmaster.onrender.com';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://ydmaster.onrender.com';
 
 async function sendVerificationEmail(email, username, code) {
   const now = new Date();
@@ -410,166 +410,166 @@ async function sendVerificationEmail(email, username, code) {
 app.post('/api/auth/register',
   createRateLimit(5, 60 * 60 * 1000, '회원가입 시도가 너무 많습니다. 1시간 후 다시 시도해주세요.'),
   async (req, res) => {
-  try {
-    const username = sanitizeString(req.body.username, 20);
-    const email    = sanitizeString(req.body.email || '', 254).toLowerCase();
-    const phone    = normalizePhone(sanitizeString(req.body.phone || '', 20));
-    const password = req.body.password || '';
-    const { agreedToTerms } = req.body;
-    const usePhone = !!phone && !email;
+    try {
+      const username = sanitizeString(req.body.username, 20);
+      const email = sanitizeString(req.body.email || '', 254).toLowerCase();
+      const phone = normalizePhone(sanitizeString(req.body.phone || '', 20));
+      const password = req.body.password || '';
+      const { agreedToTerms } = req.body;
+      const usePhone = !!phone && !email;
 
-    if (!username || (!email && !phone) || !password)
-      return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
-    if (!isValidUsername(username))
-      return res.status(400).json({ message: '사용자명은 2~20자의 영문, 한글, 숫자, 언더스코어만 사용 가능합니다.' });
-    if (!usePhone && !isValidEmail(email))
-      return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
-    if (usePhone && !isValidPhone(phone))
-      return res.status(400).json({ message: '유효한 전화번호를 입력해주세요. (예: 010-1234-5678)' });
-    if (password.length < 8)
-      return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' });
-    if (!isStrongPassword(password))
-      return res.status(400).json({ message: '비밀번호는 영문과 숫자를 포함해야 합니다.' });
-    if (!agreedToTerms)
-      return res.status(400).json({ message: '개인정보 수집·이용에 동의해주세요.' });
+      if (!username || (!email && !phone) || !password)
+        return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
+      if (!isValidUsername(username))
+        return res.status(400).json({ message: '사용자명은 2~20자의 영문, 한글, 숫자, 언더스코어만 사용 가능합니다.' });
+      if (!usePhone && !isValidEmail(email))
+        return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
+      if (usePhone && !isValidPhone(phone))
+        return res.status(400).json({ message: '유효한 전화번호를 입력해주세요. (예: 010-1234-5678)' });
+      if (password.length < 8)
+        return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' });
+      if (!isStrongPassword(password))
+        return res.status(400).json({ message: '비밀번호는 영문과 숫자를 포함해야 합니다.' });
+      if (!agreedToTerms)
+        return res.status(400).json({ message: '개인정보 수집·이용에 동의해주세요.' });
 
-    if (!usePhone && (!process.env.GMAIL_USER || !process.env.GMAIL_PASS))
-      return res.status(500).json({ message: '메일 서버 설정이 완료되지 않았습니다. 관리자에게 문의하세요.' });
+      if (!usePhone && (!process.env.GMAIL_USER || !process.env.GMAIL_PASS))
+        return res.status(500).json({ message: '메일 서버 설정이 완료되지 않았습니다. 관리자에게 문의하세요.' });
 
-    const query = usePhone
-      ? { $or: [{ phone }, { username }] }
-      : { $or: [{ email }, { username }] };
-    const existsUser = await User.findOne(query);
-    if (existsUser) return res.status(400).json({
-      message: existsUser.username === username ? '이미 사용 중인 사용자명입니다.'
-        : usePhone ? '이미 사용 중인 전화번호입니다.' : '이미 사용 중인 이메일입니다.'
-    });
+      const query = usePhone
+        ? { $or: [{ phone }, { username }] }
+        : { $or: [{ email }, { username }] };
+      const existsUser = await User.findOne(query);
+      if (existsUser) return res.status(400).json({
+        message: existsUser.username === username ? '이미 사용 중인 사용자명입니다.'
+          : usePhone ? '이미 사용 중인 전화번호입니다.' : '이미 사용 중인 이메일입니다.'
+      });
 
-    if (usePhone) await EmailVerification.deleteMany({ phone });
-    else await EmailVerification.deleteMany({ email });
+      if (usePhone) await EmailVerification.deleteMany({ phone });
+      else await EmailVerification.deleteMany({ email });
 
-    const code  = String(Math.floor(100000 + Math.random() * 900000));
-    const token = crypto.randomBytes(32).toString('hex');
-    const hashed = await bcrypt.hash(password, 12);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const token = crypto.randomBytes(32).toString('hex');
+      const hashed = await bcrypt.hash(password, 12);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    const verifyData = { username, password: hashed, token, code, expiresAt };
-    if (usePhone) verifyData.phone = phone;
-    else verifyData.email = email;
-    await new EmailVerification(verifyData).save();
+      const verifyData = { username, password: hashed, token, code, expiresAt };
+      if (usePhone) verifyData.phone = phone;
+      else verifyData.email = email;
+      await new EmailVerification(verifyData).save();
 
-    if (usePhone) {
-      // SMS 인증 코드 발송
-      console.log(`[SMS 인증] ${phone} → 코드: ${code}`);
-      res.status(200).json({ message: '인증 코드를 발송했습니다.', token, verifyType: 'phone', devCode: code });
-    } else {
-      await sendVerificationEmail(email, username, code);
-      res.status(200).json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token, verifyType: 'email' });
+      if (usePhone) {
+        // SMS 인증 코드 발송
+        console.log(`[SMS 인증] ${phone} → 코드: ${code}`);
+        res.status(200).json({ message: '인증 코드를 발송했습니다.', token, verifyType: 'phone', devCode: code });
+      } else {
+        await sendVerificationEmail(email, username, code);
+        res.status(200).json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token, verifyType: 'email' });
+      }
+    } catch (e) {
+      console.error('register error:', e.message);
+      res.status(500).json({ message: e.message || '인증 코드 발송 중 오류가 발생했습니다.' });
     }
-  } catch (e) {
-    console.error('register error:', e.message);
-    res.status(500).json({ message: e.message || '인증 코드 발송 중 오류가 발생했습니다.' });
-  }
-});
+  });
 
 app.post('/api/auth/verify-code',
   createRateLimit(10, 10 * 60 * 1000, '인증 시도가 너무 많습니다. 10분 후 다시 시도해주세요.'),
   async (req, res) => {
-  try {
-    const { token, code } = req.body;
-    if (!token || !code)
-      return res.status(400).json({ message: '토큰과 인증 코드를 입력해주세요.' });
+    try {
+      const { token, code } = req.body;
+      if (!token || !code)
+        return res.status(400).json({ message: '토큰과 인증 코드를 입력해주세요.' });
 
-    const record = await EmailVerification.findOne({ token });
-    if (!record)
-      return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다. 다시 회원가입을 시도해주세요.' });
-    if (record.expiresAt < new Date()) {
+      const record = await EmailVerification.findOne({ token });
+      if (!record)
+        return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다. 다시 회원가입을 시도해주세요.' });
+      if (record.expiresAt < new Date()) {
+        await EmailVerification.deleteOne({ token });
+        return res.status(400).json({ message: '인증 코드가 만료되었습니다. 다시 회원가입을 시도해주세요.' });
+      }
+      if (record.code !== String(code).trim())
+        return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
+
+      const usePhone = !!record.phone && !record.email;
+      const existQuery = usePhone
+        ? { $or: [{ phone: record.phone }, { username: record.username }] }
+        : { $or: [{ email: record.email }, { username: record.username }] };
+      const exists = await User.findOne(existQuery);
+      if (exists) {
+        await EmailVerification.deleteOne({ token });
+        return res.status(400).json({ message: '이미 가입된 계정 또는 사용자명입니다.' });
+      }
+
+      const newUserData = {
+        username: record.username,
+        password: record.password,
+        isVerified: true
+      };
+      if (usePhone) {
+        newUserData.phone = record.phone;
+        newUserData.email = `phone_${record.phone}@ydmaster.local`;
+      } else {
+        newUserData.email = record.email;
+      }
+      await new User(newUserData).save();
+
       await EmailVerification.deleteOne({ token });
-      return res.status(400).json({ message: '인증 코드가 만료되었습니다. 다시 회원가입을 시도해주세요.' });
+
+      const user = await User.findOne({ email: record.email });
+      const jwtToken = jwt.sign({ id: user._id, v: 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.json({ message: '인증이 완료되었습니다!', token: jwtToken, user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin || false } });
+    } catch (e) {
+      console.error('verify-code error:', e);
+      res.status(500).json({ message: '서버 오류가 발생했습니다.' });
     }
-    if (record.code !== String(code).trim())
-      return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
-
-    const usePhone = !!record.phone && !record.email;
-    const existQuery = usePhone
-      ? { $or: [{ phone: record.phone }, { username: record.username }] }
-      : { $or: [{ email: record.email }, { username: record.username }] };
-    const exists = await User.findOne(existQuery);
-    if (exists) {
-      await EmailVerification.deleteOne({ token });
-      return res.status(400).json({ message: '이미 가입된 계정 또는 사용자명입니다.' });
-    }
-
-    const newUserData = {
-      username: record.username,
-      password: record.password,
-      isVerified: true
-    };
-    if (usePhone) {
-      newUserData.phone = record.phone;
-      newUserData.email = `phone_${record.phone}@ydmaster.local`;
-    } else {
-      newUserData.email = record.email;
-    }
-    await new User(newUserData).save();
-
-    await EmailVerification.deleteOne({ token });
-
-    const user = await User.findOne({ email: record.email });
-    const jwtToken = jwt.sign({ id: user._id, v: 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ message: '인증이 완료되었습니다!', token: jwtToken, user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin || false } });
-  } catch (e) {
-    console.error('verify-code error:', e);
-    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-  }
-});
+  });
 
 app.post('/api/auth/resend-code',
   createRateLimit(3, 10 * 60 * 1000, '재발송은 10분에 3회까지 가능합니다.'),
   async (req, res) => {
-  try {
-    const { token } = req.body;
-    const record = await EmailVerification.findOne({ token });
-    if (!record)
-      return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다.' });
+    try {
+      const { token } = req.body;
+      const record = await EmailVerification.findOne({ token });
+      if (!record)
+        return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다.' });
 
-    const newCode = String(Math.floor(100000 + Math.random() * 900000));
-    const newExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      const newCode = String(Math.floor(100000 + Math.random() * 900000));
+      const newExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    record.code = newCode;
-    record.expiresAt = newExpiresAt;
-    await record.save();
+      record.code = newCode;
+      record.expiresAt = newExpiresAt;
+      await record.save();
 
-    await sendVerificationEmail(record.email, record.username, newCode);
-    res.json({ message: '새 인증 코드를 발송했습니다.' });
-  } catch (e) {
-    console.error('resend-code error:', e);
-    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-  }
-});
+      await sendVerificationEmail(record.email, record.username, newCode);
+      res.json({ message: '새 인증 코드를 발송했습니다.' });
+    } catch (e) {
+      console.error('resend-code error:', e);
+      res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    }
+  });
 
 // ==================== 비밀번호 찾기 ====================
 app.post('/api/auth/forgot-password',
   createRateLimit(5, 60 * 60 * 1000, '비밀번호 찾기 요청이 너무 많습니다. 1시간 후 다시 시도해주세요.'),
   async (req, res) => {
-  try {
-    const email = sanitizeString(req.body.email || '', 254).toLowerCase();
-    if (!email || !isValidEmail(email))
-      return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
+    try {
+      const email = sanitizeString(req.body.email || '', 254).toLowerCase();
+      if (!email || !isValidEmail(email))
+        return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
 
-    const user = await User.findOne({ email });
-    // 보안상 존재 여부와 무관하게 성공 응답
-    if (!user || user.loginType !== 'local') {
-      return res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token: '' });
-    }
+      const user = await User.findOne({ email });
+      // 보안상 존재 여부와 무관하게 성공 응답
+      if (!user || user.loginType !== 'local') {
+        return res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token: '' });
+      }
 
-    await PasswordReset.deleteMany({ email });
-    const code  = String(Math.floor(100000 + Math.random() * 900000));
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await new PasswordReset({ email, token, code, expiresAt }).save();
+      await PasswordReset.deleteMany({ email });
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await new PasswordReset({ email, token, code, expiresAt }).save();
 
-    const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+      const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
 <style>
   body{margin:0;padding:0;background:#f4f4f8;font-family:'Noto Sans KR',sans-serif}
   .wrap{max-width:520px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
@@ -593,47 +593,47 @@ app.post('/api/auth/forgot-password',
   <div class="footer"><strong style="color:#6c63ff">영단마스터</strong> — 나만의 영어 단어 테스트 플랫폼</div>
 </div></body></html>`;
 
-    await transporter.sendMail({
-      from: `"영단마스터" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: `[영단마스터] 비밀번호 재설정 코드: ${code}`,
-      html,
-    });
-    res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token });
-  } catch(e) {
-    console.error('forgot-password error:', e.message);
-    res.status(500).json({ message: '오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
-  }
-});
+      await transporter.sendMail({
+        from: `"영단마스터" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject: `[영단마스터] 비밀번호 재설정 코드: ${code}`,
+        html,
+      });
+      res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token });
+    } catch (e) {
+      console.error('forgot-password error:', e.message);
+      res.status(500).json({ message: '오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
+    }
+  });
 
 app.post('/api/auth/reset-password',
   createRateLimit(10, 10 * 60 * 1000, '요청이 너무 많습니다. 10분 후 다시 시도해주세요.'),
   async (req, res) => {
-  try {
-    const { token, code, newPassword } = req.body;
-    if (!token || !code || !newPassword)
-      return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
-    if (newPassword.length < 8 || !isStrongPassword(newPassword))
-      return res.status(400).json({ message: '비밀번호는 영문과 숫자를 포함한 8자 이상이어야 합니다.' });
+    try {
+      const { token, code, newPassword } = req.body;
+      if (!token || !code || !newPassword)
+        return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
+      if (newPassword.length < 8 || !isStrongPassword(newPassword))
+        return res.status(400).json({ message: '비밀번호는 영문과 숫자를 포함한 8자 이상이어야 합니다.' });
 
-    const record = await PasswordReset.findOne({ token });
-    if (!record) return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다. 다시 시도해주세요.' });
-    if (record.expiresAt < new Date()) {
+      const record = await PasswordReset.findOne({ token });
+      if (!record) return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다. 다시 시도해주세요.' });
+      if (record.expiresAt < new Date()) {
+        await PasswordReset.deleteOne({ token });
+        return res.status(400).json({ message: '코드가 만료되었습니다. 다시 시도해주세요.' });
+      }
+      if (record.code !== String(code).trim())
+        return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
+
+      const hashed = await bcrypt.hash(newPassword, 12);
+      await User.updateOne({ email: record.email }, { $set: { password: hashed } });
       await PasswordReset.deleteOne({ token });
-      return res.status(400).json({ message: '코드가 만료되었습니다. 다시 시도해주세요.' });
+      res.json({ message: '비밀번호가 성공적으로 변경되었습니다. 로그인해주세요.' });
+    } catch (e) {
+      console.error('reset-password error:', e.message);
+      res.status(500).json({ message: '서버 오류가 발생했습니다.' });
     }
-    if (record.code !== String(code).trim())
-      return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
-
-    const hashed = await bcrypt.hash(newPassword, 12);
-    await User.updateOne({ email: record.email }, { $set: { password: hashed } });
-    await PasswordReset.deleteOne({ token });
-    res.json({ message: '비밀번호가 성공적으로 변경되었습니다. 로그인해주세요.' });
-  } catch(e) {
-    console.error('reset-password error:', e.message);
-    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-  }
-});
+  });
 
 app.get('/api/auth/verify-email', async (req, res) => {
   return res.send(verifyPage('expired'));
@@ -708,50 +708,52 @@ function verifyPage(status, username = '') {
 app.post('/api/auth/login',
   createRateLimit(10, 15 * 60 * 1000, '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'),
   async (req, res) => {
-  try {
-    const identifier = sanitizeString(req.body.email, 254).toLowerCase();
-    const password   = req.body.password || '';
+    try {
+      const identifier = sanitizeString(req.body.email, 254).toLowerCase();
+      const password = req.body.password || '';
 
-    if (!identifier || !password)
-      return res.status(400).json({ message: '이메일/전화번호와 비밀번호를 입력해주세요.' });
+      if (!identifier || !password)
+        return res.status(400).json({ message: '이메일/전화번호와 비밀번호를 입력해주세요.' });
 
-    const isPhone = isValidPhone(identifier);
-    if (!isPhone && !isValidEmail(identifier))
-      return res.status(400).json({ message: '유효한 이메일 또는 전화번호를 입력해주세요.' });
+      const isPhone = isValidPhone(identifier);
+      if (!isPhone && !isValidEmail(identifier))
+        return res.status(400).json({ message: '유효한 이메일 또는 전화번호를 입력해주세요.' });
 
-    const user = isPhone
-      ? await User.findOne({ phone: normalizePhone(identifier) })
-      : await User.findOne({ email: identifier });
-    const dummyHash = '$2a$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
-    const passwordMatch = user
-      ? await bcrypt.compare(password, user.password || dummyHash)
-      : await bcrypt.compare(password, dummyHash).then(() => false);
+      const user = isPhone
+        ? await User.findOne({ phone: normalizePhone(identifier) })
+        : await User.findOne({ email: identifier });
+      const dummyHash = '$2a$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+      const passwordMatch = user
+        ? await bcrypt.compare(password, user.password || dummyHash)
+        : await bcrypt.compare(password, dummyHash).then(() => false);
 
-    if (!user || !passwordMatch)
-      return res.status(400).json({ message: '계정 정보 또는 비밀번호가 올바르지 않습니다.' });
-    if (!user.isVerified && user.loginType === 'local')
-      return res.status(403).json({ message: '이메일 인증이 필요합니다. 메일함을 확인해주세요.' });
+      if (!user || !passwordMatch)
+        return res.status(400).json({ message: '계정 정보 또는 비밀번호가 올바르지 않습니다.' });
+      if (!user.isVerified && user.loginType === 'local')
+        return res.status(403).json({ message: '이메일 인증이 필요합니다. 메일함을 확인해주세요.' });
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      console.error('JWT_SECRET 환경변수 미설정');
-      return res.status(500).json({ message: '서버 설정 오류가 발생했습니다.' });
-    }
-    const token = jwt.sign({ id: user._id, v: 1 }, jwtSecret, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin || false } });
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        console.error('JWT_SECRET 환경변수 미설정');
+        return res.status(500).json({ message: '서버 설정 오류가 발생했습니다.' });
+      }
+      const token = jwt.sign({ id: user._id, v: 1 }, jwtSecret, { expiresIn: '7d' });
+      res.json({ token, user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin || false } });
+    } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
+  });
 
 app.get('/api/auth/me', auth, (req, res) => {
-  res.json({ user: {
-    id: req.user._id, username: req.user.username, email: req.user.email,
-    createdAt: req.user.createdAt,
-    isAdmin: req.user.isAdmin || false,
-    avatarImage: req.user.avatarImage || '',
-    bannerImage: req.user.bannerImage || '',
-    bannerGradient: req.user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
-    favorites: (req.user.favorites || []).map(id => id.toString())
-  }});
+  res.json({
+    user: {
+      id: req.user._id, username: req.user.username, email: req.user.email,
+      createdAt: req.user.createdAt,
+      isAdmin: req.user.isAdmin || false,
+      avatarImage: req.user.avatarImage || '',
+      bannerImage: req.user.bannerImage || '',
+      bannerGradient: req.user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
+      favorites: (req.user.favorites || []).map(id => id.toString())
+    }
+  });
 });
 
 app.put('/api/auth/profile', auth, async (req, res) => {
@@ -812,13 +814,15 @@ app.put('/api/auth/profile', auth, async (req, res) => {
     if (bannerGradient !== undefined) update.bannerGradient = bannerGradient;
 
     const user = await User.findByIdAndUpdate(req.user._id, update, { new: true }).select('-password');
-    res.json({ user: {
-      id: user._id, username: user.username, email: user.email,
-      isAdmin: user.isAdmin || false,
-      avatarImage: user.avatarImage || '',
-      bannerImage: user.bannerImage || '',
-      bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)'
-    }});
+    res.json({
+      user: {
+        id: user._id, username: user.username, email: user.email,
+        isAdmin: user.isAdmin || false,
+        avatarImage: user.avatarImage || '',
+        bannerImage: user.bannerImage || '',
+        bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)'
+      }
+    });
   } catch (e) {
     console.error('profile update error:', e.message);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
@@ -888,7 +892,7 @@ app.put('/api/friends/request/:reqId', auth, async (req, res) => {
       return res.status(403).json({ message: '권한이 없습니다.' });
     if (action === 'accept') {
       await User.findByIdAndUpdate(fr.from, { $addToSet: { friends: fr.to } });
-      await User.findByIdAndUpdate(fr.to,   { $addToSet: { friends: fr.from } });
+      await User.findByIdAndUpdate(fr.to, { $addToSet: { friends: fr.from } });
       fr.status = 'accepted';
     } else { fr.status = 'rejected'; }
     await fr.save();
@@ -1057,7 +1061,7 @@ app.post('/api/wrongnote', auth, async (req, res) => {
       return res.status(400).json({ message: '저장할 단어가 없습니다.' });
 
     // 같은 testId로 오늘 이미 저장한 항목이 있으면 words 합치기 (중복 방지)
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const existing = testId
       ? await WrongNote.findOne({ user: req.user._id, testId, savedAt: { $gte: todayStart } })
       : null;
@@ -1073,14 +1077,14 @@ app.post('/api/wrongnote', auth, async (req, res) => {
     }
 
     const sanitizedWords = words.slice(0, 200).map(w => ({
-      question: String(w.question||'').slice(0, 200),
-      answer:   String(w.answer||'').slice(0, 200),
+      question: String(w.question || '').slice(0, 200),
+      answer: String(w.answer || '').slice(0, 200),
     }));
 
     const group = await new WrongNote({
-      user:  req.user._id,
+      user: req.user._id,
       testId: testId || null,
-      testTitle: String(testTitle||'').slice(0,100),
+      testTitle: String(testTitle || '').slice(0, 100),
       words: sanitizedWords,
     }).save();
 
@@ -1143,8 +1147,8 @@ app.get('/api/users/:id/profile', auth, async (req, res) => {
     // 응시 통계
     const results = await Result.find({ user: req.params.id });
     const totalAttempts = results.length;
-    const avgScore  = totalAttempts > 0
-      ? Math.round(results.reduce((s,r) => s + r.percentage, 0) / totalAttempts)
+    const avgScore = totalAttempts > 0
+      ? Math.round(results.reduce((s, r) => s + r.percentage, 0) / totalAttempts)
       : 0;
     const bestScore = totalAttempts > 0
       ? Math.max(...results.map(r => r.percentage))
@@ -1155,13 +1159,13 @@ app.get('/api/users/:id/profile', auth, async (req, res) => {
 
     res.json({
       user: {
-        _id:            user._id,
-        username:       user.username,
-        avatarImage:    user.avatarImage || '',
-        bannerImage:    user.bannerImage || '',
+        _id: user._id,
+        username: user.username,
+        avatarImage: user.avatarImage || '',
+        bannerImage: user.bannerImage || '',
         bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
-        loginType:      user.loginType,
-        createdAt:      user.createdAt,
+        loginType: user.loginType,
+        createdAt: user.createdAt,
       },
       stats: { totalAttempts, avgScore, bestScore, totalTests }
     });
@@ -1181,8 +1185,8 @@ app.get('/api/ranking', auth, async (req, res) => {
         $group: {
           _id: '$user',
           totalAttempts: { $sum: 1 },
-          avgScore:      { $avg: '$percentage' },
-          bestScore:     { $max: '$percentage' },
+          avgScore: { $avg: '$percentage' },
+          bestScore: { $max: '$percentage' },
         }
       },
       { $sort: { avgScore: -1, totalAttempts: -1 } },
@@ -1198,20 +1202,20 @@ app.get('/api/ranking', auth, async (req, res) => {
       { $unwind: '$userInfo' },
       {
         $project: {
-          _id:           '$userInfo._id',
-          username:      '$userInfo.username',
-          avatarImage:   '$userInfo.avatarImage',
+          _id: '$userInfo._id',
+          username: '$userInfo.username',
+          avatarImage: '$userInfo.avatarImage',
           totalAttempts: 1,
-          avgScore:      { $round: ['$avgScore',  1] },
-          bestScore:     { $round: ['$bestScore', 1] },
+          avgScore: { $round: ['$avgScore', 1] },
+          bestScore: { $round: ['$bestScore', 1] },
         }
       }
     ]);
 
     // 내 순위 계산
-    const myId  = req.user._id.toString();
+    const myId = req.user._id.toString();
     const myIdx = ranking.findIndex(u => u._id.toString() === myId);
-    let myRank  = null;
+    let myRank = null;
 
     if (myIdx !== -1) {
       myRank = { ...ranking[myIdx], rank: myIdx + 1 };
@@ -1221,10 +1225,10 @@ app.get('/api/ranking', auth, async (req, res) => {
         { $match: { user: req.user._id } },
         {
           $group: {
-            _id:           '$user',
+            _id: '$user',
             totalAttempts: { $sum: 1 },
-            avgScore:      { $avg: '$percentage' },
-            bestScore:     { $max: '$percentage' },
+            avgScore: { $avg: '$percentage' },
+            bestScore: { $max: '$percentage' },
           }
         }
       ]);
@@ -1234,8 +1238,8 @@ app.get('/api/ranking', auth, async (req, res) => {
         const higherCount = await Result.aggregate([
           {
             $group: {
-              _id:           '$user',
-              avgScore:      { $avg: '$percentage' },
+              _id: '$user',
+              avgScore: { $avg: '$percentage' },
               totalAttempts: { $sum: 1 },
             }
           },
@@ -1243,9 +1247,9 @@ app.get('/api/ranking', auth, async (req, res) => {
           { $count: 'count' }
         ]);
         myRank = {
-          rank:          (higherCount[0]?.count || 0) + 1,
-          avgScore:      myAvg,
-          bestScore:     Math.round(myAgg[0].bestScore * 10) / 10,
+          rank: (higherCount[0]?.count || 0) + 1,
+          avgScore: myAvg,
+          bestScore: Math.round(myAgg[0].bestScore * 10) / 10,
           totalAttempts: myAgg[0].totalAttempts,
         };
       }
@@ -1261,18 +1265,18 @@ app.get('/api/ranking', auth, async (req, res) => {
 // 친구 랭킹
 app.get('/api/ranking/friends', auth, async (req, res) => {
   try {
-    const me      = await User.findById(req.user._id).select('friends');
+    const me = await User.findById(req.user._id).select('friends');
     const friendOids = (me?.friends || []);           // ObjectId 배열
-    const allOids    = [...friendOids, req.user._id]; // 나 포함
+    const allOids = [...friendOids, req.user._id]; // 나 포함
 
     const ranking = await Result.aggregate([
       { $match: { user: { $in: allOids } } },
       {
         $group: {
-          _id:           '$user',
+          _id: '$user',
           totalAttempts: { $sum: 1 },
-          avgScore:      { $avg: '$percentage' },
-          bestScore:     { $max: '$percentage' },
+          avgScore: { $avg: '$percentage' },
+          bestScore: { $max: '$percentage' },
         }
       },
       { $sort: { avgScore: -1, totalAttempts: -1 } },
@@ -1287,17 +1291,17 @@ app.get('/api/ranking/friends', auth, async (req, res) => {
       { $unwind: '$userInfo' },
       {
         $project: {
-          _id:           '$userInfo._id',
-          username:      '$userInfo.username',
-          avatarImage:   '$userInfo.avatarImage',
+          _id: '$userInfo._id',
+          username: '$userInfo.username',
+          avatarImage: '$userInfo.avatarImage',
           totalAttempts: 1,
-          avgScore:      { $round: ['$avgScore',  1] },
-          bestScore:     { $round: ['$bestScore', 1] },
+          avgScore: { $round: ['$avgScore', 1] },
+          bestScore: { $round: ['$bestScore', 1] },
         }
       }
     ]);
 
-    const myId  = req.user._id.toString();
+    const myId = req.user._id.toString();
     const myIdx = ranking.findIndex(u => u._id.toString() === myId);
     const myRank = myIdx !== -1 ? { ...ranking[myIdx], rank: myIdx + 1 } : null;
 
@@ -1310,9 +1314,9 @@ app.get('/api/ranking/friends', auth, async (req, res) => {
 
 // ==================== 네이버 소셜 로그인 ====================
 
-const NAVER_CLIENT_ID     = process.env.NAVER_CLIENT_ID;
+const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
 const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
-const NAVER_CALLBACK_URL  = process.env.BACKEND_URL
+const NAVER_CALLBACK_URL = process.env.BACKEND_URL
   ? `${process.env.BACKEND_URL}/api/auth/naver/callback`
   : 'https://ydmaster.onrender.com/api/auth/naver/callback';
 const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://ydmaster.onrender.com';
@@ -1369,9 +1373,9 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     }
 
     const naverUser = profileData.response;
-    const naverId   = String(naverUser.id);
-    const email     = (naverUser.email || '').toLowerCase().trim();
-    const nickname  = (naverUser.nickname || naverUser.name || '').trim();
+    const naverId = String(naverUser.id);
+    const email = (naverUser.email || '').toLowerCase().trim();
+    const nickname = (naverUser.nickname || naverUser.name || '').trim();
 
     let user = await User.findOne({ naverId });
 
@@ -1386,7 +1390,7 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     }
 
     if (!user) {
-      let base = nickname.replace(/[^a-zA-Z0-9가-힣_]/g, '').slice(0, 18) || `naver${naverId.slice(0,6)}`;
+      let base = nickname.replace(/[^a-zA-Z0-9가-힣_]/g, '').slice(0, 18) || `naver${naverId.slice(0, 6)}`;
       let username = base;
       let retry = 0;
       while (await User.findOne({ username }) && retry < 5) {
@@ -1416,20 +1420,20 @@ app.get('/api/auth/naver/callback', async (req, res) => {
 
 // ==================== 구글 소셜 로그인 ====================
 
-const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_CALLBACK_URL  = process.env.BACKEND_URL
+const GOOGLE_CALLBACK_URL = process.env.BACKEND_URL
   ? `${process.env.BACKEND_URL}/api/auth/google/callback`
   : 'https://ydmaster.onrender.com/api/auth/google/callback';
 
 app.get('/api/auth/google', (req, res) => {
   const params = new URLSearchParams({
-    client_id:     GOOGLE_CLIENT_ID,
-    redirect_uri:  GOOGLE_CALLBACK_URL,
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_CALLBACK_URL,
     response_type: 'code',
-    scope:         'openid email profile',
-    access_type:   'offline',
-    prompt:        'select_account'
+    scope: 'openid email profile',
+    access_type: 'offline',
+    prompt: 'select_account'
   });
   res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
 });
@@ -1447,10 +1451,10 @@ app.get('/api/auth/google/callback', async (req, res) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id:     GOOGLE_CLIENT_ID,
+        client_id: GOOGLE_CLIENT_ID,
         client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri:  GOOGLE_CALLBACK_URL,
-        grant_type:    'authorization_code'
+        redirect_uri: GOOGLE_CALLBACK_URL,
+        grant_type: 'authorization_code'
       })
     });
     const tokenData = await tokenRes.json();
@@ -1468,23 +1472,23 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
 
     const googleId = profile.id;
-    const email    = (profile.email || '').toLowerCase();
-    const name     = profile.name || profile.given_name || `user_${googleId.slice(0,6)}`;
-    const avatar   = profile.picture || '';
+    const email = (profile.email || '').toLowerCase();
+    const name = profile.name || profile.given_name || `user_${googleId.slice(0, 6)}`;
+    const avatar = profile.picture || '';
 
     let user = await User.findOne({ googleId });
 
     if (!user && email) {
       user = await User.findOne({ email });
       if (user) {
-        user.googleId  = googleId;
+        user.googleId = googleId;
         user.isVerified = true;
         await user.save();
       }
     }
 
     if (!user) {
-      let username = name.replace(/[^a-zA-Z0-9가-힣_]/g, '').slice(0, 20) || `google_${googleId.slice(0,6)}`;
+      let username = name.replace(/[^a-zA-Z0-9가-힣_]/g, '').slice(0, 20) || `google_${googleId.slice(0, 6)}`;
       const exists = await User.findOne({ username });
       if (exists) username = username + '_' + Math.floor(Math.random() * 1000);
 
@@ -1516,14 +1520,14 @@ app.get('/api/auth/google/callback', async (req, res) => {
 
 app.get('/api/notices', async (req, res) => {
   try {
-    const notices = await Notice.find().populate('author','username').sort({isPinned:-1, createdAt:-1}).limit(20);
+    const notices = await Notice.find().populate('author', 'username').sort({ isPinned: -1, createdAt: -1 }).limit(20);
     res.json(notices);
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
 app.post('/api/notices', adminAuth, async (req, res) => {
   try {
-    const title   = sanitizeString(req.body.title, 200);
+    const title = sanitizeString(req.body.title, 200);
     const content = sanitizeString(req.body.content, 5000);
     const { isPinned } = req.body;
     if (!title || !content) return res.status(400).json({ message: '제목과 내용을 입력해주세요.' });
@@ -1551,7 +1555,7 @@ app.delete('/api/notices/:id', adminAuth, async (req, res) => {
 
 app.post('/api/inquiries', auth, createRateLimit(10, 60 * 60 * 1000, '문의는 1시간에 10회까지 가능합니다.'), async (req, res) => {
   try {
-    const title   = sanitizeString(req.body.title, 100);
+    const title = sanitizeString(req.body.title, 100);
     const content = sanitizeString(req.body.content, 2000);
     if (!title || !content) return res.status(400).json({ message: '제목과 내용을 입력해주세요.' });
     const inquiry = await new Inquiry({ user: req.user._id, title, content }).save();
@@ -1570,7 +1574,7 @@ app.get('/api/inquiries/mine', auth, async (req, res) => {
 
 app.get('/api/admin/inquiries', adminAuth, async (req, res) => {
   try {
-    const inquiries = await Inquiry.find().populate('user','username email').sort({ createdAt: -1 });
+    const inquiries = await Inquiry.find().populate('user', 'username email').sort({ createdAt: -1 });
     res.json(inquiries);
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
@@ -1583,7 +1587,7 @@ app.put('/api/admin/inquiries/:id/answer', adminAuth, async (req, res) => {
       req.params.id,
       { answer, status: 'answered', answeredAt: new Date(), answeredBy: req.user._id },
       { new: true }
-    ).populate('user','username email');
+    ).populate('user', 'username email');
     if (!inquiry) return res.status(404).json({ message: '문의를 찾을 수 없습니다.' });
     res.json(inquiry);
   } catch { res.status(500).json({ message: '서버 오류' }); }
@@ -1603,7 +1607,7 @@ app.put('/api/admin/users/:id/toggle-admin', adminAuth, async (req, res) => {
     if (ADMIN_EMAILS.includes(user.email)) return res.status(400).json({ message: '기본 관리자는 변경할 수 없습니다.' });
     user.isAdmin = !user.isAdmin;
     await user.save();
-    res.json({ message: `${user.username}의 관리자 권한이 ${user.isAdmin?'부여':'해제'}되었습니다.`, isAdmin: user.isAdmin });
+    res.json({ message: `${user.username}의 관리자 권한이 ${user.isAdmin ? '부여' : '해제'}되었습니다.`, isAdmin: user.isAdmin });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
@@ -1643,30 +1647,36 @@ app.get('/api/admin/stats/chart', adminAuth, async (req, res) => {
     // 날짜별 신규 가입자
     const userAgg = await User.aggregate([
       { $match: { createdAt: { $gte: since } } },
-      { $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } },
-        count: { $sum: 1 }
-      }},
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } },
+          count: { $sum: 1 }
+        }
+      },
       { $sort: { _id: 1 } }
     ]);
 
     // 날짜별 테스트 응시 횟수
     const resultAgg = await Result.aggregate([
       { $match: { createdAt: { $gte: since } } },
-      { $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } },
-        count: { $sum: 1 }
-      }},
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } },
+          count: { $sum: 1 }
+        }
+      },
       { $sort: { _id: 1 } }
     ]);
 
     // 날짜별 테스트 생성 횟수
     const testAgg = await Test.aggregate([
       { $match: { createdAt: { $gte: since } } },
-      { $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } },
-        count: { $sum: 1 }
-      }},
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } },
+          count: { $sum: 1 }
+        }
+      },
       { $sort: { _id: 1 } }
     ]);
 
@@ -1678,27 +1688,27 @@ app.get('/api/admin/stats/chart', adminAuth, async (req, res) => {
     }
 
     const toMap = arr => Object.fromEntries(arr.map(x => [x._id, x.count]));
-    const userMap   = toMap(userAgg);
+    const userMap = toMap(userAgg);
     const resultMap = toMap(resultAgg);
-    const testMap   = toMap(testAgg);
+    const testMap = toMap(testAgg);
 
     res.json({
       labels,
-      newUsers:    labels.map(d => userMap[d]   || 0),
+      newUsers: labels.map(d => userMap[d] || 0),
       testResults: labels.map(d => resultMap[d] || 0),
-      newTests:    labels.map(d => testMap[d]   || 0),
+      newTests: labels.map(d => testMap[d] || 0),
     });
-  } catch(e) { console.error('chart stats error:', e.message); res.status(500).json({ message: '서버 오류' }); }
+  } catch (e) { console.error('chart stats error:', e.message); res.status(500).json({ message: '서버 오류' }); }
 });
 
 // ==================== 관리자 로그 API ====================
 app.get('/api/admin/logs', adminAuth, (req, res) => {
-  const limit  = Math.min(parseInt(req.query.limit)  || 500, 2000);
-  const level  = req.query.level  || 'all';
+  const limit = Math.min(parseInt(req.query.limit) || 500, 2000);
+  const level = req.query.level || 'all';
   const search = (req.query.search || '').toLowerCase();
 
   let entries = [...logBuffer].reverse(); // 최신순
-  if (level !== 'all')  entries = entries.filter(e => e.level === level);
+  if (level !== 'all') entries = entries.filter(e => e.level === level);
   if (search) entries = entries.filter(e => e.message.toLowerCase().includes(search));
   entries = entries.slice(0, limit);
 
@@ -1829,13 +1839,13 @@ app.get('/manifest.json', (req, res) => {
     scope: '/',
     icons: [
       {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230a0a0f'/%3E%3Ctext x='50%25' y='58%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='300' font-weight='900' fill='%236c63ff'%3E%EC%98%81%3C/text%3E%3C/svg%3E",
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236c63ff'/%3E%3Cstop offset='1' stop-color='%23ff6584'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='108' fill='%230a0a0f'/%3E%3Ccircle cx='256' cy='250' r='175' fill='none' stroke='url(%23g)' stroke-width='3' opacity='.18'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='240' font-weight='900' fill='url(%23g)'%3E%EC%98%81%3C/text%3E%3Ccircle cx='390' cy='118' r='22' fill='%23ff6584'/%3E%3Cpath d='M384 118l6-9 6 9-9 5 9 5-6 9-6-9-9-5z' fill='%23fff' opacity='.85'/%3E%3C/svg%3E",
         sizes: '192x192',
         type: 'image/svg+xml',
         purpose: 'any'
       },
       {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230a0a0f'/%3E%3Ctext x='50%25' y='58%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='300' font-weight='900' fill='%236c63ff'%3E%EC%98%81%3C/text%3E%3C/svg%3E",
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236c63ff'/%3E%3Cstop offset='1' stop-color='%23ff6584'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='108' fill='%230a0a0f'/%3E%3Ccircle cx='256' cy='250' r='175' fill='none' stroke='url(%23g)' stroke-width='3' opacity='.18'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='240' font-weight='900' fill='url(%23g)'%3E%EC%98%81%3C/text%3E%3Ccircle cx='390' cy='118' r='22' fill='%23ff6584'/%3E%3Cpath d='M384 118l6-9 6 9-9 5 9 5-6 9-6-9-9-5z' fill='%23fff' opacity='.85'/%3E%3C/svg%3E",
         sizes: '512x512',
         type: 'image/svg+xml',
         purpose: 'any maskable'
