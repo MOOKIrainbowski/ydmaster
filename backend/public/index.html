@@ -4004,7 +4004,7 @@
     .landing-sticky{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;transform:translateY(-100%);transition:transform .3s ease;pointer-events:none}
     .landing-sticky.show{transform:translateY(0);pointer-events:auto}
     .landing-sticky-logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .landing-sticky-logo svg{flex-shrink:0}
+
     .landing-sticky .btn{padding:8px 22px;font-size:.85rem;min-width:auto}
     body.theme-light .landing-sticky{background:rgba(255,255,255,.88)}
 
@@ -4033,7 +4033,7 @@
     }
 
     .landing-footer-top{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;color:var(--text)}
-    .landing-footer-top svg{flex-shrink:0}
+
     .landing-footer-desc{font-size:.8rem;color:var(--text3);text-align:center;line-height:1.6;max-width:400px}
     .landing-footer-links{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:center}
     .landing-footer-links a{color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:5px;font-size:.8rem;transition:color .15s}
@@ -6664,8 +6664,6 @@
         `<div class="review-card"><div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</div><div class="review-text">${r.text}</div><div class="review-author">— ${r.author}</div></div>`
       ).join('');
 
-      const logoSvg = `<svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#6c63ff"/><stop offset="1" stop-color="#ff6584"/></linearGradient></defs><rect width="512" height="512" rx="108" fill="#0a0a0f"/><circle cx="256" cy="250" r="175" stroke="url(#lg)" stroke-width="3" opacity=".18"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="240" font-weight="900" fill="url(#lg)">영</text><circle cx="390" cy="118" r="22" fill="#ff6584"/><path d="M384 118l6-9 6 9-9 5 9 5-6 9-6-9-9-5z" fill="#fff" opacity=".85"/></svg>`;
-
       app.innerHTML = `
   <div class="page active" style="justify-content:stretch">
     <div class="landing-hero">
@@ -6673,7 +6671,7 @@
 
       <!-- Sticky header -->
       <div class="landing-sticky" id="landingSticky">
-        <div class="landing-sticky-logo">${logoSvg} 영단마스터</div>
+        <div class="landing-sticky-logo">영단마스터</div>
         <button class="btn primary" onclick="renderPage('auth')">시작하기</button>
       </div>
 
@@ -6682,10 +6680,7 @@
         <!-- Hero -->
         <div class="landing-hero-section" id="landingHeroSection">
           <div class="landing-badge">✦ 영단어 테스트 플랫폼</div>
-          <div class="landing-logo" style="display:flex;align-items:center;justify-content:center;gap:10px">
-            <svg width="44" height="44" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lg2" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#6c63ff"/><stop offset="1" stop-color="#ff6584"/></linearGradient></defs><rect width="512" height="512" rx="108" fill="#0a0a0f"/><circle cx="256" cy="250" r="175" stroke="url(#lg2)" stroke-width="3" opacity=".18"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="240" font-weight="900" fill="url(#lg2)">영</text><circle cx="390" cy="118" r="22" fill="#ff6584"/><path d="M384 118l6-9 6 9-9 5 9 5-6 9-6-9-9-5z" fill="#fff" opacity=".85"/></svg>
-            영단마스터
-          </div>
+          <div class="landing-logo">영단마스터</div>
           <p class="landing-sub">직접 테스트를 만들고 친구들과 공유하여<br>실력을 향상시키세요.</p>
           <div class="landing-btns">
             <button class="btn primary" onclick="renderPage('auth')">시작하기</button>
@@ -6768,7 +6763,7 @@
 
         <!-- Footer -->
         <div class="landing-footer">
-          <div class="landing-footer-top">${logoSvg} 영단마스터</div>
+          <div class="landing-footer-top">영단마스터</div>
           <p class="landing-footer-desc">직접 테스트를 만들고 친구들과 공유하여 실력을 향상시키세요.</p>
           <div class="landing-footer-links">
             <a href="https://instagram.com/sjxonv" target="_blank" rel="noopener"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.97.24 2.43.403a4.08 4.08 0 011.47.958c.453.453.78.9.957 1.47.163.46.35 1.26.404 2.43.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.17-.24 1.97-.404 2.43a4.08 4.08 0 01-.957 1.47 4.08 4.08 0 01-1.47.957c-.46.164-1.26.35-2.43.404-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.054-1.97-.24-2.43-.404a4.08 4.08 0 01-1.47-.957 4.08 4.08 0 01-.957-1.47c-.164-.46-.35-1.26-.404-2.43C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.054-1.17.24-1.97.404-2.43a4.08 4.08 0 01.957-1.47A4.08 4.08 0 015.064 2.293c.46-.163 1.26-.35 2.43-.404C8.76 1.83 9.796 2.163 12 2.163zM12 0C8.741 0 8.333.014 7.053.072 5.775.13 4.903.333 4.14.63a5.88 5.88 0 00-2.126 1.384A5.88 5.88 0 00.63 4.14C.333 4.903.13 5.775.072 7.053.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.058 1.278.261 2.15.558 2.913a5.88 5.88 0 001.384 2.126 5.88 5.88 0 002.126 1.384c.763.297 1.635.5 2.913.558C8.333 23.986 8.741 24 12 24s3.667-.014 4.947-.072c1.278-.058 2.15-.261 2.913-.558a5.88 5.88 0 002.126-1.384 5.88 5.88 0 001.384-2.126c.297-.763.5-1.635.558-2.913.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.058-1.278-.261-2.15-.558-2.913a5.88 5.88 0 00-1.384-2.126A5.88 5.88 0 0019.86.63C19.097.333 18.225.13 16.947.072 15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg> @sjxonv</a>
