@@ -8377,14 +8377,14 @@
       if (!val) { toast('정답을 입력해주세요.', 'error'); return; }
 
       const q = S.activeTest.questions[S.activeQIdx];
+      const correct = (q.answer || q.options?.[q.correctAnswer] || '').trim();
       let ok;
       if (S.activeTest.format === 'essay' && q.keywords?.length > 0) {
         const lv = val.toLowerCase();
         const matched = q.keywords.filter(kw => lv.includes(kw.toLowerCase()));
         ok = matched.length >= q.keywords.length;
       } else {
-        const correct = (q.answer || q.options?.[q.correctAnswer] || '').trim().toLowerCase();
-        ok = val.toLowerCase() === correct;
+        ok = val.toLowerCase() === correct.toLowerCase();
       }
 
       S.answered = true; S.selectedOpt = -2; // -2 = 주관식
