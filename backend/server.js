@@ -1321,20 +1321,11 @@ const NAVER_CALLBACK_URL = process.env.BACKEND_URL
   : 'https://ydmaster.onrender.com/api/auth/naver/callback';
 const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://ydmaster.onrender.com';
 
-const naverStateMap = new Map();
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of naverStateMap.entries()) {
-    if (now - v > 10 * 60 * 1000) naverStateMap.delete(k);
-  }
-}, 60000);
-
 app.get('/api/auth/naver', (req, res) => {
   if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET) {
     return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('네이버 로그인이 설정되지 않았습니다.')}`);
   }
   const state = crypto.randomBytes(16).toString('hex');
-  naverStateMap.set(state, Date.now());
   const url = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(NAVER_CALLBACK_URL)}&state=${state}`;
   res.redirect(url);
 });
@@ -1349,10 +1340,6 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     if (!code || !state) {
       return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('잘못된 요청입니다.')}`);
     }
-    if (!naverStateMap.has(state)) {
-      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('보안 검증에 실패했습니다. 다시 시도해주세요.')}`);
-    }
-    naverStateMap.delete(state);
 
     const tokenRes = await fetch(
       `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_CLIENT_SECRET}&redirect_uri=${encodeURIComponent(NAVER_CALLBACK_URL)}&code=${code}&state=${state}`
@@ -1427,6 +1414,9 @@ const GOOGLE_CALLBACK_URL = process.env.BACKEND_URL
   : 'https://ydmaster.onrender.com/api/auth/google/callback';
 
 app.get('/api/auth/google', (req, res) => {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('구글 로그인이 설정되지 않았습니다.')}`);
+  }
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: GOOGLE_CALLBACK_URL,
@@ -1503,11 +1493,9 @@ app.get('/api/auth/google/callback', async (req, res) => {
       }).save();
     }
 
-    const jwtToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || 'ydmaster_secret_key',
-      { expiresIn: '7d' }
-    );
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('서버 설정 오류입니다.')}`);
+    const jwtToken = jwt.sign({ id: user._id, v: 1 }, jwtSecret, { expiresIn: '7d' });
     res.redirect(`${FRONTEND_ORIGIN}?google_token=${jwtToken}&google_username=${encodeURIComponent(user.username)}`);
 
   } catch (e) {
