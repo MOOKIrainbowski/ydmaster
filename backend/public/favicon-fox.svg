@@ -8,6 +8,18 @@
       <stop offset="0" stop-color="#6c63ff"/>
       <stop offset="1" stop-color="#ff6584"/>
     </linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8c42"/>
+      <stop offset="1" stop-color="#e8651a"/>
+    </linearGradient>
+    <linearGradient id="fur-dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d45a12"/>
+      <stop offset="1" stop-color="#b84a0e"/>
+    </linearGradient>
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff5ee"/>
+      <stop offset="1" stop-color="#ffe8d6"/>
+    </linearGradient>
     <linearGradient id="eye-l" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#a78bfa"/>
       <stop offset="1" stop-color="#6c63ff"/>
@@ -30,93 +42,104 @@
   <rect width="512" height="512" rx="108" fill="url(#bg)"/>
 
   <!-- Subtle ring -->
-  <circle cx="256" cy="268" r="210" fill="none" stroke="url(#ring)" stroke-width="2"/>
+  <circle cx="256" cy="268" r="210" fill="none" stroke="url(#ring)" stroke-width="2.5"/>
 
-  <!-- === FOX MASCOT (dark/neon style) === -->
+  <!-- === FOX MASCOT === -->
 
-  <!-- Ears (outer — dark with gradient stroke) -->
-  <path d="M130 120 L170 248 L90 232 Z" fill="#1e1e2e" stroke="url(#g)" stroke-width="2"/>
-  <path d="M382 120 L342 248 L422 232 Z" fill="#1e1e2e" stroke="url(#g)" stroke-width="2"/>
+  <!-- Ears (outer — orange) -->
+  <path d="M128 115 L172 250 L85 232 Z" fill="url(#fur)"/>
+  <path d="M384 115 L340 250 L427 232 Z" fill="url(#fur)"/>
 
-  <!-- Ears (inner — gradient fill, low opacity like owl tufts) -->
-  <path d="M138 160 L165 238 L112 225 Z" fill="url(#g)" opacity=".25"/>
-  <path d="M374 160 L347 238 L400 225 Z" fill="url(#g)" opacity=".25"/>
+  <!-- Ears (inner — pink) -->
+  <path d="M138 162 L167 240 L108 226 Z" fill="#ff8aab"/>
+  <path d="M374 162 L345 240 L404 226 Z" fill="#ff8aab"/>
 
-  <!-- Head -->
-  <ellipse cx="256" cy="275" rx="130" ry="120" fill="#1e1e2e"/>
+  <!-- Tail (behind body) -->
+  <path d="M348 378 Q430 350 440 280 Q452 348 420 398 Q388 435 348 410 Z" fill="url(#fur)"/>
+  <path d="M408 340 Q438 302 440 280 Q446 338 425 378 Q410 405 395 398 Z" fill="url(#belly)" opacity=".9"/>
 
-  <!-- Face disc (lighter inner, like owl) -->
-  <ellipse cx="256" cy="295" rx="90" ry="82" fill="#252538"/>
+  <!-- Body (orange with white belly) -->
+  <ellipse cx="256" cy="400" rx="105" ry="52" fill="url(#fur)"/>
+  <ellipse cx="256" cy="408" rx="70" ry="36" fill="url(#belly)"/>
 
-  <!-- Forehead marking (gradient accent) -->
-  <path d="M205 200 Q256 178 307 200 Q285 225 256 230 Q227 225 205 200 Z" fill="url(#g)" opacity=".12"/>
+  <!-- Head (main orange) -->
+  <ellipse cx="256" cy="275" rx="132" ry="122" fill="url(#fur)"/>
 
-  <!-- Cheek tufts (dark, like owl wings) -->
-  <path d="M130 275 Q108 310 135 350 Q150 322 145 288 Z" fill="#1e1e2e" stroke="url(#g)" stroke-width="1.5" opacity=".7"/>
-  <path d="M382 275 Q404 310 377 350 Q362 322 367 288 Z" fill="#1e1e2e" stroke="url(#g)" stroke-width="1.5" opacity=".7"/>
+  <!-- White face patch -->
+  <path d="M180 260 Q200 220 256 210 Q312 220 332 260 Q320 340 256 365 Q192 340 180 260 Z" fill="url(#belly)"/>
 
-  <!-- Eye sockets (dark circles, like owl) -->
-  <circle cx="205" cy="265" r="40" fill="#0a0a0f"/>
-  <circle cx="307" cy="265" r="40" fill="#0a0a0f"/>
+  <!-- Forehead darker patch -->
+  <path d="M195 195 Q256 168 317 195 Q290 228 256 234 Q222 228 195 195 Z" fill="url(#fur-dark)" opacity=".6"/>
 
-  <!-- Eyes (gradient orbs with glow, same as owl) -->
-  <circle cx="205" cy="265" r="32" fill="url(#eye-l)" filter="url(#glow)"/>
-  <circle cx="307" cy="265" r="32" fill="url(#eye-r)" filter="url(#glow)"/>
+  <!-- Cheek tufts (darker orange) -->
+  <path d="M128 272 Q104 312 134 355 Q152 325 146 286 Z" fill="url(#fur-dark)"/>
+  <path d="M384 272 Q408 312 378 355 Q360 325 366 286 Z" fill="url(#fur-dark)"/>
+
+  <!-- Eye sockets -->
+  <circle cx="205" cy="265" r="42" fill="#0a0a0f"/>
+  <circle cx="307" cy="265" r="42" fill="#0a0a0f"/>
+
+  <!-- Eyes (gradient orbs with glow) -->
+  <circle cx="205" cy="265" r="35" fill="url(#eye-l)" filter="url(#glow)"/>
+  <circle cx="307" cy="265" r="35" fill="url(#eye-r)" filter="url(#glow)"/>
 
   <!-- Pupils -->
-  <circle cx="213" cy="260" r="14" fill="#0a0a0f"/>
-  <circle cx="315" cy="260" r="14" fill="#0a0a0f"/>
+  <circle cx="214" cy="260" r="14" fill="#0a0a0f"/>
+  <circle cx="316" cy="260" r="14" fill="#0a0a0f"/>
 
   <!-- Eye highlights -->
-  <circle cx="219" cy="254" r="6" fill="#fff" opacity=".85"/>
-  <circle cx="321" cy="254" r="6" fill="#fff" opacity=".85"/>
-  <circle cx="208" cy="268" r="3" fill="#fff" opacity=".4"/>
-  <circle cx="310" cy="268" r="3" fill="#fff" opacity=".4"/>
+  <circle cx="220" cy="253" r="7" fill="#fff" opacity=".9"/>
+  <circle cx="322" cy="253" r="7" fill="#fff" opacity=".9"/>
+  <circle cx="208" cy="269" r="3.5" fill="#fff" opacity=".45"/>
+  <circle cx="310" cy="269" r="3.5" fill="#fff" opacity=".45"/>
 
-  <!-- Eyebrow accents (gradient arcs, like owl) -->
-  <path d="M170 228 Q205 212 240 230" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round" opacity=".6"/>
-  <path d="M272 230 Q307 212 342 228" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+  <!-- Eyebrow accents -->
+  <path d="M168 225 Q205 208 243 228" fill="none" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
+  <path d="M269 228 Q307 208 344 225" fill="none" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
 
   <!-- Nose -->
-  <ellipse cx="256" cy="318" rx="12" ry="9" fill="#ffb347"/>
-  <ellipse cx="254" cy="316" rx="5" ry="3" fill="#ffc966" opacity=".6"/>
+  <ellipse cx="256" cy="320" rx="14" ry="11" fill="#2a2a3e"/>
+  <ellipse cx="254" cy="317" rx="6" ry="3.5" fill="#3d3d52" opacity=".7"/>
+  <ellipse cx="252" cy="315" rx="3" ry="2" fill="#fff" opacity=".3"/>
 
   <!-- Mouth -->
-  <path d="M256 327 Q244 340 235 334" fill="none" stroke="url(#g)" stroke-width="2" stroke-linecap="round" opacity=".4"/>
-  <path d="M256 327 Q268 340 277 334" fill="none" stroke="url(#g)" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+  <path d="M256 331 Q243 346 232 338" fill="none" stroke="#c8756a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M256 331 Q269 346 280 338" fill="none" stroke="#c8756a" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- Whiskers (gradient stroke, subtle) -->
-  <line x1="160" y1="300" x2="108" y2="290" stroke="url(#g)" stroke-width="1.5" stroke-linecap="round" opacity=".25"/>
-  <line x1="160" y1="312" x2="105" y2="318" stroke="url(#g)" stroke-width="1.5" stroke-linecap="round" opacity=".25"/>
-  <line x1="352" y1="300" x2="404" y2="290" stroke="url(#g)" stroke-width="1.5" stroke-linecap="round" opacity=".25"/>
-  <line x1="352" y1="312" x2="407" y2="318" stroke="url(#g)" stroke-width="1.5" stroke-linecap="round" opacity=".25"/>
+  <!-- Blush cheeks -->
+  <ellipse cx="172" cy="300" rx="20" ry="12" fill="#ff6584" opacity=".25"/>
+  <ellipse cx="340" cy="300" rx="20" ry="12" fill="#ff6584" opacity=".25"/>
 
-  <!-- Body -->
-  <ellipse cx="256" cy="400" rx="100" ry="50" fill="#1e1e2e"/>
-  <ellipse cx="256" cy="405" rx="65" ry="32" fill="#2a2a3e"/>
+  <!-- Whiskers -->
+  <line x1="158" y1="302" x2="100" y2="290" stroke="#ffcdb2" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
+  <line x1="158" y1="316" x2="96" y2="322" stroke="#ffcdb2" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
+  <line x1="354" y1="302" x2="412" y2="290" stroke="#ffcdb2" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
+  <line x1="354" y1="316" x2="416" y2="322" stroke="#ffcdb2" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
 
-  <!-- Belly chevrons (feather/fur texture, like owl) -->
-  <path d="M235 388 L256 402 L277 388" fill="none" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round" opacity=".3"/>
-  <path d="M240 405 L256 416 L272 405" fill="none" stroke="url(#g)" stroke-width="2" stroke-linecap="round" opacity=".2"/>
+  <!-- Belly chevron markings -->
+  <path d="M233 392 L256 406 L279 392" fill="none" stroke="url(#fur)" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+  <path d="M240 410 L256 420 L272 410" fill="none" stroke="url(#fur)" stroke-width="2" stroke-linecap="round" opacity=".35"/>
 
-  <!-- Tail (dark with gradient stroke, like owl wings) -->
-  <path d="M345 380 Q425 355 435 290 Q445 350 415 395 Q385 430 345 408 Z" fill="#1e1e2e" stroke="url(#g)" stroke-width="2"/>
-  <!-- Tail tip accent -->
-  <path d="M410 340 Q435 310 435 290 Q440 340 420 375 Q405 400 390 395 Z" fill="url(#g)" opacity=".15"/>
-
-  <!-- Feet (small warm accent, like owl) -->
-  <ellipse cx="220" cy="440" rx="24" ry="10" fill="#ffb347" opacity=".8"/>
-  <ellipse cx="292" cy="440" rx="24" ry="10" fill="#ffb347" opacity=".8"/>
+  <!-- Feet -->
+  <ellipse cx="218" cy="442" rx="26" ry="11" fill="url(#fur-dark)"/>
+  <ellipse cx="294" cy="442" rx="26" ry="11" fill="url(#fur-dark)"/>
+  <!-- Paw pads -->
+  <circle cx="210" cy="442" r="4" fill="#ffb0c0" opacity=".7"/>
+  <circle cx="218" cy="440" r="4" fill="#ffb0c0" opacity=".7"/>
+  <circle cx="226" cy="442" r="4" fill="#ffb0c0" opacity=".7"/>
+  <circle cx="286" cy="442" r="4" fill="#ffb0c0" opacity=".7"/>
+  <circle cx="294" cy="440" r="4" fill="#ffb0c0" opacity=".7"/>
+  <circle cx="302" cy="442" r="4" fill="#ffb0c0" opacity=".7"/>
 
   <!-- Sparkle top-right -->
-  <circle cx="405" cy="120" r="8" fill="#ff6584" opacity=".6"/>
-  <path d="M401 120l4-7 4 7-7 3 7 3-4 7-4-7-7-3z" fill="#fff" opacity=".7"/>
+  <circle cx="405" cy="115" r="10" fill="#ff6584" opacity=".7"/>
+  <path d="M400 115l5-9 5 9-8 4 8 4-5 9-5-9-8-4z" fill="#fff" opacity=".8"/>
 
   <!-- Sparkle bottom-left -->
-  <circle cx="95" cy="400" r="5" fill="#6c63ff" opacity=".5"/>
-  <path d="M92 400l3-5 3 5-5 2 5 2-3 5-3-5-5-2z" fill="#fff" opacity=".6"/>
+  <circle cx="95" cy="400" r="7" fill="#6c63ff" opacity=".6"/>
+  <path d="M91 400l4-7 4 7-6 3 6 3-4 7-4-7-6-3z" fill="#fff" opacity=".7"/>
 
-  <!-- Tiny accent dots -->
-  <circle cx="420" cy="400" r="4" fill="#ff6584" opacity=".3"/>
-  <circle cx="90" cy="145" r="3" fill="#6c63ff" opacity=".3"/>
+  <!-- Accent dots -->
+  <circle cx="425" cy="405" r="5" fill="#ff6584" opacity=".4"/>
+  <circle cx="88" cy="140" r="4" fill="#6c63ff" opacity=".35"/>
 </svg>
