@@ -1827,13 +1827,13 @@ app.get('/manifest.json', (req, res) => {
     scope: '/',
     icons: [
       {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236c63ff'/%3E%3Cstop offset='1' stop-color='%23ff6584'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='108' fill='%230a0a0f'/%3E%3Ccircle cx='256' cy='250' r='175' fill='none' stroke='url(%23g)' stroke-width='3' opacity='.18'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='240' font-weight='900' fill='url(%23g)'%3E%EC%98%81%3C/text%3E%3Ccircle cx='390' cy='118' r='22' fill='%23ff6584'/%3E%3Cpath d='M384 118l6-9 6 9-9 5 9 5-6 9-6-9-9-5z' fill='%23fff' opacity='.85'/%3E%3C/svg%3E",
+        src: '/favicon-fox.svg',
         sizes: '192x192',
         type: 'image/svg+xml',
         purpose: 'any'
       },
       {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236c63ff'/%3E%3Cstop offset='1' stop-color='%23ff6584'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='108' fill='%230a0a0f'/%3E%3Ccircle cx='256' cy='250' r='175' fill='none' stroke='url(%23g)' stroke-width='3' opacity='.18'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='240' font-weight='900' fill='url(%23g)'%3E%EC%98%81%3C/text%3E%3Ccircle cx='390' cy='118' r='22' fill='%23ff6584'/%3E%3Cpath d='M384 118l6-9 6 9-9 5 9 5-6 9-6-9-9-5z' fill='%23fff' opacity='.85'/%3E%3C/svg%3E",
+        src: '/favicon-fox.svg',
         sizes: '512x512',
         type: 'image/svg+xml',
         purpose: 'any maskable'
