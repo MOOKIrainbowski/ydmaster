@@ -4871,6 +4871,100 @@
       color: #111120
     }
 
+    /* ── Public Profile Page ── */
+    .pub-profile-wrap {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 0 100px
+    }
+    .pub-banner {
+      height: 140px;
+      border-radius: 0 0 24px 24px;
+      position: relative
+    }
+    .pub-back-btn {
+      position: absolute; top: 14px; left: 14px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(0,0,0,.4); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.15);
+      color: white; font-size: .9rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center
+    }
+    .pub-share-btn {
+      position: absolute; top: 14px; right: 14px;
+      height: 32px; border-radius: 8px; padding: 0 12px;
+      background: rgba(0,0,0,.4); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.15);
+      color: white; font-size: .72rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 5px
+    }
+    .pub-avatar-row {
+      display: flex; align-items: flex-end; gap: 14px;
+      padding: 0 20px; margin-top: -40px; position: relative; z-index: 10
+    }
+    .pub-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg,var(--accent),var(--accent2));
+      border: 4px solid var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.8rem; color: white;
+      overflow: hidden; flex-shrink: 0
+    }
+    .pub-name-area { padding-bottom: 8px; min-width: 0; flex: 1 }
+    .pub-username {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.15rem; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap
+    }
+    .pub-url {
+      font-size: .7rem; color: var(--text3); margin-top: 2px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap
+    }
+    .pub-meta-row {
+      display: flex; gap: 16px; padding: 16px 20px 0;
+      font-size: .78rem; color: var(--text3)
+    }
+    .pub-meta-row span { display: flex; align-items: center; gap: 4px }
+    .pub-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 8px; padding: 18px 20px 0
+    }
+    .pub-stat {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px 6px; text-align: center
+    }
+    .pub-stat-num {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.1rem; color: var(--accent)
+    }
+    .pub-stat-label {
+      font-size: .65rem; color: var(--text3); margin-top: 4px
+    }
+    .pub-actions {
+      display: flex; gap: 8px; padding: 20px 20px 0
+    }
+    .pub-section {
+      padding: 20px 20px 0
+    }
+    .pub-section-title {
+      font-weight: 700; font-size: .85rem; color: var(--text);
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px
+    }
+    .pub-test-card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+      cursor: pointer; transition: border-color .15s
+    }
+    .pub-test-card:hover { border-color: var(--accent) }
+    .pub-test-name {
+      font-weight: 700; font-size: .85rem; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap
+    }
+    .pub-test-meta {
+      font-size: .7rem; color: var(--text3); margin-top: 4px
+    }
+    body.theme-light .pub-stat { background: #f4f4f8; border-color: #e8e8ee }
+
     /* ── 문의 종류 선택 ── */
     .inq-type-row {
       display: flex;
@@ -6555,7 +6649,11 @@
       sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
       moon:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>',
       heart:'<path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>',
-      arrowSort:'<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>'
+      arrowSort:'<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>',
+      link:'<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>',
+      calendar:'<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
+      arrowLeft:'<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>',
+      book:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>'
     };return `<svg width="${sz}" height="${sz}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display:inline-block;vertical-align:-.15em;flex-shrink:0">${d[name]||''}</svg>`;}
 
     /* ============================================================
@@ -6742,13 +6840,13 @@
     function renderPage(page, opts = {}) {
       S.page = page;
       // 해시 URL 업데이트 (SPA 라우팅)
-      const newHash = '#/' + page + (opts.id ? '/' + opts.id : '');
+      const newHash = page === 'u' ? '#/u/' + (opts.id || '') : '#/' + page + (opts.id ? '/' + opts.id : '');
       if (window.location.hash !== newHash) {
         window.history.pushState({ page, opts }, '', newHash);
       }
       const app = document.getElementById('app');
       app.innerHTML = '';
-      if (!S.user && page !== 'auth' && page !== 'landing') { buildLanding(app); return; }
+      if (!S.user && page !== 'auth' && page !== 'landing' && page !== 'u') { buildLanding(app); return; }
       switch (page) {
         case 'auth': buildAuth(app); break;
         case 'landing': buildLanding(app); break;
@@ -6766,6 +6864,7 @@
         case 'wrongnote': buildWrongNote(app); break;
         case 'tests': buildAllTests(app, opts); break;
         case 'favorites': buildAllTests(app, { tab: 'fav' }); break;
+        case 'u': buildPublicProfile(app, opts.id); break;
       }
     }
 
@@ -9004,6 +9103,7 @@
             <button class="btn ghost sm" onclick="showProfileEditPanel()" style="padding:5px 10px;font-size:.72rem">${ic('pencil',12)} 편집</button>
           </div>
           <div class="profile-email" id="profile-disp-email">${esc(u?.email || '')}</div>
+          <button class="btn ghost sm" onclick="copyProfileUrl('${location.origin}/#/u/${encodeURIComponent(u?.username||'')}')" style="margin-top:6px;padding:4px 10px;font-size:.7rem">${ic('link',12)} 프로필 공유</button>
         </div>
       </div>
 
@@ -9435,7 +9535,7 @@
       if (top3.length) {
         const [first, second, third] = [top3[0], top3[1], top3[2]];
         const podItem = (u, rank, cls, crown) => u ? `
-      <div class="rank-podium-item ${cls}" onclick="showUserProfile('${u._id}')" style="cursor:pointer">
+      <div class="rank-podium-item ${cls}" onclick="goToUserPage('${esc(u.username)}')" style="cursor:pointer">
         <div class="rank-crown">${crown}</div>
         <div class="rank-avatar ${cls}" style="${u._id === S.user?.id ? 'box-shadow:0 0 0 3px var(--accent)' : ''}">
           ${u.avatarImage ? `<img src="${u.avatarImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (u.username?.[0]?.toUpperCase() || '?')}
@@ -9455,7 +9555,7 @@
       const restHTML = rest.map((u, i) => {
         const isMe = u._id === S.user?.id;
         const rank = i + 4;
-        return `<div class="rank-item${isMe ? ' rank-me' : ''}" onclick="${isMe ? '' : ` showUserProfile('${u._id}')`}" style="${isMe ? '' : 'cursor:pointer'}">
+        return `<div class="rank-item${isMe ? ' rank-me' : ''}" onclick="${isMe ? '' : `goToUserPage('${esc(u.username)}')`}" style="${isMe ? '' : 'cursor:pointer'}">
       <div class="rank-num">${rank}</div>
       <div class="rank-item-avatar" style="${isMe ? 'background:var(--accent)' : ''}">
         ${u.avatarImage ? `<img src="${u.avatarImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (u.username?.[0]?.toUpperCase() || '?')}
@@ -9568,7 +9668,7 @@
         </div>
         <div class="inquiry-title">${esc(titleDisp)}</div>
         <div class="inquiry-content">${esc(q.content)}</div>
-        <div class="inq-item-meta">${esc(authorName)} · ${date}</div>
+        <div class="inq-item-meta"><span style="cursor:pointer;text-decoration:underline;text-decoration-color:var(--border)" onclick="goToUserPage('${esc(authorName)}')">${esc(authorName)}</span> · ${date}</div>
         ${q.status === 'answered' ? `
           <div class="inquiry-answer">
             <span class="inquiry-answer-label">${ic('chat',13)} 답변</span>
@@ -10064,10 +10164,10 @@
       if (!S.friends?.length) return '<div class="empty-state"><h3>아직 친구가 없어요</h3><p>친구를 추가해보세요!</p></div>';
       return S.friends.map(f => `
     <div class="friend-item">
-      <div class="friend-avatar" onclick="showUserProfile('${f._id}')" style="cursor:pointer">${f.username[0].toUpperCase()}</div>
-      <div class="friend-name" onclick="showUserProfile('${f._id}')" style="cursor:pointer;flex:1">${esc(f.username)}</div>
+      <div class="friend-avatar" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer">${f.username[0].toUpperCase()}</div>
+      <div class="friend-name" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;flex:1">${esc(f.username)}</div>
       <div class="friend-acts">
-        <button class="btn ghost sm" onclick="showUserProfile('${f._id}')">프로필</button>
+        <button class="btn ghost sm" onclick="goToUserPage('${esc(f.username)}')">프로필</button>
         <button class="btn danger sm" onclick="removeFriend('${f._id}','${esc(f.username)}')">삭제</button>
       </div>
     </div>`).join('');
@@ -10078,8 +10178,8 @@
       return S.friendRequests.map(req => `
     <div class="req-item">
       <div class="req-top">
-        <div class="friend-avatar" onclick="showUserProfile('${req.from._id}')" style="cursor:pointer">${req.from.username[0].toUpperCase()}</div>
-        <div class="req-name" onclick="showUserProfile('${req.from._id}')" style="cursor:pointer">${esc(req.from.username)}</div>
+        <div class="friend-avatar" onclick="goToUserPage('${esc(req.from.username)}')" style="cursor:pointer">${req.from.username[0].toUpperCase()}</div>
+        <div class="req-name" onclick="goToUserPage('${esc(req.from.username)}')" style="cursor:pointer">${esc(req.from.username)}</div>
       </div>
       <div class="req-btns">
         <button class="btn primary sm" onclick="respondReq('${req._id}','accept')">✓ 수락</button>
@@ -10114,8 +10214,8 @@
           if (!users.length) { res.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:.85rem">검색 결과가 없어요</div>'; return; }
           res.innerHTML = users.map(u => `
         <div class="user-search-result">
-          <div class="friend-avatar" style="width:34px;height:34px;font-size:.85rem;cursor:pointer" onclick="showUserProfile('${u._id}')">${u.username[0].toUpperCase()}</div>
-          <div style="flex:1;cursor:pointer" onclick="showUserProfile('${u._id}')">
+          <div class="friend-avatar" style="width:34px;height:34px;font-size:.85rem;cursor:pointer" onclick="closeModal();goToUserPage('${esc(u.username)}')">${u.username[0].toUpperCase()}</div>
+          <div style="flex:1;cursor:pointer" onclick="closeModal();goToUserPage('${esc(u.username)}')">
             <div class="usr-name">${esc(u.username)}</div>
             ${u.isFriend ? '<div class="usr-status">이미 친구예요</div>' : u.requestSent ? '<div class="usr-status">요청 전송됨</div>' : ''}
           </div>
@@ -10265,103 +10365,154 @@
     }
 
     /* ============================================================
+       PUBLIC PROFILE PAGE (#/u/:username)
+    ============================================================ */
+    function goToUserPage(username) {
+      if (!username) return;
+      if (S.user && username === S.user.username) { renderPage('profile'); return; }
+      renderPage('u', { id: username });
+    }
+
+    async function buildPublicProfile(app, username) {
+      if (!username) { if (S.user) renderPage('home'); else renderPage('landing'); return; }
+
+      app.innerHTML = `<div class="pub-profile-wrap"><div style="text-align:center;padding:80px 0;color:var(--text3);font-size:.875rem">프로필을 불러오는 중...</div></div>`;
+
+      try {
+        const data = await (await fetch(API + '/p/' + encodeURIComponent(username))).json();
+        if (!data.user) throw new Error(data.message || '프로필을 찾을 수 없습니다.');
+        const u = data.user;
+        const st = data.stats || {};
+        const tests = data.recentTests || [];
+        const isOwn = S.user && S.user.username === u.username;
+        const isFriend = S.friends?.some(f => f._id === u._id || f._id?.toString() === u._id);
+        const gc = p => p >= 80 ? 'var(--accent3)' : p >= 50 ? 'var(--accent)' : 'var(--accent2)';
+        const bannerStyle = u.bannerImage
+          ? `background:url('${u.bannerImage}') center/cover no-repeat`
+          : `background:${u.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)'}`;
+        const joinDate = new Date(u.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const profileUrl = location.origin + '/#/u/' + encodeURIComponent(u.username);
+
+        app.innerHTML = `
+    <div class="pub-profile-wrap">
+      <!-- Banner -->
+      <div class="pub-banner" style="${bannerStyle}">
+        <button class="pub-back-btn" onclick="${S.user ? "history.back()" : "renderPage('landing')"}">${ic('arrowLeft',16)}</button>
+        <button class="pub-share-btn" onclick="copyProfileUrl('${esc(profileUrl)}')">${ic('link',13)} 프로필 공유</button>
+      </div>
+
+      <!-- Avatar + Name -->
+      <div class="pub-avatar-row">
+        <div class="pub-avatar">
+          ${u.avatarImage
+            ? `<img src="${u.avatarImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+            : (u.username?.[0]?.toUpperCase() || '?')}
+        </div>
+        <div class="pub-name-area">
+          <div class="pub-username">${esc(u.username)}</div>
+          <div class="pub-url">ydmaster.onrender.com/#/u/${esc(u.username)}</div>
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div class="pub-meta-row">
+        <span>${ic('calendar',13)} ${joinDate} 가입</span>
+        <span>${ic('people',13)} 친구 ${st.friendCount || 0}명</span>
+        <span>${u.loginType === 'naver' ? '네이버' : u.loginType === 'google' ? '구글' : '이메일'} 계정</span>
+      </div>
+
+      <!-- Stats -->
+      <div class="pub-stats">
+        <div class="pub-stat">
+          <div class="pub-stat-num">${st.totalAttempts || 0}</div>
+          <div class="pub-stat-label">총 응시</div>
+        </div>
+        <div class="pub-stat">
+          <div class="pub-stat-num" style="color:${gc(st.avgScore||0)}">${st.avgScore || 0}%</div>
+          <div class="pub-stat-label">평균 정답률</div>
+        </div>
+        <div class="pub-stat">
+          <div class="pub-stat-num" style="color:var(--accent3)">${st.bestScore || 0}%</div>
+          <div class="pub-stat-label">최고 점수</div>
+        </div>
+        <div class="pub-stat">
+          <div class="pub-stat-num">${st.totalTests || 0}</div>
+          <div class="pub-stat-label">공개 테스트</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      ${isOwn ? `
+      <div class="pub-actions">
+        <button class="btn primary" style="flex:1" onclick="renderPage('profile')">${ic('pencil',14)} 프로필 편집</button>
+      </div>` : S.user ? `
+      <div class="pub-actions">
+        ${isFriend
+          ? `<button class="btn ghost" style="flex:1" onclick="removeFriend('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 삭제</button>`
+          : `<button class="btn primary" style="flex:1" id="pub-friend-btn" onclick="sendPubFriendReq('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 요청</button>`}
+      </div>` : `
+      <div class="pub-actions">
+        <button class="btn primary" style="flex:1" onclick="renderPage('auth')">로그인하고 친구 추가하기</button>
+      </div>`}
+
+      <!-- Recent Public Tests -->
+      ${tests.length ? `
+      <div class="pub-section">
+        <div class="pub-section-title">${ic('book',15)} 공개 테스트</div>
+        ${tests.map(t => `
+          <div class="pub-test-card" ${S.user ? `onclick="renderPage('test',{id:'${t._id}'})"` : ''}>
+            <div class="pub-test-name">${esc(t.title)}</div>
+            <div class="pub-test-meta">${t.questionCount || 0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
+          </div>`).join('')}
+      </div>` : ''}
+
+    </div>`;
+      } catch (e) {
+        app.innerHTML = `
+    <div class="pub-profile-wrap" style="text-align:center;padding:80px 20px">
+      <div style="font-size:2.5rem;margin-bottom:12px">${ic('people',48)}</div>
+      <h3 style="color:var(--text);margin-bottom:8px">프로필을 찾을 수 없습니다</h3>
+      <p style="color:var(--text3);font-size:.85rem;margin-bottom:24px">${esc(e.message)}</p>
+      <button class="btn primary" onclick="${S.user ? "renderPage('home')" : "renderPage('landing')"}">돌아가기</button>
+    </div>`;
+      }
+    }
+
+    function copyProfileUrl(url) {
+      navigator.clipboard.writeText(url).then(() => toast('프로필 링크가 복사되었습니다!', 'success'))
+        .catch(() => { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('프로필 링크가 복사되었습니다!', 'success'); });
+    }
+
+    async function sendPubFriendReq(toId, name) {
+      const btn = document.getElementById('pub-friend-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = ic('people',14) + ' 전송 중...'; }
+      try {
+        await apiFetch('POST', '/friends/request', { toUserId: toId });
+        toast(name + '님에게 친구 요청을 보냈습니다.', 'success');
+        if (btn) { btn.innerHTML = ic('people',14) + ' 요청 전송됨'; btn.className = 'btn ghost'; btn.style.flex = '1'; }
+      } catch (e) {
+        toast(e.message, 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = ic('people',14) + ' 친구 요청'; }
+      }
+    }
+
+    /* ============================================================
        USER PROFILE MODAL (타 유저 프로필 보기)
     ============================================================ */
     async function showUserProfile(userId) {
       if (!userId || userId === S.user?.id) { renderPage('profile'); return; }
-
-      // 로딩 모달
-      const ov = showModal(`
-    <div class="modal-handle"></div>
-    <div style="text-align:center;padding:32px 0;color:var(--text3);font-size:.875rem">프로필을 불러오는 중...</div>
-  `);
-
       try {
         const data = await apiFetch('GET', `/users/${userId}/profile`);
-        const u = data.user;
-        const stats = data.stats || {};
-        const gc = p => p >= 80 ? 'var(--accent3)' : p >= 50 ? 'var(--accent)' : 'var(--accent2)';
-        const isFriend = S.friends?.some(f => f._id === userId || f._id?.toString() === userId);
-        const bannerStyle = u.bannerImage
-          ? `background:url('${u.bannerImage}') center/cover no-repeat`
-          : `background:${u.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)'}`;
-
-        closeModal();
-
-        // 배너가 모달 최상단에 padding 없이 붙도록 직접 overlay 생성
-        const upmOv = document.createElement('div');
-        upmOv.className = 'modal-overlay';
-        upmOv.addEventListener('click', e => { if (e.target === upmOv) upmOv.remove(); });
-
-        upmOv.innerHTML = `
-      <div class="modal" style="padding:0;">
-
-        <!-- 1. 배너만 overflow:hidden으로 클립 (아바타는 이 div 밖) -->
-        <div style="position:relative;height:90px;border-radius:24px 24px 0 0;overflow:hidden;flex-shrink:0;${bannerStyle}">
-          <!-- 닫기 X 버튼 -->
-          <button onclick="this.closest('.modal-overlay').remove()"
-            style="position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:50%;
-                   background:rgba(0,0,0,.45);border:none;color:white;font-size:.9rem;cursor:pointer;
-                   display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)">✕</button>
-        </div>
-
-        <!-- 2. 아바타 + 이름: 배너 div 바깥, position:relative로 아바타를 위로 올림 -->
-        <div style="position:relative;padding:0 18px 0;margin-top:-36px;margin-bottom:14px;display:flex;align-items:flex-end;gap:14px;z-index:10">
-          <!-- 아바타 — z-index로 배너보다 앞, 잘리지 않음 -->
-          <div style="width:68px;height:68px;border-radius:50%;
-                      background:linear-gradient(135deg,var(--accent),var(--accent2));
-                      border:4px solid var(--card);
-                      display:flex;align-items:center;justify-content:center;
-                      font-weight:800;font-size:1.5rem;color:white;
-                      overflow:hidden;flex-shrink:0;position:relative;z-index:10">
-            ${u.avatarImage
-            ? `<img src="${u.avatarImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
-            : (u.username?.[0]?.toUpperCase() || '?')}
-          </div>
-          <!-- 이름 -->
-          <div style="padding-bottom:6px;min-width:0;flex:1">
-            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);
-                        overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.username)}</div>
-            <div style="font-size:.72rem;color:var(--text3);margin-top:2px">
-              ${u.loginType === 'naver' ? '네이버' : u.loginType === 'google' ? '구글' : '이메일'} 계정
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 통계 -->
-        <div class="upm-stats">
-          <div class="upm-stat">
-            <div class="upm-stat-num">${stats.totalAttempts || 0}</div>
-            <div class="upm-stat-label">총 응시</div>
-          </div>
-          <div class="upm-stat">
-            <div class="upm-stat-num" style="color:${gc(stats.avgScore || 0)}">${stats.avgScore || 0}%</div>
-            <div class="upm-stat-label">평균 정답률</div>
-          </div>
-          <div class="upm-stat">
-            <div class="upm-stat-num" style="color:var(--accent3)">${stats.bestScore || 0}%</div>
-            <div class="upm-stat-label">최고 정답률</div>
-          </div>
-        </div>
-
-        <!-- 4. 액션 버튼 -->
-        <div class="upm-actions" style="padding-bottom:calc(18px + var(--sab))">
-          ${isFriend
-            ? `<button class="btn ghost" style="flex:1" onclick="removeFriend('${u._id}','${esc(u.username)}');this.closest('.modal-overlay').remove()">친구 삭제</button>`
-            : `<button class="btn primary" style="flex:1" id="upm-friend-btn" onclick="sendFriendReqFromProfile('${u._id}','${esc(u.username)}')">친구 요청</button>`
-          }
-          <button class="btn ghost" style="flex:1" onclick="this.closest('.modal-overlay').remove()">닫기</button>
-        </div>
-      </div>`;
-        document.body.appendChild(upmOv);
+        if (data.user?.username) {
+          renderPage('u', { id: data.user.username });
+        }
       } catch (e) {
-        closeModal();
         toast(e.message || '프로필을 불러올 수 없습니다.', 'error');
       }
     }
 
     async function sendFriendReqFromProfile(toId, name) {
-      const btn = document.getElementById('upm-friend-btn');
+      const btn = document.getElementById('pub-friend-btn') || document.getElementById('upm-friend-btn');
       if (btn) { btn.disabled = true; btn.textContent = '전송 중...'; }
       try {
         await apiFetch('POST', '/friends/request', { toUserId: toId });
@@ -10933,7 +11084,7 @@
         const app = document.getElementById('app');
         if (app) {
           app.innerHTML = '';
-          if (!S.user && e.state.page !== 'auth' && e.state.page !== 'landing') { buildLanding(app); return; }
+          if (!S.user && e.state.page !== 'auth' && e.state.page !== 'landing' && e.state.page !== 'u') { buildLanding(app); return; }
           switch (e.state.page) {
             case 'auth': buildAuth(app); break;
             case 'landing': buildLanding(app); break;
@@ -10951,6 +11102,7 @@
             case 'wrongnote': buildWrongNote(app); break;
             case 'tests': buildAllTests(app, e.state.opts || {}); break;
             case 'favorites': buildAllTests(app, { tab: 'fav' }); break;
+            case 'u': buildPublicProfile(app, e.state.opts?.id); break;
             default: buildHome(app);
           }
         }
@@ -10984,12 +11136,21 @@
           await loadData();
           // 해시 URL에서 초기 페이지 결정
           const hash = window.location.hash.replace('#/', '').split('/');
-          const startPage = hash[0] && ['home', 'tests', 'editor', 'friends', 'history', 'profile', 'ranking', 'wrongnote', 'notice', 'inquiry', 'admin'].includes(hash[0]) ? hash[0] : 'home';
-          renderPage(startPage);
+          if (hash[0] === 'u' && hash[1]) {
+            renderPage('u', { id: decodeURIComponent(hash[1]) });
+          } else {
+            const startPage = hash[0] && ['home', 'tests', 'editor', 'friends', 'history', 'profile', 'ranking', 'wrongnote', 'notice', 'inquiry', 'admin'].includes(hash[0]) ? hash[0] : 'home';
+            renderPage(startPage);
+          }
         } catch (e) {
           S.token = null; localStorage.removeItem('ydmaster_token'); renderPage('auth');
         }
-      } else { renderPage('landing'); }
+      } else {
+        const hash = window.location.hash.replace('#/', '').split('/');
+        if (hash[0] === 'u' && hash[1]) {
+          renderPage('u', { id: decodeURIComponent(hash[1]) });
+        } else { renderPage('landing'); }
+      }
       document.getElementById('loading').style.display = 'none';
     }
     init();

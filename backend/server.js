@@ -1176,6 +1176,47 @@ app.get('/api/users/:id/profile', auth, async (req, res) => {
   }
 });
 
+// ==================== 공개 프로필 (by username) ====================
+app.get('/api/p/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username })
+      .select('username avatarImage bannerImage bannerGradient loginType createdAt friends');
+    if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+
+    const results = await Result.find({ user: user._id });
+    const totalAttempts = results.length;
+    const avgScore = totalAttempts > 0
+      ? Math.round(results.reduce((s, r) => s + r.percentage, 0) / totalAttempts)
+      : 0;
+    const bestScore = totalAttempts > 0
+      ? Math.max(...results.map(r => r.percentage))
+      : 0;
+    const totalTests = await Test.countDocuments({ author: user._id, isPublic: true });
+    const friendCount = user.friends?.length || 0;
+
+    // 최근 공개 테스트 (최대 5개)
+    const recentTests = await Test.find({ author: user._id, isPublic: true, isFriendOnly: false })
+      .sort({ createdAt: -1 }).limit(5).select('title questionCount createdAt');
+
+    res.json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        avatarImage: user.avatarImage || '',
+        bannerImage: user.bannerImage || '',
+        bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
+        loginType: user.loginType,
+        createdAt: user.createdAt,
+      },
+      stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount },
+      recentTests
+    });
+  } catch (e) {
+    console.error('public profile error:', e.message);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // ==================== 랭킹 ====================
 
 // 전체 랭킹 (평균 정답률 기준, 상위 50명)
