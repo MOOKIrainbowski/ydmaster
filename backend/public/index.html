@@ -4968,6 +4968,13 @@
       background: rgba(255, 101, 132, .25)
     }
 
+    .wn-toggle-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .wn-toggle-btn{font-size:.7rem;padding:4px 10px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .wn-toggle-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .wn-blurred{filter:blur(5px);user-select:none;pointer-events:none;transition:filter .2s}
+    .wn-tts-btn{width:26px;height:26px;border-radius:7px;background:rgba(108,99,255,.1);color:var(--accent);border:none;cursor:pointer;font-size:.8rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .wn-tts-btn:hover{background:rgba(108,99,255,.25)}
+
     .wn-actions-row {
       display: flex;
       gap: 8px;
@@ -10283,19 +10290,28 @@
       groups.forEach(g => {
         const gid = String(g._id);
         const date = new Date(g.savedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const wordsHTML = (g.words || []).map((w, wi) => `
+        const wordsHTML = (g.words || []).map((w, wi) => {
+          const qIsKo = /[\uAC00-\uD7AF]/.test(w.question);
+          const enText = qIsKo ? w.answer : w.question;
+          return `
       <div class="wn-word-item">
+        <button class="wn-tts-btn" onclick="wnSpeak(this.dataset.text)" data-text="${esc(enText)}" title="발음 듣기">🔊</button>
         <span class="wn-word-q">${esc(w.question)}</span>
         <span class="wn-word-arrow">→</span>
         <span class="wn-word-a">${esc(w.answer)}</span>
         <button class="wn-del-btn" onclick="deleteWrongNoteWord('${gid}',${wi})" title="이 단어 삭제">✕</button>
-      </div>`).join('');
+      </div>`;
+        }).join('');
 
         html += `<div class="wn-group" id="wng-${gid}">
       <div class="wn-group-header">
         <div style="min-width:0;flex:1">
           <div class="wn-group-title">📝 ${esc(g.testTitle || '테스트')}</div>
           <div class="wn-group-date">${date}</div>
+          <div class="wn-toggle-wrap">
+            <button class="wn-toggle-btn" data-lang="ko" onclick="wnToggleHide('${gid}','ko')">한글 뜻 가리기</button>
+            <button class="wn-toggle-btn" data-lang="en" onclick="wnToggleHide('${gid}','en')">영어 단어 가리기</button>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span class="wn-group-count">${g.words?.length || 0}개</span>
@@ -10307,6 +10323,39 @@
       });
 
       el.innerHTML = html;
+    }
+
+    // ── 오답노트 TTS ──
+    function wnSpeak(text) {
+      if (!text) return;
+      if (!('speechSynthesis' in window)) { toast('이 브라우저에서 음성을 지원하지 않습니다.', 'info'); return; }
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      u.rate = 0.9;
+      speechSynthesis.speak(u);
+    }
+
+    // ── 오답노트 가리기 토글 ──
+    const _wnHide = {};
+    function wnToggleHide(gid, lang) {
+      if (!_wnHide[gid]) _wnHide[gid] = { ko: false, en: false };
+      _wnHide[gid][lang] = !_wnHide[gid][lang];
+      const group = document.getElementById('wng-' + gid);
+      if (!group) return;
+      group.querySelectorAll('.wn-word-item').forEach(item => {
+        const qEl = item.querySelector('.wn-word-q');
+        const aEl = item.querySelector('.wn-word-a');
+        if (!qEl || !aEl) return;
+        const qIsKo = /[\uAC00-\uD7AF]/.test(qEl.textContent);
+        if (lang === 'ko') {
+          (qIsKo ? qEl : aEl).classList.toggle('wn-blurred', _wnHide[gid].ko);
+        } else {
+          (qIsKo ? aEl : qEl).classList.toggle('wn-blurred', _wnHide[gid].en);
+        }
+      });
+      const btn = group.querySelector('.wn-toggle-btn[data-lang="' + lang + '"]');
+      if (btn) btn.classList.toggle('active', _wnHide[gid][lang]);
     }
 
     async function deleteWrongNoteWord(groupId, wordIdx) {
