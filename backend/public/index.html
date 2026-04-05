@@ -142,9 +142,9 @@
     }
 
     body.theme-light .theme-btn {
-      background: #eaeaf0;
+      background: #f0f0f5;
       border-color: #dcdce8;
-      color: #44445a
+      color: #666680
     }
 
     /* ── 카드 / 컨테이너 ── */
@@ -3477,21 +3477,23 @@
     .theme-btn {
       width: 36px;
       height: 36px;
-      border-radius: 10px;
+      border-radius: 50%;
       background: var(--bg3);
       border: 1.5px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 1.1rem;
-      transition: all .15s;
+      color: var(--text2);
+      transition: all .3s ease;
       flex-shrink: 0
     }
 
     .theme-btn:hover {
       border-color: var(--accent);
-      background: rgba(108, 99, 255, .1)
+      background: rgba(108, 99, 255, .12);
+      color: var(--accent);
+      transform: rotate(20deg)
     }
 
     .theme-toggle-row {
@@ -4868,19 +4870,24 @@
     }
 
     .wn-group {
-      margin: 0 16px 20px;
+      margin: 0 16px 16px;
       background: var(--card);
       border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color .2s
+    }
+
+    .wn-group:hover {
+      border-color: rgba(108,99,255,.25)
     }
 
     .wn-group-header {
-      padding: 12px 16px;
-      background: var(--bg3);
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--bg3), var(--bg2));
       border-bottom: 1px solid var(--border);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between
     }
 
@@ -4890,54 +4897,72 @@
       color: var(--text);
       display: flex;
       align-items: center;
-      gap: 8px
+      gap: 6px
     }
 
     .wn-group-date {
-      font-size: .72rem;
-      color: var(--text3)
+      font-size: .7rem;
+      color: var(--text3);
+      margin-top: 2px
     }
 
     .wn-group-count {
-      font-size: .72rem;
+      font-size: .7rem;
       color: var(--accent);
-      font-weight: 600;
+      font-weight: 700;
       background: rgba(var(--accent-rgb), .1);
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 100px
     }
 
     .wn-word-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 11px 16px;
-      border-bottom: 1px solid rgba(42, 42, 56, .4)
+      gap: 8px;
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(42, 42, 56, .2);
+      transition: background .15s
     }
 
     .wn-word-item:last-child {
       border-bottom: none
     }
 
+    .wn-word-item:hover {
+      background: rgba(var(--accent-rgb), .03)
+    }
+
+    .wn-word-num {
+      font-size: .62rem;
+      color: var(--text3);
+      opacity: .5;
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+      font-weight: 600
+    }
+
     .wn-word-q {
-      font-size: .9rem;
+      font-size: .88rem;
       font-weight: 600;
       color: var(--text);
       flex: 1;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap
+      white-space: nowrap;
+      transition: filter .2s, opacity .2s
     }
 
     .wn-word-arrow {
       color: var(--text3);
-      font-size: .75rem;
-      flex-shrink: 0
+      font-size: .7rem;
+      flex-shrink: 0;
+      opacity: .5
     }
 
     .wn-word-a {
-      font-size: .88rem;
+      font-size: .85rem;
       color: var(--accent3);
       font-weight: 600;
       flex: 1;
@@ -4945,7 +4970,8 @@
       text-align: right;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap
+      white-space: nowrap;
+      transition: filter .2s, opacity .2s
     }
 
     .wn-del-btn {
@@ -4969,11 +4995,14 @@
     }
 
     .wn-toggle-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-    .wn-toggle-btn{font-size:.7rem;padding:4px 10px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
-    .wn-toggle-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
-    .wn-blurred{filter:blur(5px);user-select:none;pointer-events:none;transition:filter .2s}
-    .wn-tts-btn{width:26px;height:26px;border-radius:7px;background:rgba(108,99,255,.1);color:var(--accent);border:none;cursor:pointer;font-size:.8rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
-    .wn-tts-btn:hover{background:rgba(108,99,255,.25)}
+    .wn-toggle-btn{font-size:.68rem;padding:5px 12px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;font-weight:500}
+    .wn-toggle-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .wn-toggle-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(108,99,255,.25)}
+    .wn-blurred{filter:blur(5px);user-select:none;cursor:pointer;transition:filter .25s,opacity .25s}
+    .wn-blurred.wn-revealed{filter:none;user-select:auto;pointer-events:auto;opacity:.6;border-bottom:1.5px dashed var(--accent);padding-bottom:1px}
+    .wn-tts-btn{width:28px;height:28px;border-radius:8px;background:rgba(108,99,255,.08);color:var(--accent);border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .wn-tts-btn:hover{background:rgba(108,99,255,.2);transform:scale(1.08)}
+    .wn-tts-btn:active{transform:scale(.95)}
 
     .wn-actions-row {
       display: flex;
@@ -4987,13 +5016,21 @@
       border-color: #dcdce8
     }
 
+    body.theme-light .wn-group:hover {
+      border-color: rgba(108,99,255,.2)
+    }
+
     body.theme-light .wn-group-header {
-      background: #f4f4f8;
+      background: linear-gradient(135deg, #f4f4f8, #fafafe);
       border-color: #dcdce8
     }
 
     body.theme-light .wn-word-item {
-      border-color: #eaeaf0
+      border-color: #eef0f4
+    }
+
+    body.theme-light .wn-word-item:hover {
+      background: rgba(108,99,255,.025)
     }
 
     body.theme-light .wn-word-q {
@@ -5047,8 +5084,7 @@
 
       .theme-btn {
         width: 30px;
-        height: 30px;
-        font-size: .95rem
+        height: 30px
       }
 
       .nav-avatar {
@@ -6411,7 +6447,9 @@
       bulb:'<path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>',
       lock:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>',
       user:'<path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>',
-      sadFace:'<circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'
+      sadFace:'<circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+      sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+      moon:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
     };return `<svg width="${sz}" height="${sz}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display:inline-block;vertical-align:-.15em;flex-shrink:0">${d[name]||''}</svg>`;}
 
     /* ============================================================
@@ -6641,7 +6679,7 @@
     </div>
     <div class="nav-right">
       ${S.user ? `
-        <div class="theme-btn" onclick="showThemeSettings()" title="테마 설정">${S.theme === 'light' ? '☀️' : '🌙'}</div>
+        <div class="theme-btn" onclick="showThemeSettings()" title="테마 설정">${S.theme === 'light' ? ic('sun',17) : ic('moon',17)}</div>
         ${S.isAdmin ? `<button class="admin-sq-btn" onclick="renderPage('admin')" title="관리자">${ic('gear',16)}</button>` : ''}
         <div class="nav-badge-wrap" onclick="renderPage('profile')" style="cursor:pointer" title="프로필">
           <div class="nav-avatar" style="${S.profile?.avatarImage ? 'background:none;padding:0;overflow:hidden' : ''}">${navAvatarInner}</div>
@@ -10302,13 +10340,13 @@
 
       // 통계 바
       let html = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px;margin-bottom:20px">
-    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent2)">${totalWords}</div>
-      <div style="font-size:.72rem;color:var(--text3);margin-top:2px">총 오답 단어</div>
+    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,101,132,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent2)">${ic('notebook',20)}</div>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent2)">${totalWords}</div><div style="font-size:.68rem;color:var(--text3);margin-top:1px">총 오답 단어</div></div>
     </div>
-    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent)">${groups.length}</div>
-      <div style="font-size:.72rem;color:var(--text3);margin-top:2px">저장된 테스트</div>
+    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(108,99,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent)">${ic('clipboard',20)}</div>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent)">${groups.length}</div><div style="font-size:.68rem;color:var(--text3);margin-top:1px">저장된 테스트</div></div>
     </div>
   </div>`;
 
@@ -10321,10 +10359,11 @@
           const enText = qIsKo ? w.answer : w.question;
           return `
       <div class="wn-word-item">
+        <span class="wn-word-num">${wi+1}</span>
         <button class="wn-tts-btn" onclick="wnSpeak(this.dataset.text)" data-text="${esc(enText)}" title="발음 듣기">${ic('speaker',14)}</button>
-        <span class="wn-word-q">${esc(w.question)}</span>
+        <span class="wn-word-q" onclick="wnRevealWord(this)">${esc(w.question)}</span>
         <span class="wn-word-arrow">→</span>
-        <span class="wn-word-a">${esc(w.answer)}</span>
+        <span class="wn-word-a" onclick="wnRevealWord(this)">${esc(w.answer)}</span>
         <button class="wn-del-btn" onclick="deleteWrongNoteWord('${gid}',${wi})" title="이 단어 삭제">✕</button>
       </div>`;
         }).join('');
@@ -10375,13 +10414,23 @@
         if (!qEl || !aEl) return;
         const qIsKo = /[\uAC00-\uD7AF]/.test(qEl.textContent);
         if (lang === 'ko') {
-          (qIsKo ? qEl : aEl).classList.toggle('wn-blurred', _wnHide[gid].ko);
+          const t = qIsKo ? qEl : aEl;
+          t.classList.toggle('wn-blurred', _wnHide[gid].ko);
+          if (!_wnHide[gid].ko) t.classList.remove('wn-revealed');
         } else {
-          (qIsKo ? aEl : qEl).classList.toggle('wn-blurred', _wnHide[gid].en);
+          const t = qIsKo ? aEl : qEl;
+          t.classList.toggle('wn-blurred', _wnHide[gid].en);
+          if (!_wnHide[gid].en) t.classList.remove('wn-revealed');
         }
       });
       const btn = group.querySelector('.wn-toggle-btn[data-lang="' + lang + '"]');
       if (btn) btn.classList.toggle('active', _wnHide[gid][lang]);
+    }
+
+    // ── 오답노트 개별 단어 보기 ──
+    function wnRevealWord(el) {
+      if (!el.classList.contains('wn-blurred')) return;
+      el.classList.toggle('wn-revealed');
     }
 
     async function deleteWrongNoteWord(groupId, wordIdx) {
