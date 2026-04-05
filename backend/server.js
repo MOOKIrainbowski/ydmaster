@@ -258,6 +258,7 @@ const InquirySchema = new mongoose.Schema({
   answer: { type: String, default: '' },
   answeredAt: { type: Date },
   answeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1558,12 +1559,39 @@ app.get('/api/inquiries/mine', auth, async (req, res) => {
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
+app.get('/api/inquiries', auth, async (req, res) => {
+  try {
+    const inquiries = await Inquiry.find().populate('user', 'username').sort({ createdAt: -1 });
+    res.json(inquiries);
+  } catch { res.status(500).json({ message: '서버 오류' }); }
+});
+
+app.post('/api/inquiries/:id/like', auth, async (req, res) => {
+  try {
+    const inquiry = await Inquiry.findById(req.params.id);
+    if (!inquiry) return res.status(404).json({ message: '문의를 찾을 수 없습니다.' });
+    const uid = req.user._id.toString();
+    const idx = inquiry.likes.findIndex(id => id.toString() === uid);
+    if (idx > -1) inquiry.likes.splice(idx, 1); else inquiry.likes.push(req.user._id);
+    await inquiry.save();
+    res.json({ likes: inquiry.likes.length, liked: idx === -1 });
+  } catch { res.status(500).json({ message: '서버 오류' }); }
+});
+
 // ==================== 관리자 API ====================
 
 app.get('/api/admin/inquiries', adminAuth, async (req, res) => {
   try {
     const inquiries = await Inquiry.find().populate('user', 'username email').sort({ createdAt: -1 });
     res.json(inquiries);
+  } catch { res.status(500).json({ message: '서버 오류' }); }
+});
+
+app.delete('/api/admin/inquiries/:id', adminAuth, async (req, res) => {
+  try {
+    const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
+    if (!inquiry) return res.status(404).json({ message: '문의를 찾을 수 없습니다.' });
+    res.json({ message: '삭제되었습니다.' });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 

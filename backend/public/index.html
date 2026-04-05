@@ -4102,18 +4102,30 @@
     .inquiry-item {
       background: var(--card);
       border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 10px
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: border-color .15s
+    }
+
+    .inquiry-item:hover {
+      border-color: rgba(108,99,255,.2)
+    }
+
+    .inq-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px
     }
 
     .inquiry-status {
-      display: inline-block;
-      font-size: .7rem;
+      display: inline-flex;
+      align-items: center;
+      font-size: .68rem;
       font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 100px;
-      margin-bottom: 6px
+      padding: 3px 9px;
+      border-radius: 100px
     }
 
     .inquiry-status.pending {
@@ -4127,48 +4139,140 @@
     }
 
     .inquiry-title {
-      font-family: 'Syne', sans-serif;
       font-weight: 700;
-      font-size: .95rem;
-      margin-bottom: 4px
+      font-size: .92rem;
+      margin-bottom: 4px;
+      color: var(--text)
     }
 
     .inquiry-content {
-      font-size: .85rem;
+      font-size: .82rem;
       color: var(--text2);
-      line-height: 1.7;
-      margin-top: 8px;
-      white-space: pre-wrap
+      line-height: 1.6;
+      margin-top: 4px;
+      white-space: pre-wrap;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
+
+    .inq-item-meta {
+      font-size: .7rem;
+      color: var(--text3);
+      margin-top: 8px
     }
 
     .inquiry-answer {
-      background: var(--bg2);
-      border: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      background: rgba(108,99,255,.05);
       border-left: 3px solid var(--accent);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-top: 14px;
-      font-size: .85rem;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 12px;
+      margin-top: 10px;
+      font-size: .82rem;
       color: var(--text);
-      line-height: 1.7;
-      white-space: pre-wrap
+      line-height: 1.6
     }
 
     .inquiry-answer-label {
-      font-size: .75rem;
+      font-size: .7rem;
       font-weight: 700;
       color: var(--accent);
-      margin-bottom: 8px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 6px
+      gap: 4px;
+      white-space: nowrap;
+      flex-shrink: 0
+    }
+
+    .inquiry-answer-text {
+      white-space: pre-wrap;
+      word-break: break-word
     }
 
     .inquiry-answer-date {
-      font-size: .7rem;
+      font-size: .68rem;
       color: var(--text3);
-      margin-top: 8px;
+      margin-top: 6px;
       text-align: right
+    }
+
+    .inq-like-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 10px;
+      font-size: .72rem;
+      color: var(--text3);
+      cursor: pointer;
+      transition: all .15s;
+      font-weight: 600
+    }
+
+    .inq-like-btn:hover {
+      border-color: var(--accent2);
+      color: var(--accent2)
+    }
+
+    .inq-like-btn.active {
+      background: rgba(255,101,132,.1);
+      border-color: rgba(255,101,132,.3);
+      color: var(--accent2)
+    }
+
+    .inq-like-btn.active svg {
+      fill: var(--accent2)
+    }
+
+    .inq-tabs-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      padding: 0 2px
+    }
+
+    .inq-tab {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text3);
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 100px;
+      transition: all .15s
+    }
+
+    .inq-tab:hover {
+      color: var(--text2)
+    }
+
+    .inq-tab.active {
+      background: var(--accent);
+      color: #fff
+    }
+
+    .inq-sort-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .72rem;
+      color: var(--text3);
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 8px;
+      transition: all .15s;
+      border: 1px solid var(--border)
+    }
+
+    .inq-sort-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent)
     }
 
     .admin-stat-grid {
@@ -6449,7 +6553,9 @@
       user:'<path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>',
       sadFace:'<circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
       sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
-      moon:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
+      moon:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>',
+      heart:'<path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>',
+      arrowSort:'<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>'
     };return `<svg width="${sz}" height="${sz}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display:inline-block;vertical-align:-.15em;flex-shrink:0">${d[name]||''}</svg>`;}
 
     /* ============================================================
@@ -9387,49 +9493,104 @@
         + myBarHTML
         + `<div style="text-align:center;margin-top:16px;font-size:.72rem;color:var(--text3)">* 랭킹 기준: 평균 정답률 (최소 1회 응시)</div>`;
     }
+    let _inqSort = 'newest';
+    let _inqFilter = 'all';
+    let _inqCache = [];
+
     function buildInquiry(app) {
       app.innerHTML = topNav('inquiry') + `
   <div class="page active">
     <div class="scroll-body">
       <div class="section" style="padding-top:24px">
-        <div class="sec-header" style="margin-bottom:18px">
+        <div class="sec-header" style="margin-bottom:14px">
           <span class="sec-title" style="font-size:1.08rem">${ic('chat')} 문의하기</span>
           <button class="btn primary sm" onclick="showInquiryForm()">+ 문의</button>
+        </div>
+        <div class="inq-tabs-row">
+          <div class="inq-tab ${_inqFilter==='all'?'active':''}" onclick="setInqFilter('all')">전체</div>
+          <div class="inq-tab ${_inqFilter==='mine'?'active':''}" onclick="setInqFilter('mine')">내 문의</div>
+          <div style="flex:1"></div>
+          <div class="inq-sort-btn" id="inq-sort-btn" onclick="toggleInqSort()">${ic('arrowSort',13)} <span id="inq-sort-label">${_inqSort==='newest'?'최신순':'추천순'}</span></div>
         </div>
         <div id="inquiry-list"><div style="text-align:center;padding:20px;color:var(--text3)">불러오는 중...</div></div>
       </div>
     </div>
   </div>` + bottomNav('inquiry');
-      loadMyInquiries();
+      loadInquiries();
     }
 
-    async function loadMyInquiries() {
+    function setInqFilter(f) {
+      _inqFilter = f;
+      document.querySelectorAll('.inq-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&f==='all')||(i===1&&f==='mine')));
+      renderInquiryList();
+    }
+
+    function toggleInqSort() {
+      _inqSort = _inqSort === 'newest' ? 'likes' : 'newest';
+      const lbl = document.getElementById('inq-sort-label');
+      if (lbl) lbl.textContent = _inqSort === 'newest' ? '최신순' : '추천순';
+      renderInquiryList();
+    }
+
+    async function loadInquiries() {
       try {
-        const list = await apiFetch('GET', '/inquiries/mine');
-        const el = document.getElementById('inquiry-list');
-        if (!el) return;
-        if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>문의 내역이 없어요</h3><p>궁금한 점을 문의해보세요!</p></div>'; return; }
-        el.innerHTML = list.map(q => {
-          const typeMatch = q.title.match(/^\[(건의|문의|신고)\]\s*/);
-          const typeTag = typeMatch ? `<span class="inq-type-tag ${typeMatch[1]}">${typeMatch[1]}</span>` : '';
-          const titleDisp = q.title.replace(/^\[(건의|문의|신고)\]\s*/, '');
-          return `
+        _inqCache = await apiFetch('GET', '/inquiries');
+        renderInquiryList();
+      } catch (e) { toast(e.message, 'error'); }
+    }
+
+    function renderInquiryList() {
+      const el = document.getElementById('inquiry-list');
+      if (!el) return;
+      let list = [..._inqCache];
+      if (_inqFilter === 'mine') list = list.filter(q => (q.user?._id || q.user) === S.user?.id);
+      if (_inqSort === 'likes') list.sort((a,b) => (b.likes?.length||0) - (a.likes?.length||0));
+      if (!list.length) { el.innerHTML = `<div class="empty-state"><h3>${_inqFilter==='mine'?'내 문의가 없어요':'문의가 없어요'}</h3><p>궁금한 점을 문의해보세요!</p></div>`; return; }
+      el.innerHTML = list.map(q => {
+        const isOwn = (q.user?._id || q.user) === S.user?.id;
+        const liked = (q.likes||[]).some(id => id === S.user?.id || id?._id === S.user?.id);
+        const likeCount = (q.likes||[]).length;
+        const typeMatch = q.title.match(/^\[(건의|문의|신고)\]\s*/);
+        const typeTag = typeMatch ? `<span class="inq-type-tag ${typeMatch[1]}">${typeMatch[1]}</span>` : '';
+        const titleDisp = q.title.replace(/^\[(건의|문의|신고)\]\s*/, '');
+        const date = new Date(q.createdAt).toLocaleDateString('ko-KR');
+        const authorName = q.user?.username || (isOwn ? (S.user?.username||'나') : '알 수 없음');
+        return `
       <div class="inquiry-item">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-          <span class="inquiry-status ${q.status}">${q.status === 'answered' ? '✓ 답변완료' : '⏳ 답변대기'}</span>
-          ${typeTag}
+        <div class="inq-item-top">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="inquiry-status ${q.status}">${q.status === 'answered' ? '✓ 답변완료' : '대기중'}</span>
+            ${typeTag}
+          </div>
+          <button class="inq-like-btn ${liked?'active':''}" onclick="toggleInqLike('${q._id}',this)">
+            ${ic('heart',13)} <span>${likeCount||''}</span>
+          </button>
         </div>
         <div class="inquiry-title">${esc(titleDisp)}</div>
-        <div class="notice-meta">${new Date(q.createdAt).toLocaleDateString('ko-KR')}</div>
         <div class="inquiry-content">${esc(q.content)}</div>
+        <div class="inq-item-meta">${esc(authorName)} · ${date}</div>
         ${q.status === 'answered' ? `
           <div class="inquiry-answer">
-            <div class="inquiry-answer-label">${ic('chat',14)} 관리자 답변</div>
-            ${esc(q.answer)}
-            <div class="inquiry-answer-date">${new Date(q.answeredAt).toLocaleDateString('ko-KR')}</div>
-          </div>`: ``}
+            <span class="inquiry-answer-label">${ic('chat',13)} 답변</span>
+            <span class="inquiry-answer-text">${esc(q.answer)}</span>
+          </div>` : ''}
       </div>`;
-        }).join('');
+      }).join('');
+    }
+
+    async function toggleInqLike(id, btn) {
+      try {
+        const res = await apiFetch('POST', '/inquiries/'+id+'/like');
+        const cached = _inqCache.find(q => q._id === id);
+        if (cached) {
+          if (res.liked) { if (!cached.likes) cached.likes = []; cached.likes.push(S.user?.id); }
+          else { cached.likes = (cached.likes||[]).filter(lid => (lid?._id||lid) !== S.user?.id); }
+        }
+        if (btn) {
+          btn.classList.toggle('active', res.liked);
+          const sp = btn.querySelector('span');
+          if (sp) sp.textContent = res.likes || '';
+        }
       } catch (e) { toast(e.message, 'error'); }
     }
 
@@ -9475,7 +9636,7 @@
         await apiFetch('POST', '/inquiries', { title: `[${type}] ${title}`, content });
         toast('문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다. 😊', 'success');
         closeModal();
-        loadMyInquiries();
+        await loadInquiries();
       } catch (e) { toast(e.message, 'error'); }
     }
 
@@ -9796,10 +9957,11 @@
       <div class="inquiry-item">
         <span class="inquiry-status ${q.status}">${q.status === 'answered' ? '✓ 답변완료' : '⏳ 미답변'}</span>
         <div class="inquiry-title">${esc(q.title)}</div>
-        <div class="notice-meta">${esc(q.user?.username || '?')} · ${new Date(q.createdAt).toLocaleDateString('ko-KR')}</div>
+        <div class="notice-meta">${esc(q.user?.username || '?')} · ${new Date(q.createdAt).toLocaleDateString('ko-KR')}${q.likes ? ` · ${ic('heart',13)} ${q.likes.length}` : ''}</div>
         <div class="inquiry-content">${esc(q.content)}</div>
         ${q.status === 'answered'
-            ? `<div class="inquiry-answer"><div class="inquiry-answer-label">${ic('chat',14)} 내 답변</div>${esc(q.answer)}</div>`
+            ? `<div class="inquiry-answer"><div class="inquiry-answer-label">${ic('chat',14)} 내 답변</div>${esc(q.answer)}</div>
+               <button class="btn danger sm" style="margin-top:8px" onclick="deleteAdminInquiry('${q._id}')">삭제</button>`
             : `<div style="margin-top:12px">
               <textarea class="form-input" id="ans-${q._id}" rows="3" placeholder="답변을 입력하세요" style="resize:vertical;font-size:.85rem"></textarea>
               <button class="btn primary sm" style="margin-top:8px;width:100%" onclick="submitAnswer('${q._id}')">답변 전송</button>
@@ -9816,6 +9978,15 @@
         toast('답변이 전송되었습니다.', 'success');
         loadAdminInquiries();
         loadAdminStats();
+      } catch (e) { toast(e.message, 'error'); }
+    }
+
+    async function deleteAdminInquiry(id) {
+      if (!confirm('이 문의를 삭제하시겠습니까?')) return;
+      try {
+        await apiFetch('DELETE', `/admin/inquiries/${id}`);
+        toast('삭제되었습니다.', 'success');
+        loadAdminInquiries();
       } catch (e) { toast(e.message, 'error'); }
     }
 
