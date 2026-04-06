@@ -9169,56 +9169,42 @@
         <div class="profile-email" id="profile-disp-email" style="margin-top:2px">${esc(u?.email || '')}</div>
       </div>
 
-      <!-- 내 랭킹 + 통계 -->
-      <div id="profile-rank-area" style="padding:16px 20px 0">
-        <div class="pub-stats" style="padding:0">
-          <div class="pub-stat">
-            <div class="pub-stat-num">${S.stats?.totalAttempts || 0}</div>
-            <div class="pub-stat-label">총 응시</div>
-          </div>
-          <div class="pub-stat">
-            <div class="pub-stat-num" style="color:${(S.stats?.avgScore||0) >= 80 ? 'var(--accent3)' : (S.stats?.avgScore||0) >= 50 ? 'var(--accent)' : 'var(--accent2)'}">${S.stats?.avgScore || 0}%</div>
-            <div class="pub-stat-label">평균 정답률</div>
-          </div>
-          <div class="pub-stat">
-            <div class="pub-stat-num" style="color:var(--accent3)">${S.stats?.bestScore || 0}%</div>
-            <div class="pub-stat-label">최고 점수</div>
-          </div>
-          <div class="pub-stat">
-            <div class="pub-stat-num">${S.myTests?.length || 0}</div>
-            <div class="pub-stat-label">테스트</div>
-          </div>
-        </div>
-      </div>
+      <!-- 랭킹 배지 -->
+      <div id="profile-rank-area" style="padding:12px 20px 0"></div>
 
-      <!-- 내 테스트 -->
-      <div class="section" style="padding-top:8px">
-        <div class="sec-header" style="margin-bottom:12px">
-          <span class="sec-title">${ic('book')} 내 테스트</span>
-          <button class="btn ghost sm" onclick="renderPage('tests',{tab:'mine'})" style="font-size:.72rem">더보기 →</button>
-        </div>
-        <div class="tests-grid">
-          ${(S.myTests||[]).slice(0,4).map(t => `
-            <div class="pub-test-card" onclick="showTestOptions(null,'${t._id}')">
-              <div class="pub-test-name">${esc(t.title)}</div>
-              <div class="pub-test-meta">${t.questionCount||t.questions?.length||0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
-            </div>`).join('') || '<div style="font-size:.82rem;color:var(--text3);padding:8px 0">아직 만든 테스트가 없어요</div>'}
-        </div>
-      </div>
+      <!-- 내 테스트 + 친구 목록 (2단 그리드) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 16px 0">
 
-      <!-- 친구 목록 -->
-      <div class="section friends-section" style="padding-top:8px">
-        <div class="sec-header" style="margin-bottom:16px">
-          <span class="sec-title">${ic('people')} 친구</span>
-          <button class="btn primary sm" onclick="showAddFriend()">+ 친구 추가</button>
-        </div>
-        <div class="friends-tabs">
-          <div class="friends-tab active" id="ftab-list" onclick="switchFTab('list')">친구 목록 (${S.friends.length})</div>
-          <div class="friends-tab" id="ftab-req" onclick="switchFTab('req')">
-            친구 요청${hasPending ? '<span class="ftab-badge"></span>' : ''}
+        <!-- 내 테스트 -->
+        <div class="section" style="padding:0">
+          <div class="sec-header" style="margin-bottom:10px">
+            <span class="sec-title" style="font-size:.82rem">${ic('book',14)} 내 테스트</span>
+            <button class="btn ghost sm" onclick="renderPage('tests',{tab:'mine'})" style="font-size:.68rem;padding:3px 8px">더보기</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${(S.myTests||[]).slice(0,4).map(t => `
+              <div class="pub-test-card" onclick="showTestOptions(null,'${t._id}')" style="margin-bottom:0;padding:10px 12px">
+                <div class="pub-test-name" style="font-size:.78rem">${esc(t.title)}</div>
+                <div class="pub-test-meta" style="font-size:.65rem">${t.questionCount||t.questions?.length||0}문항</div>
+              </div>`).join('') || '<div style="font-size:.78rem;color:var(--text3);padding:8px 0">아직 만든 테스트가 없어요</div>'}
           </div>
         </div>
-        <div id="ftab-content">${renderFriendList()}</div>
+
+        <!-- 친구 목록 -->
+        <div class="section friends-section" style="padding:0">
+          <div class="sec-header" style="margin-bottom:10px">
+            <span class="sec-title" style="font-size:.82rem">${ic('people',14)} 친구</span>
+            <button class="btn primary sm" onclick="showAddFriend()" style="font-size:.68rem;padding:3px 8px">+ 추가</button>
+          </div>
+          <div class="friends-tabs" style="margin-bottom:8px">
+            <div class="friends-tab active" id="ftab-list" onclick="switchFTab('list')" style="font-size:.72rem;padding:6px 0">목록 (${S.friends.length})</div>
+            <div class="friends-tab" id="ftab-req" onclick="switchFTab('req')" style="font-size:.72rem;padding:6px 0">
+              요청${hasPending ? '<span class="ftab-badge"></span>' : ''}
+            </div>
+          </div>
+          <div id="ftab-content">${renderFriendList()}</div>
+        </div>
+
       </div>
 
     </div>
@@ -10278,13 +10264,10 @@
     function renderFriendList() {
       if (!S.friends?.length) return '<div class="empty-state"><h3>아직 친구가 없어요</h3><p>친구를 추가해보세요!</p></div>';
       return S.friends.map(f => `
-    <div class="friend-item">
-      <div class="friend-avatar" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer">${f.username[0].toUpperCase()}</div>
-      <div class="friend-name" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;flex:1">${esc(f.username)}</div>
-      <div class="friend-acts">
-        <button class="btn ghost sm" onclick="goToUserPage('${esc(f.username)}')">프로필</button>
-        <button class="btn danger sm" onclick="removeFriend('${f._id}','${esc(f.username)}')">삭제</button>
-      </div>
+    <div class="friend-item" style="gap:8px">
+      <div class="friend-avatar" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;width:30px;height:30px;font-size:.75rem;flex-shrink:0">${f.username[0].toUpperCase()}</div>
+      <div class="friend-name" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;flex:1;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.username)}</div>
+      <button class="btn danger sm" onclick="removeFriend('${f._id}','${esc(f.username)}')" style="padding:3px 8px;font-size:.65rem;flex-shrink:0">삭제</button>
     </div>`).join('');
     }
 
