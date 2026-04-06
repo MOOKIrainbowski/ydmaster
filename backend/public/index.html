@@ -4922,9 +4922,10 @@
     }
     .pub-meta-row {
       display: flex; gap: 16px; padding: 16px 20px 0;
-      font-size: .78rem; color: var(--text3)
+      font-size: .78rem; color: var(--text3); flex-wrap: wrap
     }
     .pub-meta-row span { display: flex; align-items: center; gap: 4px }
+    .pub-body { display: block }
     .pub-stats {
       display: grid; grid-template-columns: repeat(4, 1fr);
       gap: 8px; padding: 18px 20px 0
@@ -4964,6 +4965,46 @@
       font-size: .7rem; color: var(--text3); margin-top: 4px
     }
     body.theme-light .pub-stat { background: #f4f4f8; border-color: #e8e8ee }
+
+    /* ── Desktop public profile ── */
+    @media (min-width: 768px) {
+      .pub-profile-wrap {
+        max-width: 860px;
+        padding: 40px 20px 80px
+      }
+      .pub-banner {
+        height: 200px;
+        border-radius: 20px
+      }
+      .pub-avatar {
+        width: 100px; height: 100px; font-size: 2.2rem;
+        border-width: 5px
+      }
+      .pub-avatar-row {
+        margin-top: -50px; padding: 0 32px; gap: 18px
+      }
+      .pub-username { font-size: 1.4rem }
+      .pub-url { font-size: .78rem }
+      .pub-meta-row { padding: 18px 32px 0; gap: 24px; font-size: .85rem }
+      .pub-stats { padding: 20px 32px 0; gap: 12px }
+      .pub-stat { padding: 18px 10px; border-radius: 16px }
+      .pub-stat-num { font-size: 1.3rem }
+      .pub-stat-label { font-size: .72rem }
+      .pub-actions { padding: 24px 32px 0; gap: 12px }
+      .pub-actions .btn { padding: 12px 24px; font-size: .9rem }
+      .pub-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0
+      }
+      .pub-section { padding: 24px 32px 0 }
+      .pub-section-title { font-size: .92rem; margin-bottom: 14px }
+      .pub-test-card { padding: 14px 18px }
+      .pub-test-name { font-size: .9rem }
+      .pub-test-meta { font-size: .75rem }
+      .pub-back-btn { width: 40px; height: 40px; font-size: 1rem }
+      .pub-share-btn { height: 36px; font-size: .78rem; padding: 0 16px }
+    }
 
     /* ── 문의 종류 선택 ── */
     .inq-type-row {
@@ -10544,30 +10585,52 @@
         </div>
       </div>
 
-      <!-- Actions -->
-      ${isOwn ? `
-      <div class="pub-actions">
-        <button class="btn primary" style="flex:1" onclick="renderPage('profile')">${ic('pencil',14)} 프로필 편집</button>
-      </div>` : S.user ? `
-      <div class="pub-actions">
-        ${isFriend
-          ? `<button class="btn ghost" style="flex:1" onclick="removeFriend('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 삭제</button>`
-          : `<button class="btn primary" style="flex:1" id="pub-friend-btn" onclick="sendPubFriendReq('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 요청</button>`}
-      </div>` : `
-      <div class="pub-actions">
-        <button class="btn primary" style="flex:1" onclick="renderPage('auth')">로그인하고 친구 추가하기</button>
-      </div>`}
+      <!-- Body: side-by-side on desktop -->
+      <div class="pub-body">
 
-      <!-- Recent Public Tests -->
-      ${tests.length ? `
-      <div class="pub-section">
-        <div class="pub-section-title">${ic('book',15)} 공개 테스트</div>
-        ${tests.map(t => `
-          <div class="pub-test-card" ${S.user ? `onclick="renderPage('test',{id:'${t._id}'})"` : ''}>
-            <div class="pub-test-name">${esc(t.title)}</div>
-            <div class="pub-test-meta">${t.questionCount || 0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
-          </div>`).join('')}
-      </div>` : ''}
+        <!-- Left: Actions -->
+        <div>
+          ${isOwn ? `
+          <div class="pub-actions">
+            <button class="btn primary" style="flex:1" onclick="renderPage('profile')">${ic('pencil',14)} 프로필 편집</button>
+          </div>` : S.user ? `
+          <div class="pub-actions">
+            ${isFriend
+              ? `<button class="btn ghost" style="flex:1" onclick="removeFriend('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 삭제</button>`
+              : `<button class="btn primary" style="flex:1" id="pub-friend-btn" onclick="sendPubFriendReq('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 요청</button>`}
+          </div>` : `
+          <div class="pub-actions">
+            <button class="btn primary" style="flex:1" onclick="renderPage('auth')">로그인하고 친구 추가하기</button>
+          </div>`}
+
+          <div class="pub-section">
+            <div class="pub-section-title">${ic('people',15)} 정보</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:.82rem;color:var(--text2)">
+              <div style="display:flex;align-items:center;gap:8px">${ic('calendar',14)} <span>${joinDate} 가입</span></div>
+              <div style="display:flex;align-items:center;gap:8px">${ic('people',14)} <span>친구 ${st.friendCount || 0}명</span></div>
+              <div style="display:flex;align-items:center;gap:8px">${ic('chart',14)} <span>총 ${st.totalAttempts || 0}회 응시</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Recent Public Tests -->
+        <div>
+          ${tests.length ? `
+          <div class="pub-section">
+            <div class="pub-section-title">${ic('book',15)} 공개 테스트</div>
+            ${tests.map(t => `
+              <div class="pub-test-card" ${S.user ? `onclick="renderPage('test',{id:'${t._id}'})"` : ''}>
+                <div class="pub-test-name">${esc(t.title)}</div>
+                <div class="pub-test-meta">${t.questionCount || 0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
+              </div>`).join('')}
+          </div>` : `
+          <div class="pub-section">
+            <div class="pub-section-title">${ic('book',15)} 공개 테스트</div>
+            <div style="font-size:.82rem;color:var(--text3)">아직 공개 테스트가 없어요</div>
+          </div>`}
+        </div>
+
+      </div>
 
     </div>`;
       } catch (e) {
