@@ -223,6 +223,7 @@ const TestSchema = new mongoose.Schema({
   isFriendOnly: { type: Boolean, default: false },
   tags: [String],
   playCount: { type: Number, default: 0 },
+  favoriteCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -1198,6 +1199,17 @@ app.get('/api/p/:username', async (req, res) => {
     const recentTests = await Test.find({ author: user._id, isPublic: true, isFriendOnly: false })
       .sort({ createdAt: -1 }).limit(5).select('title questionCount createdAt');
 
+    // 랭킹 계산
+    let rank = null;
+    if (totalAttempts > 0) {
+      const higherCount = await Result.aggregate([
+        { $group: { _id: '$user', avgScore: { $avg: '$percentage' } } },
+        { $match: { avgScore: { $gt: avgScore } } },
+        { $count: 'count' }
+      ]);
+      rank = (higherCount[0]?.count || 0) + 1;
+    }
+
     res.json({
       user: {
         _id: user._id,
@@ -1208,7 +1220,7 @@ app.get('/api/p/:username', async (req, res) => {
         loginType: user.loginType,
         createdAt: user.createdAt,
       },
-      stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount },
+      stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount, rank },
       recentTests
     });
   } catch (e) {
@@ -1823,14 +1835,22 @@ app.post('/api/favorites/:testId', auth, async (req, res) => {
     const { testId } = req.params;
     const test = await Test.findById(testId);
     if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    await User.findByIdAndUpdate(req.user._id, { $addToSet: { favorites: testId } });
+    const user = await User.findById(req.user._id);
+    const alreadyFav = user.favorites.map(f => f.toString()).includes(testId);
+    if (!alreadyFav) {
+      await User.findByIdAndUpdate(req.user._id, { $addToSet: { favorites: testId } });
+      await Test.findByIdAndUpdate(testId, { $inc: { favoriteCount: 1 } });
+    }
     res.json({ message: '즐겨찾기에 추가되었습니다.', added: true });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
 app.delete('/api/favorites/:testId', auth, async (req, res) => {
   try {
+    const user = await User.findById(req.user._id);
+    const wasFav = user.favorites.map(f => f.toString()).includes(req.params.testId);
     await User.findByIdAndUpdate(req.user._id, { $pull: { favorites: req.params.testId } });
+    if (wasFav) await Test.findByIdAndUpdate(req.params.testId, { $inc: { favoriteCount: -1 } });
     res.json({ message: '즐겨찾기에서 제거되었습니다.', added: false });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });

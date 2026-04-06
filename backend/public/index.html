@@ -5787,24 +5787,17 @@
       flex-direction: column;
       align-items: center;
       flex: 1;
-      max-width: 110px
+      max-width: 120px
     }
 
-    .rank-podium-item.first {
-      order: 2
-    }
-
-    .rank-podium-item.second {
-      order: 1
-    }
-
-    .rank-podium-item.third {
-      order: 3
-    }
+    .rank-podium-item.first { order: 2 }
+    .rank-podium-item.second { order: 1 }
+    .rank-podium-item.third { order: 3 }
 
     .rank-crown {
-      font-size: 1.4rem;
-      margin-bottom: 4px
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.15))
     }
 
     .rank-avatar {
@@ -5818,65 +5811,105 @@
       font-weight: 800;
       font-size: 1.1rem;
       color: white;
-      margin-bottom: 6px;
-      position: relative
+      margin-bottom: 8px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,.15)
     }
 
     .rank-avatar.first {
-      width: 64px;
-      height: 64px;
-      font-size: 1.3rem;
-      background: linear-gradient(135deg, #ffd700, #ffaa00)
+      width: 68px;
+      height: 68px;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #ffd700, #ffaa00);
+      box-shadow: 0 4px 20px rgba(255,215,0,.4)
     }
 
     .rank-avatar.second {
-      background: linear-gradient(135deg, #b0bec5, #78909c)
+      background: linear-gradient(135deg, #c0c8d0, #8a9bab);
+      box-shadow: 0 4px 16px rgba(176,190,197,.35)
     }
 
     .rank-avatar.third {
-      background: linear-gradient(135deg, #cd7f32, #a05a2c)
+      background: linear-gradient(135deg, #d4944c, #a05a2c);
+      box-shadow: 0 4px 16px rgba(205,127,50,.3)
     }
 
     .rank-podium-name {
-      font-size: .75rem;
+      font-size: .78rem;
       font-weight: 700;
       color: var(--text);
       text-align: center;
-      max-width: 90px;
+      max-width: 100px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap
     }
 
     .rank-podium-pct {
-      font-size: .7rem;
-      color: var(--text3);
-      margin-top: 2px
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: .82rem;
+      margin-top: 3px
     }
 
     .rank-podium-bar {
       width: 100%;
-      border-radius: 8px 8px 0 0;
-      margin-top: 8px
+      border-radius: 14px 14px 0 0;
+      margin-top: 10px;
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 10px
+    }
+
+    .rank-podium-bar .rank-place {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      opacity: .5
     }
 
     .rank-podium-bar.first {
-      height: 80px;
-      background: linear-gradient(180deg, rgba(255, 215, 0, .3), rgba(255, 215, 0, .1));
-      border: 1.5px solid rgba(255, 215, 0, .4)
+      height: 90px;
+      background: linear-gradient(180deg, rgba(255,215,0,.25) 0%, rgba(255,170,0,.08) 100%);
+      border: 2px solid rgba(255,215,0,.35);
+      border-bottom: none
     }
+    .rank-podium-bar.first .rank-place { color: #ffa500 }
 
     .rank-podium-bar.second {
-      height: 58px;
-      background: linear-gradient(180deg, rgba(176, 190, 197, .25), rgba(176, 190, 197, .08));
-      border: 1.5px solid rgba(176, 190, 197, .35)
+      height: 65px;
+      background: linear-gradient(180deg, rgba(176,190,197,.2) 0%, rgba(176,190,197,.06) 100%);
+      border: 2px solid rgba(176,190,197,.3);
+      border-bottom: none
     }
+    .rank-podium-bar.second .rank-place { color: #8a9bab }
 
     .rank-podium-bar.third {
-      height: 42px;
-      background: linear-gradient(180deg, rgba(205, 127, 50, .25), rgba(205, 127, 50, .08));
-      border: 1.5px solid rgba(205, 127, 50, .35)
+      height: 48px;
+      background: linear-gradient(180deg, rgba(205,127,50,.2) 0%, rgba(205,127,50,.06) 100%);
+      border: 2px solid rgba(205,127,50,.3);
+      border-bottom: none
     }
+    .rank-podium-bar.third .rank-place { color: #a05a2c }
+
+    /* white theme podium improvements */
+    body.theme-light .rank-podium-bar.first {
+      background: linear-gradient(180deg, rgba(255,215,0,.18) 0%, rgba(255,215,0,.05) 100%);
+      border-color: rgba(255,170,0,.3)
+    }
+    body.theme-light .rank-podium-bar.second {
+      background: linear-gradient(180deg, rgba(120,144,156,.12) 0%, rgba(120,144,156,.04) 100%);
+      border-color: rgba(120,144,156,.25)
+    }
+    body.theme-light .rank-podium-bar.third {
+      background: linear-gradient(180deg, rgba(205,127,50,.12) 0%, rgba(205,127,50,.04) 100%);
+      border-color: rgba(180,110,40,.25)
+    }
+    body.theme-light .rank-avatar.first { box-shadow: 0 4px 16px rgba(255,170,0,.3) }
+    body.theme-light .rank-avatar.second { box-shadow: 0 4px 12px rgba(120,144,156,.25) }
+    body.theme-light .rank-avatar.third { box-shadow: 0 4px 12px rgba(180,110,40,.2) }
 
     .rank-list {
       display: flex;
@@ -6653,7 +6686,8 @@
       link:'<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>',
       calendar:'<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
       arrowLeft:'<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>',
-      book:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>'
+      book:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>',
+      shuffle:'<path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>'
     };return `<svg width="${sz}" height="${sz}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display:inline-block;vertical-align:-.15em;flex-shrink:0">${d[name]||''}</svg>`;}
 
     /* ============================================================
@@ -6840,13 +6874,13 @@
     function renderPage(page, opts = {}) {
       S.page = page;
       // 해시 URL 업데이트 (SPA 라우팅)
-      const newHash = page === 'u' ? '#/u/' + (opts.id || '') : '#/' + page + (opts.id ? '/' + opts.id : '');
+      const newHash = page === 'userprofile' ? '#/profile/' + (opts.id || '') : '#/' + page + (opts.id ? '/' + opts.id : '');
       if (window.location.hash !== newHash) {
         window.history.pushState({ page, opts }, '', newHash);
       }
       const app = document.getElementById('app');
       app.innerHTML = '';
-      if (!S.user && page !== 'auth' && page !== 'landing' && page !== 'u') { buildLanding(app); return; }
+      if (!S.user && page !== 'auth' && page !== 'landing' && page !== 'userprofile') { buildLanding(app); return; }
       switch (page) {
         case 'auth': buildAuth(app); break;
         case 'landing': buildLanding(app); break;
@@ -6864,7 +6898,7 @@
         case 'wrongnote': buildWrongNote(app); break;
         case 'tests': buildAllTests(app, opts); break;
         case 'favorites': buildAllTests(app, { tab: 'fav' }); break;
-        case 'u': buildPublicProfile(app, opts.id); break;
+        case 'userprofile': buildPublicProfile(app, opts.id); break;
       }
     }
 
@@ -6912,11 +6946,6 @@
     <button class="subnav-btn ${active === 'wrongnote' ? 'active' : ''}" onclick="renderPage('wrongnote')">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
       오답노트
-    </button>
-    <div class="subnav-divider"></div>
-    <button class="subnav-btn ${active === 'tests' ? 'active' : ''}" onclick="renderPage('tests')">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      전체 테스트
     </button>
   </div>`: ''}`;
     }
@@ -7500,6 +7529,7 @@
        ALL TESTS PAGE — 전체 / 내 테스트 / 즐겨찾기 탭
     ============================================================ */
     let allTestsTab = 'all'; // 'all' | 'mine' | 'fav'
+    let allTestsSort = 'newest'; // 'newest' | 'favorites' | 'popular'
 
     function buildAllTests(app, opts = {}) {
       allTestsTab = opts.tab || allTestsTab || 'all';
@@ -7519,11 +7549,16 @@
           </div>
         </div>
 
-        <!-- 검색 (즐겨찾기 탭에서도 사용) -->
-        <div class="search-wrap" style="margin-bottom:14px">
-          <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="search" inputmode="search" class="search-input" id="all-tests-search"
-            placeholder="테스트 검색..." oninput="filterAllTests(this.value)"/>
+        <!-- 검색 + 정렬 -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+          <div class="search-wrap" style="flex:1;margin-bottom:0">
+            <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="search" inputmode="search" class="search-input" id="all-tests-search"
+              placeholder="테스트 검색..." oninput="filterAllTests(this.value)"/>
+          </div>
+          <button class="btn ghost sm" id="tests-sort-btn" onclick="toggleTestsSort()" style="white-space:nowrap;flex-shrink:0;font-size:.72rem;padding:8px 10px">
+            ${ic('arrowSort',13)} ${allTestsSort === 'favorites' ? '즐겨찾기순' : allTestsSort === 'popular' ? '인기순' : '최신순'}
+          </button>
         </div>
 
         <!-- 테스트 목록 -->
@@ -7545,6 +7580,16 @@
       if (g) g.innerHTML = renderAllTestsGrid(tab, q);
     }
 
+    function toggleTestsSort() {
+      const order = ['newest', 'favorites', 'popular'];
+      allTestsSort = order[(order.indexOf(allTestsSort) + 1) % order.length];
+      const btn = document.getElementById('tests-sort-btn');
+      if (btn) btn.innerHTML = ic('arrowSort',13) + ' ' + (allTestsSort === 'favorites' ? '즐겨찾기순' : allTestsSort === 'popular' ? '인기순' : '최신순');
+      const q = document.getElementById('all-tests-search')?.value || '';
+      const g = document.getElementById('all-tests-grid');
+      if (g) g.innerHTML = renderAllTestsGrid(allTestsTab, q);
+    }
+
     function filterAllTests(q) {
       const g = document.getElementById('all-tests-grid');
       if (g) g.innerHTML = renderAllTestsGrid(allTestsTab, q);
@@ -7557,9 +7602,12 @@
       else if (tab === 'fav') src = S.favorites || [];
       else src = S.tests;
 
-      const filtered = lq
+      let filtered = lq
         ? src.filter(t => t.title.toLowerCase().includes(lq) || (t.description || '').toLowerCase().includes(lq))
-        : src;
+        : [...src];
+
+      if (allTestsSort === 'favorites') filtered.sort((a, b) => (b.favoriteCount || 0) - (a.favoriteCount || 0));
+      else if (allTestsSort === 'popular') filtered.sort((a, b) => (b.playCount || 0) - (a.playCount || 0));
 
       if (!filtered.length) {
         if (tab === 'mine') return '<div class="empty-state"><h3>만든 테스트가 없어요</h3><p>첫 번째 테스트를 만들어보세요!</p></div>';
@@ -7673,7 +7721,7 @@
     <div class="format-picker" style="grid-template-columns:1fr 1fr">
       <div class="fmt-card" onclick="pickMethod(this,'shuffle')" data-m="shuffle">
         <div class="fmt-check">✓</div>
-        <div class="fmt-icon">🔀</div>
+        <div class="fmt-icon">${ic('shuffle',28)}</div>
         <div class="fmt-name">랜덤 순서</div>
         <div class="fmt-desc">문항을 무작위로 섞어서 출제</div>
       </div>
@@ -7695,7 +7743,12 @@
         <span style="font-size:.85rem;font-weight:600;color:var(--text)">${ic('pencil',14)} 주관식 문항 포함</span>
         <div class="toggle ${S.includeSubjective ? 'on' : ''}" id="subj-toggle" onclick="toggleSubjective()"></div>
       </div>
-      <div style="font-size:.75rem;color:var(--text3);line-height:1.5">전체 문항 중 10%를 주관식(직접 입력)으로 출제합니다.<br>주관식 문항은 타이머 없이 진행됩니다.</div>
+      <div id="subj-count-row" style="display:${S.includeSubjective ? 'flex' : 'none'};align-items:center;gap:8px;margin-bottom:6px">
+        <label style="font-size:.78rem;color:var(--text2);white-space:nowrap">주관식 문항 수</label>
+        <input type="number" class="count-input" id="subj-count" value="${Math.max(1, Math.round(qCount * 0.1))}" min="1" max="${qCount}" style="width:60px;text-align:center">
+        <span style="font-size:.75rem;color:var(--text3)">/ ${qCount}문항</span>
+      </div>
+      <div style="font-size:.75rem;color:var(--text3);line-height:1.5">선택한 문항 수만큼 주관식(직접 입력)으로 출제합니다.<br>주관식 문항은 타이머 없이 진행됩니다.</div>
     </div>`: ''}
     ${meta?.format === 'essay' ? `
     <div style="background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.2);border-radius:12px;padding:12px 14px;margin-bottom:4px">
@@ -7719,6 +7772,8 @@
       if (!S.selectedMethod) { toast('방식을 선택해주세요', 'error'); return; }
       const countEl = document.getElementById('tc-count');
       const count = parseInt(countEl?.value) || S.pendingQCount || 9999;
+      const subjEl = document.getElementById('subj-count');
+      S._subjCount = subjEl ? parseInt(subjEl.value) || 1 : null;
       closeModal();
       await startTest(S.pendingTestId, S.selectedMethod, count);
     }
@@ -8485,7 +8540,7 @@
           test.questions.forEach(q => { q.isSubjective = true; q.timeLimit = 0; });
           S.testTimeLimitSec = test.testTimeLimit || 0;
         } else if (S.includeSubjective && test.questions.length >= 5) {
-          const subjCount = Math.max(1, Math.round(test.questions.length * 0.1));
+          const subjCount = Math.min(S._subjCount || Math.max(1, Math.round(test.questions.length * 0.1)), test.questions.length);
           const indices = shuffle([...Array(test.questions.length).keys()]).slice(0, subjCount);
           test.questions.forEach((q, i) => {
             q.isSubjective = indices.includes(i);
@@ -8670,6 +8725,8 @@
       S.includeSubjective = !S.includeSubjective;
       const tog = document.getElementById('subj-toggle');
       if (tog) tog.className = 'toggle' + (S.includeSubjective ? ' on' : '');
+      const row = document.getElementById('subj-count-row');
+      if (row) row.style.display = S.includeSubjective ? 'flex' : 'none';
     }
 
     function submitSubjective() {
@@ -9079,31 +9136,73 @@
       <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
       <input type="file" id="banner-file-input" accept="image/*" style="display:none" onchange="handleBannerUpload(this)">
 
-      <!-- 배너 + 로그아웃 버튼 -->
+      <!-- 배너 + 버튼들 -->
       <div style="position:relative">
         <div class="profile-banner-section" onclick="showBannerPicker()">
           <div class="profile-banner-bg" style="${getBannerStyle()}"></div>
           <div class="profile-banner-edit-hint">${ic('image',14)} 배너 변경</div>
         </div>
-        <!-- 로그아웃 버튼 — 배너 우측 하단 -->
-        <button onclick="logout()" style="position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.75rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;z-index:10">
+        <div style="position:absolute;bottom:10px;left:12px;display:flex;gap:6px;z-index:10">
+          <button onclick="showProfileEditPanel()" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
+            ${ic('pencil',12)} 편집
+          </button>
+          <button onclick="copyProfileUrl('${location.origin}/#/profile/${encodeURIComponent(u?.username||'')}')" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
+            ${ic('link',12)} 공유
+          </button>
+        </div>
+        <button onclick="logout()" style="position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;z-index:10">
           로그아웃
         </button>
       </div>
 
-      <!-- 아바타 + 이름 + 이메일 -->
-      <div class="profile-avatar-row">
-        <div class="profile-avatar" onclick="document.getElementById('avatar-file-input').click()" id="profile-avatar-el">
+      <!-- 아바타 -->
+      <div style="display:flex;justify-content:center;margin-top:-40px;position:relative;z-index:10">
+        <div class="profile-avatar" onclick="document.getElementById('avatar-file-input').click()" id="profile-avatar-el" style="width:80px;height:80px;border:4px solid var(--bg)">
           <span id="profile-avatar-inner">${getAvatarContent()}</span>
           <div class="avatar-edit-hint">사진 변경</div>
         </div>
-        <div class="profile-name-area" style="padding-top:10px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-            <div class="profile-display-name" id="profile-disp-name">${esc(u?.username || '사용자')}</div>
-            <button class="btn ghost sm" onclick="showProfileEditPanel()" style="padding:5px 10px;font-size:.72rem">${ic('pencil',12)} 편집</button>
+      </div>
+
+      <!-- 이름 + 이메일 (중앙 정렬) -->
+      <div style="text-align:center;padding:8px 20px 0">
+        <div class="profile-display-name" id="profile-disp-name" style="font-size:1.15rem">${esc(u?.username || '사용자')}</div>
+        <div class="profile-email" id="profile-disp-email" style="margin-top:2px">${esc(u?.email || '')}</div>
+      </div>
+
+      <!-- 내 랭킹 + 통계 -->
+      <div id="profile-rank-area" style="padding:16px 20px 0">
+        <div class="pub-stats" style="padding:0">
+          <div class="pub-stat">
+            <div class="pub-stat-num">${S.stats?.totalAttempts || 0}</div>
+            <div class="pub-stat-label">총 응시</div>
           </div>
-          <div class="profile-email" id="profile-disp-email">${esc(u?.email || '')}</div>
-          <button class="btn ghost sm" onclick="copyProfileUrl('${location.origin}/#/u/${encodeURIComponent(u?.username||'')}')" style="margin-top:6px;padding:4px 10px;font-size:.7rem">${ic('link',12)} 프로필 공유</button>
+          <div class="pub-stat">
+            <div class="pub-stat-num" style="color:${(S.stats?.avgScore||0) >= 80 ? 'var(--accent3)' : (S.stats?.avgScore||0) >= 50 ? 'var(--accent)' : 'var(--accent2)'}">${S.stats?.avgScore || 0}%</div>
+            <div class="pub-stat-label">평균 정답률</div>
+          </div>
+          <div class="pub-stat">
+            <div class="pub-stat-num" style="color:var(--accent3)">${S.stats?.bestScore || 0}%</div>
+            <div class="pub-stat-label">최고 점수</div>
+          </div>
+          <div class="pub-stat">
+            <div class="pub-stat-num">${S.myTests?.length || 0}</div>
+            <div class="pub-stat-label">테스트</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 내 테스트 -->
+      <div class="section" style="padding-top:8px">
+        <div class="sec-header" style="margin-bottom:12px">
+          <span class="sec-title">${ic('book')} 내 테스트</span>
+          <button class="btn ghost sm" onclick="renderPage('tests',{tab:'mine'})" style="font-size:.72rem">더보기 →</button>
+        </div>
+        <div class="tests-grid">
+          ${(S.myTests||[]).slice(0,4).map(t => `
+            <div class="pub-test-card" onclick="showTestOptions(null,'${t._id}')">
+              <div class="pub-test-name">${esc(t.title)}</div>
+              <div class="pub-test-meta">${t.questionCount||t.questions?.length||0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
+            </div>`).join('') || '<div style="font-size:.82rem;color:var(--text3);padding:8px 0">아직 만든 테스트가 없어요</div>'}
         </div>
       </div>
 
@@ -9124,6 +9223,22 @@
 
     </div>
   </div>`+ bottomNav('profile');
+      // 랭킹 비동기 로드
+      loadProfileRank();
+    }
+
+    async function loadProfileRank() {
+      try {
+        const data = await fetch(API + '/p/' + encodeURIComponent(S.user.username)).then(r => r.json());
+        const rank = data.stats?.rank;
+        const el = document.getElementById('profile-rank-area');
+        if (el && rank) {
+          const badge = document.createElement('div');
+          badge.style.cssText = 'text-align:center;margin-bottom:10px';
+          badge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.2);border-radius:20px;padding:5px 14px;font-size:.78rem;font-weight:700;color:var(--accent)">${ic('trophy',14)} 전체 랭킹 ${rank}위</span>`;
+          el.prepend(badge);
+        }
+      } catch {}
     }
 
     function showProfileEditPanel() {
@@ -9534,20 +9649,20 @@
       let podiumHTML = '';
       if (top3.length) {
         const [first, second, third] = [top3[0], top3[1], top3[2]];
-        const podItem = (u, rank, cls, crown) => u ? `
+        const podItem = (u, rank, cls, crown, placeNum) => u ? `
       <div class="rank-podium-item ${cls}" onclick="goToUserPage('${esc(u.username)}')" style="cursor:pointer">
         <div class="rank-crown">${crown}</div>
-        <div class="rank-avatar ${cls}" style="${u._id === S.user?.id ? 'box-shadow:0 0 0 3px var(--accent)' : ''}">
+        <div class="rank-avatar ${cls}" style="${u._id === S.user?.id ? 'outline:3px solid var(--accent);outline-offset:2px' : ''}">
           ${u.avatarImage ? `<img src="${u.avatarImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (u.username?.[0]?.toUpperCase() || '?')}
         </div>
         <div class="rank-podium-name">${esc(u.username)}${u._id === S.user?.id ? ' 👈' : ''}</div>
         <div class="rank-podium-pct" style="color:${gc(u.avgScore)}">${u.avgScore}%</div>
-        <div class="rank-podium-bar ${cls}"></div>
-      </div>` : `<div class="rank-podium-item ${cls}"><div class="rank-crown" style="opacity:.2">${crown}</div><div class="rank-avatar ${cls}" style="opacity:.25">-</div><div class="rank-podium-bar ${cls}"></div></div>`;
+        <div class="rank-podium-bar ${cls}"><span class="rank-place">${placeNum}</span></div>
+      </div>` : `<div class="rank-podium-item ${cls}"><div class="rank-crown" style="opacity:.2">${crown}</div><div class="rank-avatar ${cls}" style="opacity:.25">-</div><div class="rank-podium-bar ${cls}"><span class="rank-place">${placeNum}</span></div></div>`;
         podiumHTML = `<div class="rank-podium">
-      ${podItem(second, '2', 'second', '🥈')}
-      ${podItem(first, '1', 'first', '🥇')}
-      ${podItem(third, '3', 'third', '🥉')}
+      ${podItem(second, '2', 'second', '🥈', '2')}
+      ${podItem(first, '1', 'first', '🥇', '1')}
+      ${podItem(third, '3', 'third', '🥉', '3')}
     </div>`;
       }
 
@@ -10365,12 +10480,12 @@
     }
 
     /* ============================================================
-       PUBLIC PROFILE PAGE (#/u/:username)
+       PUBLIC PROFILE PAGE (#/profile/:username)
     ============================================================ */
     function goToUserPage(username) {
       if (!username) return;
       if (S.user && username === S.user.username) { renderPage('profile'); return; }
-      renderPage('u', { id: username });
+      renderPage('userprofile', { id: username });
     }
 
     async function buildPublicProfile(app, username) {
@@ -10391,7 +10506,7 @@
           ? `background:url('${u.bannerImage}') center/cover no-repeat`
           : `background:${u.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)'}`;
         const joinDate = new Date(u.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const profileUrl = location.origin + '/#/u/' + encodeURIComponent(u.username);
+        const profileUrl = location.origin + '/#/profile/' + encodeURIComponent(u.username);
 
         app.innerHTML = `
     <div class="pub-profile-wrap">
@@ -10410,7 +10525,7 @@
         </div>
         <div class="pub-name-area">
           <div class="pub-username">${esc(u.username)}</div>
-          <div class="pub-url">ydmaster.onrender.com/#/u/${esc(u.username)}</div>
+          <div class="pub-url">ydmaster.onrender.com/#/profile/${esc(u.username)}</div>
         </div>
       </div>
 
@@ -10420,6 +10535,11 @@
         <span>${ic('people',13)} 친구 ${st.friendCount || 0}명</span>
         <span>${u.loginType === 'naver' ? '네이버' : u.loginType === 'google' ? '구글' : '이메일'} 계정</span>
       </div>
+
+      <!-- Ranking -->
+      ${st.rank ? `<div style="text-align:center;padding:16px 20px 0">
+        <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.2);border-radius:20px;padding:5px 14px;font-size:.78rem;font-weight:700;color:var(--accent)">${ic('trophy',14)} 전체 랭킹 ${st.rank}위</span>
+      </div>` : ''}
 
       <!-- Stats -->
       <div class="pub-stats">
@@ -10504,7 +10624,7 @@
       try {
         const data = await apiFetch('GET', `/users/${userId}/profile`);
         if (data.user?.username) {
-          renderPage('u', { id: data.user.username });
+          renderPage('userprofile', { id: data.user.username });
         }
       } catch (e) {
         toast(e.message || '프로필을 불러올 수 없습니다.', 'error');
@@ -11084,7 +11204,7 @@
         const app = document.getElementById('app');
         if (app) {
           app.innerHTML = '';
-          if (!S.user && e.state.page !== 'auth' && e.state.page !== 'landing' && e.state.page !== 'u') { buildLanding(app); return; }
+          if (!S.user && e.state.page !== 'auth' && e.state.page !== 'landing' && e.state.page !== 'userprofile') { buildLanding(app); return; }
           switch (e.state.page) {
             case 'auth': buildAuth(app); break;
             case 'landing': buildLanding(app); break;
@@ -11102,7 +11222,7 @@
             case 'wrongnote': buildWrongNote(app); break;
             case 'tests': buildAllTests(app, e.state.opts || {}); break;
             case 'favorites': buildAllTests(app, { tab: 'fav' }); break;
-            case 'u': buildPublicProfile(app, e.state.opts?.id); break;
+            case 'userprofile': buildPublicProfile(app, e.state.opts?.id); break;
             default: buildHome(app);
           }
         }
@@ -11136,8 +11256,8 @@
           await loadData();
           // 해시 URL에서 초기 페이지 결정
           const hash = window.location.hash.replace('#/', '').split('/');
-          if (hash[0] === 'u' && hash[1]) {
-            renderPage('u', { id: decodeURIComponent(hash[1]) });
+          if (hash[0] === 'profile' && hash[1]) {
+            renderPage('userprofile', { id: decodeURIComponent(hash[1]) });
           } else {
             const startPage = hash[0] && ['home', 'tests', 'editor', 'friends', 'history', 'profile', 'ranking', 'wrongnote', 'notice', 'inquiry', 'admin'].includes(hash[0]) ? hash[0] : 'home';
             renderPage(startPage);
@@ -11147,8 +11267,8 @@
         }
       } else {
         const hash = window.location.hash.replace('#/', '').split('/');
-        if (hash[0] === 'u' && hash[1]) {
-          renderPage('u', { id: decodeURIComponent(hash[1]) });
+        if (hash[0] === 'profile' && hash[1]) {
+          renderPage('userprofile', { id: decodeURIComponent(hash[1]) });
         } else { renderPage('landing'); }
       }
       document.getElementById('loading').style.display = 'none';
