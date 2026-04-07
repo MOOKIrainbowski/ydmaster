@@ -4925,6 +4925,7 @@
       font-size: .78rem; color: var(--text3); flex-wrap: wrap
     }
     .pub-meta-row span { display: flex; align-items: center; gap: 4px }
+    .pub-body { display: block }
     .pub-stats {
       display: grid; grid-template-columns: repeat(4, 1fr);
       gap: 8px; padding: 18px 20px 0
@@ -4968,20 +4969,41 @@
     /* ── Desktop public profile ── */
     @media (min-width: 768px) {
       .pub-profile-wrap {
-        max-width: 680px;
+        max-width: 860px;
         padding: 40px 20px 80px
       }
       .pub-banner {
-        height: 180px;
+        height: 200px;
         border-radius: 20px
       }
       .pub-avatar {
-        width: 90px; height: 90px; font-size: 2rem;
+        width: 100px; height: 100px; font-size: 2.2rem;
         border-width: 5px
       }
-      .pub-username { font-size: 1.3rem }
-      .pub-url { font-size: .76rem }
+      .pub-avatar-row {
+        margin-top: -50px; padding: 0 32px; gap: 18px
+      }
+      .pub-username { font-size: 1.4rem }
+      .pub-url { font-size: .78rem }
+      .pub-meta-row { padding: 18px 32px 0; gap: 24px; font-size: .85rem }
+      .pub-stats { padding: 20px 32px 0; gap: 12px }
+      .pub-stat { padding: 18px 10px; border-radius: 16px }
+      .pub-stat-num { font-size: 1.3rem }
+      .pub-stat-label { font-size: .72rem }
+      .pub-actions { padding: 24px 32px 0; gap: 12px }
+      .pub-actions .btn { padding: 12px 24px; font-size: .9rem }
+      .pub-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0
+      }
+      .pub-section { padding: 24px 32px 0 }
+      .pub-section-title { font-size: .92rem; margin-bottom: 14px }
+      .pub-test-card { padding: 14px 18px }
+      .pub-test-name { font-size: .9rem }
+      .pub-test-meta { font-size: .75rem }
       .pub-back-btn { width: 40px; height: 40px; font-size: 1rem }
+      .pub-share-btn { height: 36px; font-size: .78rem; padding: 0 16px }
     }
 
     /* ── 문의 종류 선택 ── */
@@ -9192,33 +9214,33 @@
       <div id="profile-rank-area" style="padding:12px 20px 0"></div>
 
       <!-- 내 테스트 + 친구 목록 (2단 그리드) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:10px 16px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 16px 0">
 
         <!-- 내 테스트 -->
         <div class="section" style="padding:0">
-          <div class="sec-header" style="margin-bottom:12px">
-            <span class="sec-title">${ic('book',15)} 내 테스트</span>
-            <button class="btn ghost sm" onclick="renderPage('tests',{tab:'mine'})" style="font-size:.7rem;padding:4px 10px">더보기 →</button>
+          <div class="sec-header" style="margin-bottom:10px">
+            <span class="sec-title" style="font-size:.82rem">${ic('book',14)} 내 테스트</span>
+            <button class="btn ghost sm" onclick="renderPage('tests',{tab:'mine'})" style="font-size:.68rem;padding:3px 8px">더보기</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            ${(S.myTests||[]).slice(0,5).map(t => `
-              <div class="pub-test-card" onclick="showTestOptions(null,'${t._id}')" style="margin-bottom:0">
-                <div class="pub-test-name">${esc(t.title)}</div>
-                <div class="pub-test-meta">${t.questionCount||t.questions?.length||0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
-              </div>`).join('') || '<div style="font-size:.82rem;color:var(--text3);padding:12px 0">아직 만든 테스트가 없어요</div>'}
+            ${(S.myTests||[]).slice(0,4).map(t => `
+              <div class="pub-test-card" onclick="showTestOptions(null,'${t._id}')" style="margin-bottom:0;padding:10px 12px">
+                <div class="pub-test-name" style="font-size:.78rem">${esc(t.title)}</div>
+                <div class="pub-test-meta" style="font-size:.65rem">${t.questionCount||t.questions?.length||0}문항</div>
+              </div>`).join('') || '<div style="font-size:.78rem;color:var(--text3);padding:8px 0">아직 만든 테스트가 없어요</div>'}
           </div>
         </div>
 
         <!-- 친구 목록 -->
         <div class="section friends-section" style="padding:0">
-          <div class="sec-header" style="margin-bottom:12px">
-            <span class="sec-title">${ic('people',15)} 친구</span>
-            <button class="btn primary sm" onclick="showAddFriend()">+ 친구 추가</button>
+          <div class="sec-header" style="margin-bottom:10px">
+            <span class="sec-title" style="font-size:.82rem">${ic('people',14)} 친구</span>
+            <button class="btn primary sm" onclick="showAddFriend()" style="font-size:.68rem;padding:3px 8px">+ 추가</button>
           </div>
-          <div class="friends-tabs">
-            <div class="friends-tab active" id="ftab-list" onclick="switchFTab('list')">친구 목록 (${S.friends.length})</div>
-            <div class="friends-tab" id="ftab-req" onclick="switchFTab('req')">
-              친구 요청${hasPending ? '<span class="ftab-badge"></span>' : ''}
+          <div class="friends-tabs" style="margin-bottom:8px">
+            <div class="friends-tab active" id="ftab-list" onclick="switchFTab('list')" style="font-size:.72rem;padding:6px 0">목록 (${S.friends.length})</div>
+            <div class="friends-tab" id="ftab-req" onclick="switchFTab('req')" style="font-size:.72rem;padding:6px 0">
+              요청${hasPending ? '<span class="ftab-badge"></span>' : ''}
             </div>
           </div>
           <div id="ftab-content">${renderFriendList()}</div>
@@ -10283,13 +10305,10 @@
     function renderFriendList() {
       if (!S.friends?.length) return '<div class="empty-state"><h3>아직 친구가 없어요</h3><p>친구를 추가해보세요!</p></div>';
       return S.friends.map(f => `
-    <div class="friend-item">
-      <div class="friend-avatar" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer">${f.username[0].toUpperCase()}</div>
-      <div class="friend-name" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;flex:1">${esc(f.username)}</div>
-      <div class="friend-acts">
-        <button class="btn ghost sm" onclick="goToUserPage('${esc(f.username)}')">프로필</button>
-        <button class="btn danger sm" onclick="removeFriend('${f._id}','${esc(f.username)}')">삭제</button>
-      </div>
+    <div class="friend-item" style="gap:8px">
+      <div class="friend-avatar" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;width:30px;height:30px;font-size:.75rem;flex-shrink:0">${f.username[0].toUpperCase()}</div>
+      <div class="friend-name" onclick="goToUserPage('${esc(f.username)}')" style="cursor:pointer;flex:1;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.username)}</div>
+      <button class="btn danger sm" onclick="removeFriend('${f._id}','${esc(f.username)}')" style="padding:3px 8px;font-size:.65rem;flex-shrink:0">삭제</button>
     </div>`).join('');
     }
 
@@ -10516,81 +10535,99 @@
         app.innerHTML = `
     <div class="pub-profile-wrap">
       <!-- Banner -->
-      <div style="position:relative">
-        <div class="pub-banner" style="${bannerStyle}">
-          <button class="pub-back-btn" onclick="${S.user ? "history.back()" : "renderPage('landing')"}">${ic('arrowLeft',16)}</button>
-        </div>
-        <div style="position:absolute;bottom:10px;left:12px;display:flex;gap:6px;z-index:10">
-          <button onclick="copyProfileUrl('${esc(profileUrl)}')" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
-            ${ic('link',12)} 공유
-          </button>
-          ${S.user && !isOwn ? `
-          <button onclick="${isFriend ? `removeFriend('${u._id}','${esc(u.username)}')` : `sendPubFriendReq('${u._id}','${esc(u.username)}')`}" id="pub-friend-btn" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
-            ${ic('people',12)} ${isFriend ? '친구 삭제' : '친구 요청'}
-          </button>` : ''}
-          ${isOwn ? `
-          <button onclick="renderPage('profile')" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
-            ${ic('pencil',12)} 편집
-          </button>` : ''}
-        </div>
+      <div class="pub-banner" style="${bannerStyle}">
+        <button class="pub-back-btn" onclick="${S.user ? "history.back()" : "renderPage('landing')"}">${ic('arrowLeft',16)}</button>
+        <button class="pub-share-btn" onclick="copyProfileUrl('${esc(profileUrl)}')">${ic('link',13)} 프로필 공유</button>
       </div>
 
-      <!-- Avatar (centered) -->
-      <div style="display:flex;justify-content:center;margin-top:-40px;position:relative;z-index:10">
+      <!-- Avatar + Name -->
+      <div class="pub-avatar-row">
         <div class="pub-avatar">
           ${u.avatarImage
             ? `<img src="${u.avatarImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
             : (u.username?.[0]?.toUpperCase() || '?')}
         </div>
+        <div class="pub-name-area">
+          <div class="pub-username">${esc(u.username)}</div>
+          <div class="pub-url">ydmaster.onrender.com/#/profile/${esc(u.username)}</div>
+        </div>
       </div>
 
-      <!-- Name + URL (centered) -->
-      <div style="text-align:center;padding:8px 20px 0">
-        <div class="pub-username">${esc(u.username)}</div>
-        <div class="pub-url">ydmaster.onrender.com/#/profile/${esc(u.username)}</div>
+      <!-- Meta -->
+      <div class="pub-meta-row">
+        <span>${ic('calendar',13)} ${joinDate} 가입</span>
+        <span>${ic('people',13)} 친구 ${st.friendCount || 0}명</span>
+        <span>${u.loginType === 'naver' ? '네이버' : u.loginType === 'google' ? '구글' : '이메일'} 계정</span>
       </div>
 
-      <!-- Ranking badge -->
-      ${st.rank ? `<div style="text-align:center;padding:10px 20px 0">
+      <!-- Ranking -->
+      ${st.rank ? `<div style="text-align:center;padding:16px 20px 0">
         <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.2);border-radius:20px;padding:5px 14px;font-size:.78rem;font-weight:700;color:var(--accent)">${ic('trophy',14)} 전체 랭킹 ${st.rank}위</span>
       </div>` : ''}
 
-      <!-- Two-column grid: Tests + Info -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 16px 0">
+      <!-- Stats -->
+      <div class="pub-stats">
+        <div class="pub-stat">
+          <div class="pub-stat-num">${st.totalAttempts || 0}</div>
+          <div class="pub-stat-label">총 응시</div>
+        </div>
+        <div class="pub-stat">
+          <div class="pub-stat-num" style="color:${gc(st.avgScore||0)}">${st.avgScore || 0}%</div>
+          <div class="pub-stat-label">평균 정답률</div>
+        </div>
+        <div class="pub-stat">
+          <div class="pub-stat-num" style="color:var(--accent3)">${st.bestScore || 0}%</div>
+          <div class="pub-stat-label">최고 점수</div>
+        </div>
+        <div class="pub-stat">
+          <div class="pub-stat-num">${st.totalTests || 0}</div>
+          <div class="pub-stat-label">공개 테스트</div>
+        </div>
+      </div>
 
-        <!-- 공개 테스트 -->
-        <div class="section" style="padding:0">
-          <div class="sec-header" style="margin-bottom:12px">
-            <span class="sec-title">${ic('book',15)} 공개 테스트</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            ${tests.length ? tests.map(t => `
-              <div class="pub-test-card" ${S.user ? `onclick="renderPage('test',{id:'${t._id}'})"` : ''} style="margin-bottom:0">
-                <div class="pub-test-name">${esc(t.title)}</div>
-                <div class="pub-test-meta">${t.questionCount || 0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
-              </div>`).join('') : '<div style="font-size:.82rem;color:var(--text3);padding:12px 0">아직 공개 테스트가 없어요</div>'}
+      <!-- Body: side-by-side on desktop -->
+      <div class="pub-body">
+
+        <!-- Left: Actions -->
+        <div>
+          ${isOwn ? `
+          <div class="pub-actions">
+            <button class="btn primary" style="flex:1" onclick="renderPage('profile')">${ic('pencil',14)} 프로필 편집</button>
+          </div>` : S.user ? `
+          <div class="pub-actions">
+            ${isFriend
+              ? `<button class="btn ghost" style="flex:1" onclick="removeFriend('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 삭제</button>`
+              : `<button class="btn primary" style="flex:1" id="pub-friend-btn" onclick="sendPubFriendReq('${u._id}','${esc(u.username)}')">${ic('people',14)} 친구 요청</button>`}
+          </div>` : `
+          <div class="pub-actions">
+            <button class="btn primary" style="flex:1" onclick="renderPage('auth')">로그인하고 친구 추가하기</button>
+          </div>`}
+
+          <div class="pub-section">
+            <div class="pub-section-title">${ic('people',15)} 정보</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:.82rem;color:var(--text2)">
+              <div style="display:flex;align-items:center;gap:8px">${ic('calendar',14)} <span>${joinDate} 가입</span></div>
+              <div style="display:flex;align-items:center;gap:8px">${ic('people',14)} <span>친구 ${st.friendCount || 0}명</span></div>
+              <div style="display:flex;align-items:center;gap:8px">${ic('chart',14)} <span>총 ${st.totalAttempts || 0}회 응시</span></div>
+            </div>
           </div>
         </div>
 
-        <!-- 정보 -->
-        <div class="section" style="padding:0">
-          <div class="sec-header" style="margin-bottom:12px">
-            <span class="sec-title">${ic('chart',15)} 정보</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div class="pub-test-card" style="margin-bottom:0;cursor:default">
-              <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text2)">${ic('calendar',14)} ${joinDate} 가입</div>
-            </div>
-            <div class="pub-test-card" style="margin-bottom:0;cursor:default">
-              <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text2)">${ic('people',14)} 친구 ${st.friendCount || 0}명</div>
-            </div>
-            <div class="pub-test-card" style="margin-bottom:0;cursor:default">
-              <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text2)">${ic('chart',14)} 총 ${st.totalAttempts || 0}회 응시 · 평균 ${st.avgScore || 0}%</div>
-            </div>
-            <div class="pub-test-card" style="margin-bottom:0;cursor:default">
-              <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text2)">${ic('trophy',14)} 최고 점수 ${st.bestScore || 0}%</div>
-            </div>
-          </div>
+        <!-- Right: Recent Public Tests -->
+        <div>
+          ${tests.length ? `
+          <div class="pub-section">
+            <div class="pub-section-title">${ic('book',15)} 공개 테스트</div>
+            ${tests.map(t => `
+              <div class="pub-test-card" ${S.user ? `onclick="renderPage('test',{id:'${t._id}'})"` : ''}>
+                <div class="pub-test-name">${esc(t.title)}</div>
+                <div class="pub-test-meta">${t.questionCount || 0}문항 · ${new Date(t.createdAt).toLocaleDateString('ko-KR')}</div>
+              </div>`).join('')}
+          </div>` : `
+          <div class="pub-section">
+            <div class="pub-section-title">${ic('book',15)} 공개 테스트</div>
+            <div style="font-size:.82rem;color:var(--text3)">아직 공개 테스트가 없어요</div>
+          </div>`}
         </div>
 
       </div>
