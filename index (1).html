@@ -9178,21 +9178,10 @@
       <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
       <input type="file" id="banner-file-input" accept="image/*" style="display:none" onchange="handleBannerUpload(this)">
 
-      <!-- 배너 + 버튼들 -->
-      <div class="profile-banner-section">
-        <div class="profile-banner-bg" style="${getBannerStyle()}" onclick="showBannerPicker()"></div>
-        <div class="profile-banner-edit-hint" style="pointer-events:none">${ic('image',14)} 배너 변경</div>
-        <div style="position:absolute;bottom:10px;left:12px;display:flex;gap:6px;z-index:10">
-          <button onclick="showProfileEditPanel()" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
-            ${ic('pencil',12)} 편집
-          </button>
-          <button onclick="copyProfileUrl('${location.origin}/#/profile/${encodeURIComponent(u?.username||'')}')" style="background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px">
-            ${ic('link',12)} 공유
-          </button>
-        </div>
-        <button onclick="logout()" style="position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:white;font-size:.72rem;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;z-index:10">
-          로그아웃
-        </button>
+      <!-- 배너 -->
+      <div class="profile-banner-section" onclick="showBannerPicker()">
+        <div class="profile-banner-bg" style="${getBannerStyle()}"></div>
+        <div class="profile-banner-edit-hint">${ic('image',14)} 배너 변경</div>
       </div>
 
       <!-- 아바타 -->
@@ -9207,6 +9196,13 @@
       <div style="text-align:center;padding:8px 20px 0">
         <div class="profile-display-name" id="profile-disp-name" style="font-size:1.15rem">${esc(u?.username || '사용자')}</div>
         <div class="profile-email" id="profile-disp-email" style="margin-top:2px">${esc(u?.email || '')}</div>
+      </div>
+
+      <!-- 편집 / 공유 / 로그아웃 버튼 -->
+      <div style="display:flex;justify-content:center;gap:8px;padding:12px 20px 0">
+        <button onclick="showProfileEditPanel()" style="display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:.78rem;font-weight:600;padding:8px 16px;border-radius:10px;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">${ic('pencil',13)} 편집</button>
+        <button onclick="copyProfileUrl('${location.origin}/#/profile/${encodeURIComponent(u?.username||'')}')" style="display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:.78rem;font-weight:600;padding:8px 16px;border-radius:10px;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">${ic('link',13)} 공유</button>
+        <button onclick="logout()" style="display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:.78rem;font-weight:600;padding:8px 16px;border-radius:10px;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='#e11d48'" onmouseleave="this.style.borderColor='var(--border)'">로그아웃</button>
       </div>
 
       <!-- 랭킹 배지 -->
