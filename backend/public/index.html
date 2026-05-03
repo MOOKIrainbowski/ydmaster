@@ -8840,6 +8840,33 @@
       buildTest(document.getElementById('app')); startGlobalTimer();
     }
 
+    // ── 시험 중 키보드 단축키 (PC): 1~5 = 보기 선택, Tab = 다음 문항 ──
+    document.addEventListener('keydown', function (e) {
+      if (S.page !== 'test' || !S.activeTest) return;
+      const q = S.activeTest.questions[S.activeQIdx];
+      if (!q) return;
+      const tag = (e.target?.tagName || '').toUpperCase();
+      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable;
+
+      // 1~5 숫자키: 보기 선택 (객관식, 미응답, 입력 중 아님)
+      if (!q.isSubjective && !S.answered && !isTyping && /^[1-5]$/.test(e.key)) {
+        const oi = parseInt(e.key, 10) - 1;
+        if (q.options && oi < q.options.length) {
+          e.preventDefault();
+          selectOpt(oi);
+        }
+        return;
+      }
+
+      // Tab: 다음 문항 / 결과 보기 (응답 완료 후)
+      if (e.key === 'Tab' && S.answered && !e.shiftKey) {
+        e.preventDefault();
+        const total = S.activeTest.questions.length;
+        if (S.activeQIdx + 1 < total) nextQ();
+        else finishTest();
+      }
+    });
+
     async function finishTest() {
       clearInterval(S.timer); clearInterval(S.qTimer);
       try {
