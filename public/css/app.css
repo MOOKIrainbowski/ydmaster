@@ -196,6 +196,10 @@ h3 { font-size: 20px; }
 .section__title { margin: 0; font-size: 20px; }
 .stack { display: flex; flex-direction: column; gap: 16px; }
 .btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.card.login-card { width: min(100%, 420px); margin: 40px auto; padding: 24px; }
+.login-card > .section__title { margin-bottom: 20px; }
+.login-card > .tabs, .login-card > .stack { margin-bottom: 20px; }
+.section > .explore-controls { margin-top: 20px; }
 
 .btn {
   display: inline-flex;
@@ -243,6 +247,7 @@ h3 { font-size: 20px; }
 .field__hint { display: flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 13px; }
 .field-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .field-row > .field { flex: 1 1 160px; }
+.field-row > .btn { align-self: flex-end; min-height: 48px; }
 .input, .select {
   width: 100%;
   min-width: 0;
@@ -261,6 +266,17 @@ textarea.input { min-height: 112px; resize: vertical; }
 .field:where(fieldset) { min-width: 0; margin: 0; padding: 0; border: 0; }
 
 .card { padding: 20px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); }
+a.card { display: block; color: inherit; text-decoration: none; }
+a.card:hover, a.card:focus-visible { border-color: var(--focus); }
+.set-card { display: flex; min-width: 0; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: inherit; text-decoration: none; }
+.set-card:hover, .set-card:focus-visible { border-color: var(--focus); }
+.set-card__head, .set-card__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.set-card__head { justify-content: space-between; }
+.set-card__title { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: 650; }
+.set-card__meta { color: var(--text-2); font-size: 13px; }
+.set-card__description { margin: 0; color: var(--text-2); }
+.set-card__author { display: inline-flex; align-items: center; gap: 8px; }
+.is-key { border-radius: 3px; background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
 .tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
 .tabs__tab {
   display: inline-flex;
