@@ -128,3 +128,8 @@ test('golden: grading.json', { skip: !fx('grading.json') }, () => {
     assert.equal(typeof r === 'object' ? r.correct : r, c.correct, `${c.fn}(${c.expected} / ${c.response}) ${c.note || ''}`);
   }
 });
+
+test('객관식 보기가 1개뿐이면 문항을 만들지 않음(I-059)', () => {
+  const one = { items: [{ set: 's', item: { _id: 'x', term: 'solo', meaning: '혼자' } }], pool: [{ set: 's', term: 'solo', meaning: '혼자' }] };
+  assert.throws(() => buildQuestions('mc_meaning', one, 5), /2개 이상/);
+});

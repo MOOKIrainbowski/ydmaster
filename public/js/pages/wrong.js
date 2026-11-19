@@ -33,7 +33,7 @@ export default {
       on(root, 'click', '[data-retry-wrong]', load),
       on(root, 'click', '[data-review]', (_e, el) => startTest({ source: 'wrong', kind: el.dataset.review })),
       on(root, 'click', '[data-remove]', async (_e, el) => { try { await api.del(`/wrong/${el.dataset.remove}/${el.dataset.item}`); wrong = wrong.filter(x => !(String(x.set._id) === el.dataset.remove && String(x.item) === el.dataset.item)); draw(); toast('오답 목록에서 뺐어요.', 'ok'); } catch (e) { toast(e.message, 'bad'); } }),
-      on(root, 'click', '[data-speak]', (_e, el) => speak(el.dataset.speak)),
+      on(root, 'click', '[data-speak]', (_e, el) => { if (!speak(el.dataset.speak)) toast('이 브라우저는 발음 듣기를 지원하지 않아요.', 'info'); }),
       on(root, 'click', '[data-save-legacy]', async (_e, el) => { const group = groups.find(g => String(g._id) === el.dataset.saveLegacy); if (!group?.words.length) return;
         try { const r = await api.post('/sets', { title: `${group.testTitle || '이전 시험'} 오답`.slice(0, 100), kind: 'vocab', visibility: 'private', items: group.words.map(w => ({ term: w.question, meaning: w.answer })) }); toast('오답을 내 단어 세트로 저장했어요.', 'ok'); location.hash = `#/sets/${r._id}`; }
         catch (e) { toast(e.message, 'bad'); }

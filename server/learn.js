@@ -209,21 +209,22 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     res.json({ message: '세트를 삭제했습니다.' });
   }));
 
-  // 즐겨찾기: 사용자 배열 갱신이 실제로 일어난 경우에만 카운트 증감(멱등, I-016)
+  // 즐겨찾기 수는 사용자 관계에서 다시 센 값으로 저장(I-016/I-057: 증감 방식은 중간 실패 시 영구히 어긋남)
+  const syncFavCount = async id => {
+    const n = await User.countDocuments({ favorites: id });
+    await Test.updateOne({ _id: id }, { $set: { favoriteCount: n } });
+    return n;
+  };
   app.post('/api/sets/:id/favorite', auth, wrap(async (req, res) => {
     const s = await loadViewable(req, req.params.id);
     if (!s) return notFound(res);
-    const r = await User.updateOne({ _id: req.user._id, favorites: { $ne: s._id } }, { $push: { favorites: s._id } });
-    const t = r.modifiedCount ? await Test.findByIdAndUpdate(s._id, { $inc: { favoriteCount: 1 } }, { new: true }) : await Test.findById(s._id);
-    res.json({ favorited: true, favoriteCount: t.favoriteCount });
+    await User.updateOne({ _id: req.user._id, favorites: { $ne: s._id } }, { $push: { favorites: s._id } });
+    res.json({ favorited: true, favoriteCount: await syncFavCount(s._id) });
   }));
   app.delete('/api/sets/:id/favorite', auth, wrap(async (req, res) => {
     if (!idOk(req.params.id)) return notFound(res);
-    const r = await User.updateOne({ _id: req.user._id, favorites: req.params.id }, { $pull: { favorites: req.params.id } });
-    const t = r.modifiedCount
-      ? await Test.findOneAndUpdate({ _id: req.params.id, favoriteCount: { $gt: 0 } }, { $inc: { favoriteCount: -1 } }, { new: true })
-      : await Test.findById(req.params.id);
-    res.json({ favorited: false, favoriteCount: t?.favoriteCount || 0 });
+    await User.updateOne({ _id: req.user._id, favorites: req.params.id }, { $pull: { favorites: req.params.id } });
+    res.json({ favorited: false, favoriteCount: await syncFavCount(req.params.id) });
   }));
 
   app.post('/api/sets/:id/copy', auth, wrap(async (req, res) => {
@@ -352,7 +353,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     if (!ref?.set || !ref?.item) return;
     const now = new Date();
     // 파이프라인 업데이트로 streak 증가/초기화를 원자적으로(계약 v2 #11)
-    await ItemStat.updateOne({ user, set: ref.set, item: ref.item }, [
+    const run = () => ItemStat.updateOne({ user, set: ref.set, item: ref.item }, [
       { $set: {
         wrong: { $add: [{ $ifNull: ['$wrong', 0] }, correct ? 0 : 1] },
         right: { $add: [{ $ifNull: ['$right', 0] }, correct ? 1 : 0] },
@@ -361,6 +362,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
         lastWrongAt: correct ? '$lastWrongAt' : now,
       } },
     ], { upsert: true });
+    try { await run(); } catch (e) { if (e.code === 11000) await run(); else throw e; } // I-060
   }
 
   app.post('/api/sessions/:id/finish', auth, wrap(async (req, res) => {
@@ -368,7 +370,11 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     if (!s) return;
     const timeTaken = Math.max(0, Math.min(86400, Math.round((Date.now() - s.startedAt) / 1000)));
     // active→done 원자 전이: 이긴 요청만 Result 생성(계약 v2 #2)
-    const won = await Session.findOneAndUpdate({ _id: s._id, status: 'active' }, { $set: { status: 'finishing', finishedAt: new Date() }, $unset: { expiresAt: 1 } }, { new: true });
+    // finishing 에서 30초 넘게 멈춘 세션(종료 처리 중 함수 중단)은 다시 가져와 마무리한다(I-055)
+    const stale = new Date(Date.now() - 30e3);
+    const won = await Session.findOneAndUpdate(
+      { _id: s._id, $or: [{ status: 'active' }, { status: 'finishing', finishedAt: { $lt: stale }, result: { $exists: false } }] },
+      { $set: { status: 'finishing', finishedAt: new Date() }, $unset: { expiresAt: 1 } }, { new: true });
     if (!won) {
       for (let k = 0; k < 20; k++) { // 동시에 끝내는 다른 요청이 Result 를 만드는 중이면 잠깐 기다림
         const cur = await Session.findById(s._id).lean();
@@ -379,12 +385,13 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     }
     const total = won.questions.length;
     const correct = won.answers.filter(a => a.correct).length;
-    const result = await Result.create({
+    // 세션당 Result 1개(재처리돼도 중복 생성 안 됨)
+    const result = await Result.findOneAndUpdate({ session: won._id }, { $setOnInsert: {
       user: req.user._id, test: won.source.ids[0] || won.questions[0]?.ref?.set, testTitle: won.title,
       score: correct, totalQuestions: total, correctAnswers: correct, wrongAnswers: total - correct,
       percentage: total ? Math.round((correct / total) * 100) : 0,
       answers: [], timeTaken, mode: won.mode, kind: won.kind, session: won._id,
-    });
+    } }, { upsert: true, new: true });
     await Session.updateOne({ _id: won._id }, { $set: { status: 'done', result: result._id } });
     if (won.source.ids.length) await Test.updateMany({ _id: { $in: won.source.ids } }, { $inc: { playCount: 1 } });
     won.status = 'done';

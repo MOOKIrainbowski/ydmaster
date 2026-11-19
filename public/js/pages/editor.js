@@ -2,6 +2,7 @@ import { api } from '../api.js';
 import { html, render, on, $, toast, skeleton, errorBox } from '../ui.js';
 import { pairSentences, parseMarkup, tokenize } from '../shared/passage.js';
 
+const IMPORT_LIMIT = 500;
 let xlsxPromise;
 function loadXlsx() {
   if (window.XLSX) return Promise.resolve(window.XLSX);
@@ -117,13 +118,14 @@ export default {
         items[i].en = source.slice(0, start) + `[${answer}|${distractor}]` + source.slice(end); dirty = true; selectedWord = null; draw();
       }),
       on(root, 'click', '[data-clear-word]', () => { selectedWord = null; draw(); }),
-      on(root, 'click', '[data-bulk]', () => { const text = $('[data-editor]', root).elements.namedItem('bulk').value.trim(); if (!text) return; const rows = text.includes('\t') ? text.split(/\r?\n/).map(line => line.split('\t')) : parseCSV(text); items.push(...rows.map(r => ({ term: r[0]?.trim() || '', meaning: r[1]?.trim() || '', example: r[2]?.trim() || '', exampleKo: r[3]?.trim() || '' }))); dirty = true; draw(); }),
+      on(root, 'click', '[data-bulk]', () => { const text = $('[data-editor]', root).elements.namedItem('bulk').value.trim(); if (!text) return; if (new Blob([text]).size > 1_000_000) { toast('한 번에 가져올 수 있는 텍스트는 1MB까지예요.', 'bad'); return; } const rows = text.includes('\t') ? text.split(/\r?\n/).map(line => line.split('\t')) : parseCSV(text); if (items.length + rows.length > IMPORT_LIMIT) { toast(`단어는 한 세트에 최대 ${IMPORT_LIMIT}개까지예요.`, 'bad'); return; } items.push(...rows.map(r => ({ term: r[0]?.trim() || '', meaning: r[1]?.trim() || '', example: r[2]?.trim() || '', exampleKo: r[3]?.trim() || '' }))); dirty = true; draw(); }),
       on(root, 'click', '[data-make-key]', () => { if (!selectedWord) return; const { i, start, end } = selectedWord, source = items[i].en; items[i].en = mergeKeyGroups(source.slice(0, start) + `{${source.slice(start, end)}}` + source.slice(end)); dirty = true; selectedWord = null; draw(); }),
-      on(root, 'change', '[data-csv]', async (_e, input) => { const file = input.files[0]; if (!file) return; try {
+      on(root, 'change', '[data-csv]', async (_e, input) => { const file = input.files[0]; if (!file) return; input.value = ''; if (file.size > 4 * 1024 * 1024) { toast('가져오기 파일은 4MB 이하만 사용할 수 있어요.', 'bad'); return; } try {
         let rows;
         if (/\.xlsx$/i.test(file.name)) { const XLSX = await loadXlsx(); const book = XLSX.read(await file.arrayBuffer(), { type: 'array' }); rows = XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]], { header: 1, defval: '' }); }
         else rows = parseCSV(await file.text());
         const data = rows.filter((r, i) => !(i === 0 && /^(term|영어|단어)$/i.test(String(r[0] || '').trim())));
+        if (data.length > IMPORT_LIMIT || items.length + data.length > IMPORT_LIMIT) { toast(`단어는 한 세트에 최대 ${IMPORT_LIMIT}개까지예요.`, 'bad'); return; }
         items.push(...data.map(r => ({ term: String(r[0] || ''), meaning: String(r[1] || ''), example: String(r[2] || ''), exampleKo: String(r[3] || '') }))); dirty = true; draw(); toast(`${data.length}개 행을 불러왔어요.`, 'ok');
       } catch (e) { toast(e.message || '파일을 읽지 못했어요. CSV로 저장해 올려주세요.', 'bad'); } }),
       on(root, 'submit', '[data-editor]', async (e, form) => { e.preventDefault(); const fields = form.elements; title = fields.namedItem('title').value.trim(); description = fields.namedItem('description').value.trim(); visibility = fields.namedItem('visibility').value; tags = fields.namedItem('tags').value;

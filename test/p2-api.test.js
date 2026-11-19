@@ -138,3 +138,22 @@ test('아바타는 URL 로, 바이트는 별도 엔드포인트', async () => {
   const img = await t.call('GET', me.data.user.avatarUrl.replace('/api', ''));
   assert.equal(img.status, 200);
 });
+
+test('종료 처리 중 멈춘 세션은 재요청으로 복구(I-055), 결과는 세션당 1개', async () => {
+  const s = (await t.call('POST', '/sets', vocabSet(), a.token)).data;
+  const ses = (await t.call('POST', '/sessions', { source: { type: 'sets', ids: [s._id] }, mode: 'write_term', count: 2 }, a.token)).data;
+  const Session = t.mongoose.model('Session');
+  await Session.updateOne({ _id: ses._id }, { $set: { status: 'finishing', finishedAt: new Date(Date.now() - 60e3) } });
+  const f = await t.call('POST', `/sessions/${ses._id}/finish`, {}, a.token);
+  assert.equal(f.status, 200);
+  const again = await t.call('POST', `/sessions/${ses._id}/finish`, {}, a.token);
+  assert.equal(again.data._id, f.data._id);
+  assert.equal(await t.mongoose.model('Result').countDocuments({ session: ses._id }), 1);
+});
+
+test('즐겨찾기 수는 실제 관계로 다시 맞춰짐(I-057)', async () => {
+  const s = (await t.call('POST', '/sets', vocabSet(), a.token)).data;
+  await t.mongoose.model('Test').updateOne({ _id: s._id }, { favoriteCount: 99 }); // 어긋난 상태
+  const r = await t.call('POST', `/sets/${s._id}/favorite`, {}, b.token);
+  assert.equal(r.data.favoriteCount, 1);
+});

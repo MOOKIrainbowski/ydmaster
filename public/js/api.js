@@ -10,14 +10,15 @@ async function request(method, path, body) {
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 20000);
-  let res;
+  let res, data = null;
   try {
     res = await fetch('/api' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: ctrl.signal });
+    // 본문 읽기도 같은 20초 안에(I-061: 헤더만 오고 본문이 멈추면 로딩이 끝나지 않던 문제)
+    const text = await res.text();
+    try { data = text ? JSON.parse(text) : null; } catch { /* JSON 아님 */ }
   } catch (e) {
     throw new ApiError(0, e.name === 'AbortError' ? '응답이 너무 늦어요. 잠시 후 다시 시도해주세요.' : '인터넷 연결을 확인해주세요.');
   } finally { clearTimeout(timer); }
-  let data = null;
-  try { data = await res.json(); } catch { /* 본문 없음 */ }
   if (!res.ok) {
     if (res.status === 401 && state.token) {
       setUser(null, null);

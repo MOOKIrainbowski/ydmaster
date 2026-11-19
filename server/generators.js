@@ -50,7 +50,12 @@ export function buildQuestions(mode, src, count, options = {}, rnd = Math.random
   if (m.kind === 'vocab') {
     const items = (src.items || []).filter(x => x.item.term && x.item.meaning);
     if (!items.length) throw new GenError('시험에 쓸 단어가 없습니다.');
-    for (const x of order(items).slice(0, n)) out.push(vocabQuestion(mode, x, src.pool || [], options, rnd));
+    for (const x of order(items)) {
+      if (out.length >= n) break;
+      const q = vocabQuestion(mode, x, src.pool || [], options, rnd);
+      if (q) out.push(q);
+    }
+    if (!out.length) throw new GenError('객관식은 서로 다른 단어가 2개 이상 있어야 만들 수 있습니다.');
   } else if (mode === 'sentence_order') {
     const size = Math.max(3, Math.min(8, Number(options.size) || 5));
     const groups = [];
@@ -104,6 +109,7 @@ function vocabQuestion(mode, x, pool, options, rnd) {
       seen.add(k); wrong.push(p[field]);
       if (wrong.length === 4) break;
     }
+    if (!wrong.length) return null; // 보기 1개짜리 객관식은 만들지 않는다(I-059)
     const choices = shuffle([answer, ...wrong], rnd);
     return {
       q: { type: 'choice', prompt: { text: field === 'meaning' ? term : meaning, lang: field === 'meaning' ? 'en' : 'ko' }, choices },

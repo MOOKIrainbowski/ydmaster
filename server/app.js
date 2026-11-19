@@ -916,8 +916,9 @@ app.put('/api/friends/request/:reqId', auth, async (req, res) => {
     const { action } = req.body;
     if (!isObjectId(req.params.reqId)) return res.status(404).json({ message: '요청을 찾을 수 없습니다.' });
     // 대기 중인 내 요청만, 한 번만 상태가 바뀐다(I-017: 두 기기 동시 수락/거절)
+    // 수락은 accepted 상태에서도 재시도 가능 → 중간에 끊겨 한쪽만 친구가 된 경우를 다시 맞춘다(I-056, $addToSet 멱등)
     const fr = await FriendRequest.findOneAndUpdate(
-      { _id: req.params.reqId, to: req.user._id, status: 'pending' },
+      { _id: req.params.reqId, to: req.user._id, status: action === 'accept' ? { $in: ['pending', 'accepted'] } : 'pending' },
       { $set: { status: action === 'accept' ? 'accepted' : 'rejected' } }, { new: true });
     if (!fr) return res.status(404).json({ message: '이미 처리되었거나 없는 요청입니다.' });
     if (action === 'accept') {
@@ -1271,11 +1272,11 @@ app.post('/api/inquiries/:id/like', auth, async (req, res) => {
   try {
     const inquiry = await Inquiry.findById(req.params.id);
     if (!inquiry) return res.status(404).json({ message: '문의를 찾을 수 없습니다.' });
-    const uid = req.user._id.toString();
-    const idx = inquiry.likes.findIndex(id => id.toString() === uid);
-    if (idx > -1) inquiry.likes.splice(idx, 1); else inquiry.likes.push(req.user._id);
-    await inquiry.save();
-    res.json({ likes: inquiry.likes.length, liked: idx === -1 });
+    // 읽고-고치고-저장 대신 조건부 원자 갱신(I-058): 없으면 추가, 있으면 제거
+    const add = await Inquiry.updateOne({ _id: inquiry._id, likes: { $ne: req.user._id } }, { $push: { likes: req.user._id } });
+    if (!add.modifiedCount) await Inquiry.updateOne({ _id: inquiry._id }, { $pull: { likes: req.user._id } });
+    const fresh = await Inquiry.findById(inquiry._id).select('likes').lean();
+    res.json({ likes: fresh.likes.length, liked: !!add.modifiedCount });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
