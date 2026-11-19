@@ -329,6 +329,11 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - 확인: `node --check public/js/pages/home.js`, `node --check public/js/pages/login.js` 통과. 변경 파일 범위 `git diff --check` 통과. 기존의 동시 변경 `public/js/pages/landing.js`에서는 끝 공백 경고가 관찰되어 건드리지 않았다.
 - 미확인: 브라우저 라이트/다크 및 모바일 화면 확인은 하지 않았다(배정 문서상 Claude가 담당). 전체 테스트는 실행하지 않았다.
 
+## (02) Codex 추가 작업 — D-2 시험·결과 마크업 보완 — 2026-11-20
+
+- Claude의 추가 명세와 현재 마크업을 대조해 `app.css`에 `.play__combo`/`.combo` 배지, 콤보 수치, `.score-ring`의 SVG 원·중앙 레이블·진행 획 스타일을 추가했다. 진행바의 스프링 width 전환은 이미 있어 유지했고, `.play__card.is-shake`는 tokens.css의 공용 `.is-shake` 키프레임을 그대로 사용한다.
+- 감소 모션에서는 점수 링 획 전환을 끈다. 확인: `node --check` 대상 JS 변경 없음, `git diff --check -- public/css/app.css docs/01-OVERHAUL-REVIEW.md` 통과. 브라우저 확인은 Claude의 전 화면 검수에 맡겼다.
+
 ---
 # (02) 디자인 리프레시
 
@@ -370,3 +375,17 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - play.js: 진행바 오른쪽에 `.play__combo`(콤보 자리, 비어 있을 수 있음) 안 `.combo[data-combo]`(아이콘 + `<b>숫자</b>연속`). 문항은 `.play__body > .play__card.reveal[data-qcard]` 로 감쌈. 정답 시 `.is-pop`(정답 보기 또는 `.feedback`), 오답 시 `.play__card.is-shake` 가 붙음(키프레임은 tokens.css). 진행바는 JS 가 width 를 이전→현재로 바꾸므로 `.progress__bar { transition: width var(--dur-4) var(--ease-spring) }` 필요.
 - result.js: `.result-summary.result-hero` 안에 `.score-ring`(180px) > `svg` 와 `.score-ring__label > .score-ring__num + span(점)`. 필요한 CSS: `.score-ring { position:relative; width:180px; aspect-ratio:1; margin:8px auto 4px }`, `svg { transform: rotate(-90deg) }`, `.score-ring__track { fill:none; stroke:var(--surface-3); stroke-width:14 }`, `.score-ring__bar { fill:none; stroke:url(#ring-grad); stroke-width:14; stroke-linecap:round; transition: stroke-dashoffset 1.4s var(--ease-spring) }`, 라벨은 absolute 가운데 정렬, 숫자 56px 800 tabular. 감소 모션이면 transition 없음.
 - 문항별 결과 `.review-item` 에 `.reveal` 이 붙음.
+
+## (02) Claude 리뷰 D-2 — 2026-11-20 (Chrome: 데스크톱 1540px + 모바일 370px iframe, 라이트)
+**잘 된 것(확인)**: 토큰 전용 app.css(하드코딩 색 0), 유리 상단바, 떠 있는 유리 탭바 + 그라데이션 활성 원, 통통한 버튼·보기 카드, 홈 벤토 골격, 점수 링(그라데이션 획·카운트업), 정답 보기 초록 상태, 본문 이어 읽기.
+**고칠 것(우선순위 순)** — 사용자 기준은 "1차원적이지 않게": 각 화면에 *정보가 있는 시각 요소* 가 있어야 함.
+1. **explore.js — 세트 카드가 명세의 `.set-card` + `.kind-tile` 이 아님**(그냥 `.card`, 회색 배지). 화면: 흰 박스 3개가 글자만. → 왼쪽 52px 종류 타일(단어=`--grad-vocab`+book, 본문=`--grad-passage`+text 아이콘), 배지 `.badge--vocab/--passage`, 작성자 아바타·플레이 수 칩. 제목 영역: `h1` 을 `--fs-1` 800 + 한 줄 설명("친구와 선생님이 만든 세트를 둘러보세요"), 검색 폼과 목록 사이 간격 24px, 목록은 데스크톱 2열 그리드. 같은 `.set-card` 를 home·user·wrong 에도.
+2. **home.js 히어로 칸이 구호뿐** ("배운 만큼 실력이 자라요 / 작은 반복이…") + 위에 인사·제목이 또 있음(중복). → 바깥 인사 블록 삭제, 히어로 칸 안에: "반가워요, {닉네임}님" / 큰 제목 = **최근 세트 제목**(없으면 "첫 세트를 만들어 볼까요?") / 메타(종류·개수) / 버튼 "이어서 학습"(primary) + "단어 세트 만들기"·"본문 세트 만들기"(ghost). 통계 칸: 아이콘 타일 색을 의미별로(연속=`--grad-passage`+flame `flicker`, 이번 주=`--grad-vocab`+check, 오답=`--hot` 계열+target), 숫자 48px, 라벨 아래 **도움말 한 줄**(연속 0일 → "오늘 시험을 보면 1일째!", 오답 >0 → "바로 복습하기 →" 링크). 세 칸 높이·정렬 통일(아이콘 위, 숫자, 라벨).
+3. **set.js — 핵심 표현 강조가 단어마다 끊김**(화면: "Every"·"morning" 이 따로 칠해지고 사이 공백은 안 칠해짐). `parseSentence` 토큰의 같은 `key` 그룹(사이 공백 포함)을 하나의 `<mark class="key">` 로 묶어 렌더.
+4. **ranking.js — 1~3위 시상대 없음, 내 순위 칸이 흰 박스, 문구 붙음**("내 순위 · 1위1개 학습"). → 상위 3명 시상대(가운데 1위 높게, 메달 타일 금·은·동, 아바타, learned 숫자), 내 순위 카드는 `--grad-soft` + 큰 순위 숫자 + "이번 주 N문항 외움", 목록 행은 `.list-row` + 막대(learned 비율).
+5. **me.js — 브라우저 기본 `<input type=file>`("파일 선택 / 선택된 파일 없음") 노출.** → 프로필 머리: 배너(사용자 배너 이미지 또는 `--grad-brand`) + 큰 아바타(눌러서 변경, 카메라 배지), 파일 입력은 sr-only 로 숨기고 버튼으로 연결. 폼은 카드 묶음(프로필 / 비밀번호 / 테마 / 위험 구역)으로 나누기.
+6. **login.js — 인사 2번**("다시 만나서 반가워요" + "다시 만나요"), **카드 안 카드**(폼 테두리 상자·소셜 상자). → 인사 하나, 내부 상자 테두리 제거, "또는" 구분선 + 소셜 버튼 2개 가로(각 브랜드 글자색만).
+7. **wrong.js** — 항목 왼쪽 여백 과다(목록이 오른쪽으로 밀림), 항목에 세트 종류 타일 없음 → `.list-row` 정렬, 단어는 영어 크게(serif 아님, 600 18px) + 뜻, 오답 횟수 배지 `--hot`.
+8. **result 탭 "틀린 것 4" 줄바꿈** → `.tabs__tab { white-space: nowrap }`.
+9. 시험 상단 줄: `.play__combo` 가 생기면서 "1 / 5" 가 다음 줄로 밀렸음(추가 명세 반영 전 화면). 반영 후 한 줄(`auto 1fr auto auto`)인지 확인 부탁.
+- 끝나면 `## (02) Codex 완료 D-3` + hc.
