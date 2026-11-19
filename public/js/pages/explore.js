@@ -21,17 +21,18 @@ export default {
       finally { busy = false; }
     };
     const draw = () => {
-      const cards = items.map(s => html`<a class="set-card" href="#/sets/${s._id}">
-        <div class="set-card__head"><h2 class="set-card__title">${s.title}</h2><span class="badge">${s.kind === 'passage' ? '본문' : '단어'}</span></div>
+      const cards = items.map((s, i) => html`<a class="set-card reveal spotlight" style="--i:${i}" href="#/sets/${s._id}">
+        <span class="kind-tile kind-tile--${s.kind === 'passage' ? 'passage' : 'vocab'}">${icon(s.kind === 'passage' ? 'text' : 'book', 24)}</span>
+        <div class="set-card__head"><h2 class="set-card__title">${s.title}</h2><span class="badge badge--${s.kind === 'passage' ? 'passage' : 'vocab'}">${s.kind === 'passage' ? '본문' : '단어'}</span></div>
         ${s.description ? html`<p class="set-card__description">${s.description}</p>` : ''}
         <div class="set-card__meta"><span>${s.count}개</span><span>${icon('play', 16)} ${s.playCount || 0}회</span><span class="set-card__author">${avatar(s.author, 28)}${s.author?.username || '사용자'}</span></div>
       </a>`);
-      render(root, html`<div class="page stack"><section class="section"><h1 class="section__title">학습 세트</h1>
+      render(root, html`<div class="page stack"><section class="section"><h1 class="section__title">학습 세트</h1><p class="muted explore-intro">친구와 선생님이 만든 세트를 둘러보세요.</p>
       <div class="tabs">${[['explore','둘러보기'],['fav','즐겨찾기'],['mine','내 세트']].map(([s,l]) => html`<button class="tabs__tab${scope === s ? ' is-active' : ''}" data-scope="${s}">${l}</button>`)}</div>
       <form class="field-row explore-controls" data-search><label class="field"><span class="field__label">세트 검색</span><input class="input" name="q" value="${term}" placeholder="세트 제목"></label>
         <label class="field"><span class="field__label">종류</span><select class="select" name="kind"><option value="">전체</option><option value="vocab" ${kind === 'vocab' ? 'selected' : ''}>단어</option><option value="passage" ${kind === 'passage' ? 'selected' : ''}>본문</option></select></label>
         <label class="field"><span class="field__label">정렬</span><select class="select" name="sort"><option value="popular" ${sort === 'popular' ? 'selected' : ''}>인기순</option><option value="new" ${sort === 'new' ? 'selected' : ''}>최신순</option></select></label><button class="btn btn--primary">검색</button></form>
-      ${items.length ? html`<div class="stack">${cards}</div>${more ? html`<button class="btn btn--ghost btn--block" data-more>더 보기</button>` : ''}` : empty({ icon: scope === 'fav' ? 'star' : 'compass', title: '세트가 없어요', desc: '검색 조건을 바꾸거나 새 세트를 만들어보세요.' })}
+      ${items.length ? html`<div class="set-grid">${cards}</div>${more ? html`<button class="btn btn--ghost btn--block" data-more>더 보기</button>` : ''}` : empty({ icon: scope === 'fav' ? 'star' : 'compass', title: '세트가 없어요', desc: '검색 조건을 바꾸거나 새 세트를 만들어보세요.' })}
       </section></div>`);
     };
     await load();

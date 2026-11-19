@@ -21,7 +21,19 @@ export default {
     const draw = () => {
       const passage = set.kind === 'passage';
       const items = passage ? set.passage.sentences : set.items;
-      const passageText = passage ? html`<p class="passage passage--reading" lang="en">${set.passage.sentences.map((s, i) => html`<span class="passage__sentence"><sup class="passage__num">${i + 1}</sup>${parseSentence(s.en).tokens.map(t => t.kind === 'choice' ? html`<span class="badge">${t.options.join(' / ')}</span>` : html`<span class="${t.key !== undefined ? 'is-key' : ''}">${t.text}</span>`)}${showKo && s.ko ? html` <span class="passage-ko">${s.ko}</span>` : ''} </span>`)}</p>` : '';
+      const inline = tokens => {
+        const out = [];
+        for (let i = 0; i < tokens.length;) {
+          const t = tokens[i];
+          if (t.kind === 'choice') { out.push(html`<span class="badge">${t.options.join(' / ')}</span>`); i++; continue; }
+          if (t.key === undefined) { out.push(html`<span>${t.text}</span>`); i++; continue; }
+          const key = t.key, words = [];
+          while (i < tokens.length && (tokens[i].key === key || tokens[i].kind === 'space' && tokens[i + 1]?.key === key)) words.push(tokens[i++].text);
+          out.push(html`<mark class="key">${words.join('')}</mark>`);
+        }
+        return out;
+      };
+      const passageText = passage ? html`<p class="passage passage--reading" lang="en">${set.passage.sentences.map((s, i) => html`<span class="passage__sentence"><sup class="passage__num">${i + 1}</sup>${inline(parseSentence(s.en).tokens)}${showKo && s.ko ? html` <span class="passage-ko">${s.ko}</span>` : ''} </span>`)}</p>` : '';
       render(root, html`<div class="page stack"><section class="section"><div class="section__head"><div><span class="badge">${passage ? '본문' : '단어'} · ${set.visibility === 'public' ? '공개' : set.visibility === 'friends' ? '친구' : '비공개'}</span><h1 class="section__title">${set.title}</h1></div>
         ${isOwner() ? html`<div class="btn-row"><a class="btn btn--ghost btn--sm" href="#/sets/${set._id}/edit">수정</a><button class="btn btn--ghost btn--sm set-delete" data-delete>삭제</button></div>` : ''}</div>
         ${set.description ? html`<p class="muted">${set.description}</p>` : ''}<div class="btn-row"><button class="btn btn--primary" data-test>${icon('play')}시험 보기</button>${!passage ? html`<button class="btn btn--ghost" data-flash>${flashMode ? '목록 보기' : '학습 카드'}</button>` : html`<button class="btn btn--ghost" data-translation>${showKo ? '해석 숨기기' : '해석 보기'}</button>`}<button class="btn btn--ghost" data-favorite>${icon('star')} ${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}</button><button class="btn btn--ghost" data-copy>${icon('copy')}내 세트로 복사</button><button class="btn btn--ghost" data-share>${icon('link')}공유</button></div>

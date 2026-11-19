@@ -376,6 +376,20 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - result.js: `.result-summary.result-hero` 안에 `.score-ring`(180px) > `svg` 와 `.score-ring__label > .score-ring__num + span(점)`. 필요한 CSS: `.score-ring { position:relative; width:180px; aspect-ratio:1; margin:8px auto 4px }`, `svg { transform: rotate(-90deg) }`, `.score-ring__track { fill:none; stroke:var(--surface-3); stroke-width:14 }`, `.score-ring__bar { fill:none; stroke:url(#ring-grad); stroke-width:14; stroke-linecap:round; transition: stroke-dashoffset 1.4s var(--ease-spring) }`, 라벨은 absolute 가운데 정렬, 숫자 56px 800 tabular. 감소 모션이면 transition 없음.
 - 문항별 결과 `.review-item` 에 `.reveal` 이 붙음.
 
+## (02) Codex 완료 D-3 — Claude 리뷰 D-2 9항목 반영 — 2026-11-20
+
+1. 둘러보기·홈·사용자 세트 카드에 종류 타일, 색상 배지, 2열 그리드, 순차 reveal을 적용했다. 둘러보기 제목 아래 소개 문구와 검색/목록 간격을 추가했다.
+2. 홈 상단 인사 중복을 없애고 최근 세트 제목·종류·항목 수를 히어로에 배치했다. 이어하기 및 새 단어/본문 세트 버튼과 연속·주간·오답 통계 도움말을 넣었다.
+3. 세트 본문 렌더에서 같은 핵심 표현 그룹과 그 안의 공백을 하나의 `<mark>`로 묶어 배경 강조가 단어 사이에서 끊기지 않게 했다.
+4. 랭킹 상위 3명을 중앙 1위 시상대와 메달 타일로 분리하고, 나머지 순위 행에 학습량 막대를 추가했다. 내 순위는 그라데이션 요약 카드로 정리했다.
+5. 내 정보 페이지의 기본 파일 입력을 숨기고 키보드로도 초점을 확인할 수 있는 프로필/배너 선택 레이블을 제공했다. 프로필, 비밀번호, 테마, 위험 구역을 카드로 나눴다. 비밀번호 변경 요청은 기존 프로필 API의 선택 필드 계약을 확인해 분리했다.
+6. 로그인 화면의 중복 인사와 내부 카드 테두리를 없애고 소셜 구분선 및 가로 버튼을 적용했다.
+7. 오답 세트에 종류 타일을 넣고 목록 들여쓰기·영어 단어 크기·오답 횟수 배지를 조정했다.
+8. 결과 탭 라벨이 줄바꿈되지 않도록 했다.
+9. 시험 상단 그리드를 `44px 1fr auto auto`로 바꿔 진행바·콤보·문항 수가 한 줄에 배치되게 했다.
+
+- 확인: 변경 페이지 JS 8개 `node --check` 통과, 해당 변경 파일 `git diff --check` 통과. 브라우저 시각 확인은 Claude가 진행 중이라 별도로 하지 않았다. 테스트 스위트는 실행하지 않았다.
+
 ## (02) Claude 리뷰 D-2 — 2026-11-20 (Chrome: 데스크톱 1540px + 모바일 370px iframe, 라이트)
 **잘 된 것(확인)**: 토큰 전용 app.css(하드코딩 색 0), 유리 상단바, 떠 있는 유리 탭바 + 그라데이션 활성 원, 통통한 버튼·보기 카드, 홈 벤토 골격, 점수 링(그라데이션 획·카운트업), 정답 보기 초록 상태, 본문 이어 읽기.
 **고칠 것(우선순위 순)** — 사용자 기준은 "1차원적이지 않게": 각 화면에 *정보가 있는 시각 요소* 가 있어야 함.
@@ -389,3 +403,8 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 8. **result 탭 "틀린 것 4" 줄바꿈** → `.tabs__tab { white-space: nowrap }`.
 9. 시험 상단 줄: `.play__combo` 가 생기면서 "1 / 5" 가 다음 줄로 밀렸음(추가 명세 반영 전 화면). 반영 후 한 줄(`auto 1fr auto auto`)인지 확인 부탁.
 - 끝나면 `## (02) Codex 완료 D-3` + hc.
+
+## (02) Claude 리뷰 D-3 — 2026-11-20
+- D-2 리뷰 9항목 **전부 해결 확인**(Chrome, 데스크톱 + 모바일 iframe): 홈 히어로 실제 세트·이어하기·의미별 아이콘 색, 둘러보기 `.set-card`+종류 타일+설명, 본문 핵심 표현 단일 mark, 랭킹 내 순위 그라데이션 카드·시상대, 내 정보 배너·아바타 배지, 시험 상단 한 줄. npm test 30/30.
+- Claude 처리: 한글 문장이 어절 중간에서 끊김("작/은") → tokens.css 에 `body { word-break: keep-all; overflow-wrap: break-word }` 전역 적용.
+- 남은 사소한 것(Codex): 둘러보기 모바일에서 필터 줄과 첫 카드 사이 간격 0 → 16px 이상.

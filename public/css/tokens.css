@@ -160,6 +160,9 @@
   --noise-opacity: .07;
 }
 
+/* 한글은 어절 단위로 줄바꿈(단어 중간 "작/은" 끊김 방지). 긴 영어 단어는 overflow-wrap 이 처리 */
+body { word-break: keep-all; overflow-wrap: break-word; }
+
 /* 투명도 줄이기 설정: 유리를 불투명으로(D4) */
 @media (prefers-reduced-transparency: reduce) {
   :root { --glass-bg: var(--glass-fallback); --glass-bg-strong: var(--glass-fallback); --glass-blur: none; }
