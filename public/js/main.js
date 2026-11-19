@@ -42,7 +42,7 @@ function shell(active, focus) {
       <a class="topbar__brand" href="#/">영단마스터</a>
       ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map(t => html`<a class="topbar__link${t.match.includes(active) ? ' is-active' : ''}" href="${t.href}"${t.match.includes(active) ? html` aria-current="page"` : ''}>${t.label}</a>`)}</nav>
         <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 32)}</a>`
-      : html`<a class="btn btn--primary btn--sm" href="#/login">로그인</a>`}
+      : active === 'login' ? '' : html`<a class="btn btn--primary btn--sm" href="#/login">로그인</a>`}
     </header>
     <main class="main" id="main" tabindex="-1"></main>
     ${u ? html`<nav class="tabbar" aria-label="주요 메뉴">${TABS.map(t => html`<a class="tabbar__item${t.match.includes(active) ? ' is-active' : ''}" href="${t.href}"${t.match.includes(active) ? html` aria-current="page"` : ''}>${icon(t.icon, 22)}<span>${t.label}</span></a>`)}</nav>` : ''}`);

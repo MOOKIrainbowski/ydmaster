@@ -199,3 +199,23 @@ Claude 가 이미 만든 공용 모듈 `public/js/shared/passage.js`, `public/js
 - **브라우저 확인(Claude, Chrome, dev-server)**: 시험 화면(다크·핵심 빈칸 → 오답 피드백 → 다음 문제, Enter 키 경로), 결과 화면(라이트) 정상 렌더. 빈칸 폭 `--w`, 오답 상태색, 피드백 패널, 탭, 요약 카드 모두 의도대로. 지적할 결함 없음.
 - 남은 확인: 모바일 폭(창 크기 조절이 이 환경에서 반영 안 됨 → 페이지 완성 후 DevTools 기기 모드로 다시), 어순·문장 순서·어법 선택 화면.
 - `npm test` 27/27 통과(golden 3종 포함). 다음: 페이지 작업 3-1 보고 대기.
+
+## Codex 완료 3-1 — 랜딩·인증·홈·탐색 — 2026-11-19
+
+- 확인/구현 묶음: `landing.js` 서비스 소개, `login.js` 이메일 로그인·가입 코드 인증·재발송·비밀번호 재설정·OAuth 동의, `home.js` 학습 통계와 내 세트, `explore.js` 검색·종류·정렬·즐겨찾기/내 세트 탭·더 보기.
+- API 대조: 인증 요청 필드와 응답은 `server/app.js` 인증 라우트, 목록 필터/정렬과 `{items, hasMore}`·`SetSummary`는 `server/learn.js` 계약에 맞췄다. 로그인 성공 후 토큰/사용자 저장, 실패 메시지, 빈 목록·로딩·재시도를 처리한다.
+- 안전/접근성: 화면 문구는 `html`` 이스케이프, 이벤트는 위임으로 연결. 소셜 이동 전 확인 대화상자를 둔다.
+- 확인: 네 페이지 `node --check` 통과. Claude의 `npm test` 27/27 결과는 Claude 리뷰 4에 기록됨. 로그인 메일 전송을 포함한 실제 UI 흐름은 아직 직접 실행하지 않음.
+- 작업 트리: 이 배치에서 Codex가 수정한 diff는 `explore.js`이고, `landing.js`·`login.js`·`home.js`는 현재 공유 HEAD에 동일 구현이 이미 반영돼 있어 덮어쓰지 않았다. 다음 배정 전 Claude 교차 리뷰 대기.
+
+## Claude 리뷰 5 (Codex 3-1: landing·login·home·explore) — 2026-11-19
+Chrome(dev-server, 1540px, 라이트/다크)에서 직접 확인. **공통 원인: 페이지가 §4 에 정의된 컴포넌트 마크업을 쓰지 않고 즉석 마크업을 만듦** → 옛 앱과 같은 "화면마다 제각각" 문제가 재발. 지시 4 의 핵심이니 우선 고쳐 주세요.
+1. **home.js `stat-row` — 숫자와 이름이 붙어 보임.** 화면: "0이번 주 외운 문항". app.css:281-284 는 `<dl class="stat-row"><div><dt>이름</dt><dd>값</dd></div>` 를 전제(result.js 가 그렇게 씀). home 은 `<div><strong>/<span>` → 스타일이 안 먹음. 같은 마크업으로. 핵심 지표는 숫자를 크게(dd) 두는 쪽이 맞음.
+2. **home.js·explore.js 세트 카드 — `<a class="card">` 안 글이 링크 밑줄+본문색 없이 한 줄로 붙음.** 화면: "작은 행동이 만드는 변화본문 · 10개 · 19분 전" 전부 밑줄. (a) app.css 에 링크 카드 규칙 필요: `a.card{display:block;color:inherit;text-decoration:none}` + hover/focus-visible 테두리. (b) 내용은 §4 `.list-row__title` / `.list-row__meta` 로 두 줄. 같은 "세트 카드" 가 home·explore·user·wrong 에서 반복되므로 **app.css 에 `.set-card`(제목·종류 배지·개수·작성자·플레이 수) 를 정의하고 모든 페이지가 그것만 쓰기**.
+3. **home.js — 본문 세트 만들기 진입점 없음.** "세트 만들기" 가 `#/new/vocab` 고정. 지시 1(내신 본문 암기) 이 핵심 목적이므로 "단어 세트" / "본문 세트" 두 버튼(또는 선택 메뉴).
+4. **home.js "모두 보기" → `#/explore`(둘러보기 탭)** 인데 섹션은 "내 세트" → `#/explore?scope=mine`.
+5. **explore.js — 제목 "학습 세트" 와 탭·검색 폼 간격이 0** 이고, 검색 버튼 높이가 입력보다 큼(정렬 안 맞음). `.section__head` 와 폼 사이 간격 토큰, `.field-row` 의 버튼은 `align-self:end` + 입력 높이 맞춤.
+6. **explore.js:28-29 더 보기 경쟁** — `busy` 중에 `page++` 가 먼저 실행돼 요청은 무시되고 page 만 증가 → 다음 클릭에서 한 페이지 건너뜀. `if (busy) return` 을 page 증가 앞에. 또 더 보기 실패 시 이미 불러온 목록 전체를 errorBox 로 지움 → append 실패는 toast 로.
+7. **login.js — 폼이 화면 배경에 그대로 떠 있고 제목·탭 간격 0.** `.card` 로 감싸고(최대 폭 420px, 가운데), 로그인 화면에서는 상단바 "로그인" 버튼 숨김(main.js 는 Claude 가 처리: 현재 페이지가 login 이면 버튼 생략). 소셜 버튼은 전체 폭·브랜드 표기만(아이콘 없이 텍스트면 충분).
+8. landing.js 는 아직 화면으로 못 봄(로그인 상태 리다이렉트) — 고친 뒤 3-2 와 함께 다시 확인하겠습니다.
+9. (추가, app.css) play.js 에 문항 안내 문구 `<p class="prompt__task">`(빈칸·어법 문제 위) 를 넣었습니다 — `.prompt__sub` 와 같은 보조 글자 스타일 + 아래 간격 16px 로 정의해 주세요. 그리고 다크 테마의 `.chip--placed` 글자(보라 위 보라)가 대비가 낮아 보입니다 — 대비값 확인 부탁.

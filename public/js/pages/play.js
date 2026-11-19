@@ -65,12 +65,14 @@ export default {
           </label>`;
       }
       if (q.type === 'cloze') return html`
+        <p class="prompt__task">빈칸에 들어갈 표현을 쓰세요</p>
         ${q.context?.before ? html`<p class="passage passage--dim" lang="en">${q.context.before}</p>` : ''}
         <p class="passage" lang="en">${q.segments.map(seg => typeof seg === 'string' ? seg
           : html`<input class="blank" data-blank="${seg.blank}" style="--w:${Math.max(4, Math.min(20, seg.length + 1))}ch" aria-label="빈칸 ${seg.blank + 1}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="${seg.hint ? seg.hint + '…' : ''}">`)}</p>
         ${q.context?.after ? html`<p class="passage passage--dim" lang="en">${q.context.after}</p>` : ''}
         ${q.ko ? html`<p class="passage-ko">${q.ko}</p>` : ''}`;
       if (q.type === 'inline_choice') return html`
+        <p class="prompt__task">괄호 안에서 어법·어휘상 알맞은 것을 고르세요</p>
         <p class="passage" lang="en">${q.segments.map(seg => typeof seg === 'string' ? seg
           : html`<span class="inline-choice" role="radiogroup" aria-label="선택 ${seg.choice + 1}">${seg.options.map((o, k) => html`<button class="inline-choice__opt" role="radio" aria-checked="false" data-ic="${seg.choice}" data-opt="${k}">${o}</button>`)}</span>`)}</p>
         ${q.ko ? html`<p class="passage-ko">${q.ko}</p>` : ''}`;
