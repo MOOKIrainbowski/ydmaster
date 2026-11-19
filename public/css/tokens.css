@@ -68,6 +68,15 @@
   --glass-blur: blur(18px) saturate(170%);
   --glass-shadow: 0 8px 32px rgb(124 58 237 / 12%), inset 0 1px 0 rgb(255 255 255 / 85%);
   --glass-fallback: rgb(255 247 249 / 96%);
+  /* 카드형 유리(02 D9): 본문 카드·타일까지 확장. --strong 은 글이 많은 면(시험·지문·폼) */
+  --glass-card: rgb(255 255 255 / 56%);
+  --glass-card-strong: rgb(255 255 255 / 80%);
+  --glass-card-hover: rgb(255 255 255 / 68%);
+  --glass-blur-card: blur(22px) saturate(180%);
+  --glass-edge: linear-gradient(140deg, rgb(255 255 255 / 95%) 0%, rgb(255 255 255 / 25%) 38%, rgb(253 164 175 / 45%) 72%, rgb(196 181 253 / 80%) 100%);
+  --glass-inner: inset 0 1px 0 rgb(255 255 255 / 80%), inset 0 -10px 24px -18px rgb(124 58 237 / 18%);
+  --glass-depth: 0 1px 2px rgb(30 16 41 / 5%), 0 10px 30px -6px rgb(124 58 237 / 16%), 0 4px 12px -4px rgb(225 29 72 / 8%);
+  --glass-depth-hover: 0 2px 4px rgb(30 16 41 / 6%), 0 22px 48px -10px rgb(124 58 237 / 26%), 0 8px 20px -6px rgb(225 29 72 / 12%);
 
   /* ── 오로라 배경 ── */
   --aurora-1: rgb(253 164 175 / 55%);  /* 연분홍 */
@@ -130,6 +139,11 @@
     --glass-border: rgb(255 255 255 / 9%);
     --glass-shadow: 0 10px 40px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
     --glass-fallback: rgb(22 14 31 / 96%);
+    --glass-card: rgb(36 22 50 / 50%); --glass-card-strong: rgb(30 19 42 / 82%); --glass-card-hover: rgb(44 27 61 / 58%);
+    --glass-edge: linear-gradient(140deg, rgb(255 255 255 / 26%) 0%, rgb(255 255 255 / 5%) 38%, rgb(251 113 133 / 22%) 72%, rgb(167 139 250 / 38%) 100%);
+    --glass-inner: inset 0 1px 0 rgb(255 255 255 / 10%), inset 0 -12px 28px -18px rgb(192 38 211 / 30%);
+    --glass-depth: 0 2px 6px rgb(0 0 0 / 30%), 0 16px 40px -8px rgb(0 0 0 / 50%), 0 8px 24px -10px rgb(124 58 237 / 35%);
+    --glass-depth-hover: 0 4px 10px rgb(0 0 0 / 35%), 0 26px 56px -10px rgb(0 0 0 / 55%), 0 12px 32px -10px rgb(192 38 211 / 45%);
     --aurora-1: rgb(225 29 72 / 34%); --aurora-2: rgb(124 58 237 / 42%); --aurora-3: rgb(192 38 211 / 28%); --aurora-4: rgb(190 18 60 / 22%);
     --noise-opacity: .07;
   }
@@ -156,6 +170,11 @@
   --glass-border: rgb(255 255 255 / 9%);
   --glass-shadow: 0 10px 40px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
   --glass-fallback: rgb(22 14 31 / 96%);
+  --glass-card: rgb(36 22 50 / 50%); --glass-card-strong: rgb(30 19 42 / 82%); --glass-card-hover: rgb(44 27 61 / 58%);
+  --glass-edge: linear-gradient(140deg, rgb(255 255 255 / 26%) 0%, rgb(255 255 255 / 5%) 38%, rgb(251 113 133 / 22%) 72%, rgb(167 139 250 / 38%) 100%);
+  --glass-inner: inset 0 1px 0 rgb(255 255 255 / 10%), inset 0 -12px 28px -18px rgb(192 38 211 / 30%);
+  --glass-depth: 0 2px 6px rgb(0 0 0 / 30%), 0 16px 40px -8px rgb(0 0 0 / 50%), 0 8px 24px -10px rgb(124 58 237 / 35%);
+  --glass-depth-hover: 0 4px 10px rgb(0 0 0 / 35%), 0 26px 56px -10px rgb(0 0 0 / 55%), 0 12px 32px -10px rgb(192 38 211 / 45%);
   --aurora-1: rgb(225 29 72 / 34%); --aurora-2: rgb(124 58 237 / 42%); --aurora-3: rgb(192 38 211 / 28%); --aurora-4: rgb(190 18 60 / 22%);
   --noise-opacity: .07;
 }
@@ -165,7 +184,8 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 
 /* 투명도 줄이기 설정: 유리를 불투명으로(D4) */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-bg: var(--glass-fallback); --glass-bg-strong: var(--glass-fallback); --glass-blur: none; }
+  :root { --glass-bg: var(--glass-fallback); --glass-bg-strong: var(--glass-fallback); --glass-blur: none;
+    --glass-card: var(--surface); --glass-card-strong: var(--surface); --glass-card-hover: var(--surface); --glass-blur-card: none; }
 }
 
 /* ─────────────────────────────────────────────
@@ -181,7 +201,7 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .aurora i:nth-child(4) { bottom: -24vmax; right: -10vmax; width: 44vmax; height: 44vmax; background: radial-gradient(circle, var(--aurora-4), transparent 62%); animation: aurora-a 52s var(--ease-in-out) infinite alternate-reverse; }
 .aurora::after { content: ""; position: absolute; inset: 0; background-image: var(--noise); opacity: var(--noise-opacity); mix-blend-mode: overlay; }
 /* 앱 화면에서는 오로라를 은은하게(학습 집중), 랜딩·로그인에서만 진하게 */
-.aurora--calm i { opacity: .45; }
+.aurora--calm i { opacity: .7; }
 @keyframes aurora-a { to { transform: translate3d(12vmax, 8vmax, 0) scale(1.15) rotate(25deg); } }
 @keyframes aurora-b { to { transform: translate3d(-14vmax, 12vmax, 0) scale(.9) rotate(-20deg); } }
 @keyframes aurora-c { to { transform: translate3d(10vmax, -10vmax, 0) scale(1.2); } }
@@ -190,6 +210,30 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .glass { background: var(--glass-fallback); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass { background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+}
+
+/* 카드형 유리(02 D9): 반투명 면 + 흐림 + 빛을 받는 그라데이션 테두리 + 안쪽 하이라이트 + 보랏빛 그림자.
+   테두리는 ::after(마스크로 1px 띠만 남김) 를 쓰므로 이 클래스가 붙은 요소의 ::after 는 다른 용도로 쓰지 말 것. */
+.glass-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-depth);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-card {
+    background: var(--glass-card);
+    border-color: transparent;
+    -webkit-backdrop-filter: var(--glass-blur-card); backdrop-filter: var(--glass-blur-card);
+    box-shadow: var(--glass-inner), var(--glass-depth);
+  }
+  .glass-card::after {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: var(--glass-edge);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  .glass-card--strong { background: var(--glass-card-strong); }
 }
 
 /* 그라데이션 글자(굵은 24px 이상만) */

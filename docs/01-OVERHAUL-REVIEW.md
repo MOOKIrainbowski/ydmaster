@@ -413,3 +413,20 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - D-2 리뷰 9항목 **전부 해결 확인**(Chrome, 데스크톱 + 모바일 iframe): 홈 히어로 실제 세트·이어하기·의미별 아이콘 색, 둘러보기 `.set-card`+종류 타일+설명, 본문 핵심 표현 단일 mark, 랭킹 내 순위 그라데이션 카드·시상대, 내 정보 배너·아바타 배지, 시험 상단 한 줄. npm test 30/30.
 - Claude 처리: 한글 문장이 어절 중간에서 끊김("작/은") → tokens.css 에 `body { word-break: keep-all; overflow-wrap: break-word }` 전역 적용.
 - 남은 사소한 것(Codex): 둘러보기 모바일에서 필터 줄과 첫 카드 사이 간격 0 → 16px 이상.
+
+## (02) Codex 작업 G — 소셜 로고 + 전 화면 글래스모피즘 — 2026-11-20 Claude 배정
+먼저 `docs/02-DESIGN-REFRESH.md` **§5 (추가 요청)** 를 읽으세요. 사용자 원문: 로그인 소셜 버튼에 각 회사 로고, 인터페이스에 글래스모피즘을 더해 "부드럽고 시각적 깊이감".
+### G-1. 로그인 소셜 로고 (login.js, app.css)
+- 구글 버튼: 공식 4색 "G" 로고(18~20px, 인라인 SVG, 색 #4285F4 #34A853 #FBBC05 #EA4335 — 로고 색은 브랜드 가이드상 변경 금지), 글자 "Google로 계속하기". 버튼 바탕 흰 면(다크에서도 흰 면 + 진한 글자 권장 — 구글 가이드), 통통한 그림자는 우리 스타일.
+- 네이버 버튼: 초록 #03C75A 바탕 + 흰 "N" 로고(인라인 SVG) + 흰 글자 "네이버로 계속하기"(네이버 로그인 버튼 가이드 색). 
+- 두 버튼 같은 높이·폭, 로고는 왼쪽 고정 위치. SVG 는 `aria-hidden`, 버튼 이름은 글자로. 브랜드 색 4+1 개는 app.css 하드코딩 예외로 허용(주석에 근거).
+### G-2. 전 화면 글래스모피즘 (app.css, 필요 시 페이지 클래스)
+- tokens.css 에 **`.glass-card` / `.glass-card--strong`** 유틸과 토큰(`--glass-card`, `--glass-card-strong`, `--glass-card-hover`, `--glass-blur-card`, `--glass-edge`, `--glass-inner`, `--glass-depth`, `--glass-depth-hover`)을 추가했습니다. 유틸의 `::after` 는 그라데이션 테두리용이니 겹치지 않게.
+- 적용(클래스를 붙이거나 같은 토큰으로 app.css 규칙을 바꾸기): `.card`, `.set-card`, `.bento__cell`, `.metric` 칸, 홈 히어로, `.list-row` 묶음, 랭킹 시상대·내 순위 카드, 내 정보 카드, 모달 패널(`--strong`), 토스트, 탭 세그먼트 바탕, 칩·배지(가벼운 유리), 오답 목록, 둘러보기 필터 영역.
+- **대비 유지 규칙(D9)**: 글이 많은 면 = `--strong` — 시험 `.play__card`, 결과 문항 목록, 세트 상세 본문 읽기 영역, 편집기 폼, 로그인 폼, 입력칸(입력칸 자체는 `--surface` 유지 가능).
+- 호버(포인터만): 배경 `--glass-card-hover` + `--glass-depth-hover` + `translateY(-3px)`, `--dur-3 --ease-spring`.
+- 다크·라이트 둘 다, 투명도 줄이기 설정 시 불투명(토큰이 처리).
+### 하지 말 것
+- tokens.css·landing.css·motion.js·main.js·editor.js·play/result/landing.js 수정 금지(이번엔 editor.js 도 Claude 가 고침).
+### 보고
+- `## (02) Codex 완료 G` + hc. 그다음 Claude 변경(재배포 알림·임시저장·랜딩)을 교차 리뷰 요청할 예정.

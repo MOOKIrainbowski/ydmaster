@@ -108,3 +108,29 @@
 - Duolingo UX 분석: https://www.925studios.co/blog/duolingo-design-breakdown , https://uxplanet.org/ux-and-gamification-in-duolingo-40d55ee09359
 - CSS linear() 스프링: https://ics.media/en/entry/260402/ , https://joshwcomeau.com/animation/linear-timing-function
 - 스크롤 기반 애니메이션: https://developer.chrome.com/articles/scroll-driven-animations , https://joshwcomeau.com/animation/scroll-driven-animations
+
+## 5. 추가 요청 (2026-11-20 #2)
+### 5.0 사용자 지시 원문 요약
+1. 로그인 "소셜 계정으로" 버튼에 구글·네이버 **각각의 로고**.
+2. 랜딩에 **스크롤 기반 애니메이션·키네틱 타이포그래피** 등 여러 요소를 더해 한눈에 띄게.
+3. 테스트 제작 중 **재배포해도 지금까지 한 작업이 사라지지 않게**, 재배포되면 **접속 중인 사람에게 "새로고침" 알림 + 새로고침 버튼**.
+4. 인터페이스에 **글래스모피즘**을 더해 부드럽고 깊이감 있게.
+
+### 5.1 결정
+| # | 결정 | 근거 |
+|---|---|---|
+| D9 | D4(유리는 떠 있는 층만)를 완화: **카드·타일·패널도 유리**(`.glass-card`: 반투명 면 + 22px 흐림 + 빛 받는 그라데이션 테두리 + 안쪽 하이라이트 + 보랏빛 그림자). 글이 많은 면(시험 문항·본문 읽기·폼·결과 문항 목록)은 `.glass-card--strong`(80% 불투명)으로 대비 유지. 앱 화면 오로라 세기 .45→.7(유리 뒤로 색이 비쳐야 깊이가 보임). 투명도 줄이기 설정이면 불투명. | 사용자 지시 4. 대비는 strong 층으로 보장. |
+| D10 | 저장된 데이터(세트·결과·오답)는 MongoDB 에 있어 배포와 무관하게 유지됨(설명). **아직 저장 안 한 편집 중 세트**는 브라우저에 1초 간격 자동 임시저장 → 새로고침·재배포·탭 닫힘 뒤 다시 열면 "이어서 작성" 복원. 시험은 문항마다 서버 저장이라 새로고침해도 이어 풀기. | 지시 3 "작업이 사라지지 않게". |
+| D11 | 재배포 감지: `GET /api/version`(Vercel 의 `VERCEL_GIT_COMMIT_SHA`) 을 접속 시 기억 → 60초마다·탭 복귀 시 비교 → 다르면 **유리 알림 카드**(새 버전 안내 + "작성 중인 내용은 자동 저장돼요" + [새로고침] [나중에]). 강제 새로고침 안 함(풀던 문제·쓰던 글 보호). | 지시 3. |
+| D12 | 소셜 버튼은 각 회사 **공식 로고 모양**(구글 4색 G, 네이버 초록 N)을 인라인 SVG 로. 버튼 바탕은 우리 디자인(유리/흰 면) 유지, 로고 색은 바꾸지 않음(브랜드 가이드). | 지시 1. |
+
+### 5.2 담당
+| 일 | 담당 | 파일 |
+|---|---|---|
+| 글래스 토큰·`.glass-card` 유틸 | Claude | tokens.css (완료) |
+| 재배포 감지 API·알림 UI | Claude | server/app.js, main.js, motion 무관 |
+| 편집 중 세트 자동 임시저장·복원 | Claude(이번 변경만 editor.js 를 Claude 가 수정 — Codex 는 그동안 editor.js 수정 금지) | editor.js, drafts.js |
+| 랜딩 스크롤·키네틱 | Claude | landing.js, landing.css |
+| 소셜 로고 | Codex | login.js, app.css |
+| 전 화면 글래스모피즘 적용 | Codex | app.css(+ 필요한 페이지 클래스 추가) |
+| 교차 리뷰 | 둘 다 | REVIEW 로그 |
