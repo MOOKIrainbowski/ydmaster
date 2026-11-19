@@ -3,6 +3,7 @@ import { state, setUser, onUser, getTheme, setTheme } from './state.js';
 import { api, ApiError } from './api.js';
 import { html, render, icon, on, toast, closeAllModals, errorBox, avatar } from './ui.js';
 import { initMotion, viewTransition } from './motion.js';
+import { initUpdateCheck } from './update.js';
 
 const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
@@ -156,6 +157,7 @@ async function boot() {
   let wasIn = !!state.user;
   onUser(u => { if (!!u !== wasIn) { wasIn = !!u; navigate(); } else refreshShellUser(); });
   initMotion(app);
+  initUpdateCheck();
   window.addEventListener('hashchange', navigate);
   navigate();
   if ('serviceWorker' in navigator && location.hostname !== 'localhost') navigator.serviceWorker.register('/sw.js').catch(() => {});

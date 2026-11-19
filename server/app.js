@@ -13,6 +13,13 @@ app.disable('x-powered-by');
 // Vercel 은 x-forwarded-for 를 실제 클라이언트 IP 로 덮어쓴다 → 레이트리밋 키로 신뢰 가능
 app.set('trust proxy', true);
 
+// 배포 버전(02 D11): 접속 중인 화면이 이 값을 기억했다가 바뀌면 "새로고침" 알림을 띄운다.
+// Vercel 은 배포마다 VERCEL_GIT_COMMIT_SHA 를 넣어준다. 로컬은 APP_VERSION 또는 'dev'.
+// DB 연결이 필요 없으므로 DB 미들웨어보다 앞에 둔다(가볍게 자주 불림).
+app.get('/api/version', (req, res) => {
+  res.json({ version: process.env.VERCEL_GIT_COMMIT_SHA || process.env.APP_VERSION || 'dev' });
+});
+
 // 배포 진단: 환경변수 '유무'만 알려준다(값은 절대 응답하지 않음). DB 미들웨어보다 앞에 둔다.
 const REQUIRED_ENV = ['MONGODB_URI', 'JWT_SECRET', 'GMAIL_USER', 'GMAIL_PASS', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'NAVER_CLIENT_ID', 'NAVER_CLIENT_SECRET'];
 app.get('/api/health', async (req, res) => {

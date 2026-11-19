@@ -78,3 +78,11 @@ test('알 수 없는 API 는 JSON 404', async () => {
   assert.equal(r.status, 404);
   assert.ok(r.data.message);
 });
+
+test('배포 버전 조회(DB 불필요, 캐시 금지)', async () => {
+  process.env.APP_VERSION = 'v-test-1';
+  const r = await t.call('GET', '/version');
+  assert.equal(r.status, 200);
+  assert.equal(r.data.version, 'v-test-1');
+  delete process.env.APP_VERSION;
+});

@@ -1,5 +1,6 @@
 import { api } from '../api.js';
-import { html, render, on, $, toast, skeleton, errorBox } from '../ui.js';
+import { html, render, on, $, toast, skeleton, errorBox, icon, fmtDate } from '../ui.js';
+import { drafts } from '../drafts.js';
 import { pairSentences, parseMarkup, tokenize } from '../shared/passage.js';
 
 const IMPORT_LIMIT = 500;
@@ -40,6 +41,20 @@ export default {
   title: '세트 편집',
   async render(root, params, _query, ctx) {
     let kind = params.id ? '' : params.kind, setId = params.id || '', title = '', description = '', visibility = 'private', tags = '', items = [], passageSource = '', enPaste = '', koPaste = '', dirty = false, selectedWord = null;
+    // 임시저장(02 D10): 새 세트는 'new', 수정은 세트 id 로 구분. baseUpdatedAt = 불러온 서버 세트의 수정 시각(충돌 안내용)
+    const draftId = setId || 'new';
+    let baseUpdatedAt = null, pendingDraft = null, lastSaved = '';
+    const snapshot = () => ({ kind, title, description, visibility, tags, items, passageSource, enPaste, koPaste, baseUpdatedAt });
+    const hasContent = d => d && (String(d.title || '').trim() || (d.items || []).some(x => Object.values(x).some(v => typeof v === 'string' && v.trim())) || String(d.enPaste || '').trim());
+    const flushDraft = () => {
+      if (!dirty) return true;
+      const snap = JSON.stringify(snapshot());
+      if (snap === lastSaved) return true;
+      if (!hasContent(snapshot())) return true;
+      const ok = drafts.save(draftId, snapshot());
+      if (ok) lastSaved = snap;
+      return ok;
+    };
     const tokenButtons = (en, i) => {
       const out = []; let searchAt = 0;
       for (const part of parseMarkup(en)) {
@@ -73,7 +88,17 @@ export default {
       <p class="editor-preview passage" lang="en" data-preview="${i}"></p>
       ${selectedWord?.i === i ? html`<div class="field-row"><button class="btn btn--ghost" type="button" data-make-key>핵심 표현으로</button><label class="field"><span class="field__label">오답 보기 (선택지의 첫 항목은 정답)</span><input class="input" data-distractor placeholder="오답 선택지"></label><button class="btn btn--ghost" type="button" data-make-choice>선택지로</button><button class="btn btn--ghost" type="button" data-clear-word>취소</button></div>` : ''}
       <label class="field"><span class="field__label">한국어 해석</span><textarea class="input" rows="2" data-field="ko" maxlength="600" data-autogrow>${s.ko || ''}</textarea></label><button class="btn btn--ghost btn--sm" type="button" data-remove="${i}">문장 삭제</button></div></article>`);
-    const draw = () => { render(root, html`<div class="page page--narrow"><section class="section"><h1 class="section__title">${setId ? '세트 수정' : '새 세트 만들기'}</h1>
+    const draftBanner = () => {
+      if (!pendingDraft) return '';
+      const changed = setId && pendingDraft.baseUpdatedAt && baseUpdatedAt && new Date(baseUpdatedAt) > new Date(pendingDraft.baseUpdatedAt);
+      return html`<div class="draft-banner glass-card" role="status">
+        <span class="draft-banner__icon" aria-hidden="true">${icon('clock', 20)}</span>
+        <div class="draft-banner__text"><strong>저장하지 않은 작성 내용이 있어요</strong>
+          <span>${fmtDate(pendingDraft.savedAt)} 임시저장${changed ? ' · 그 사이 세트가 다른 곳에서 바뀌었어요. 이어서 작성하면 저장할 때 지금 내용으로 덮어써요.' : ''}</span></div>
+        <div class="draft-banner__actions"><button class="btn btn--ghost btn--sm" type="button" data-draft-discard>버리기</button><button class="btn btn--primary btn--sm" type="button" data-draft-restore>이어서 작성</button></div>
+      </div>`;
+    };
+    const draw = () => { render(root, html`<div class="page page--narrow"><section class="section">${draftBanner()}<h1 class="section__title">${setId ? '세트 수정' : '새 세트 만들기'}</h1>
       <form class="stack" data-editor><label class="field"><span class="field__label">세트 제목</span><input class="input" name="title" value="${title}" maxlength="100" required></label>
       <label class="field"><span class="field__label">설명</span><textarea class="input" name="description" maxlength="500">${description}</textarea></label>
       ${setId ? html`<p class="muted">종류: ${kind === 'passage' ? '본문' : '단어'} (수정 중 변경할 수 없음)</p>` : html`<label class="field"><span class="field__label">종류</span><select class="select" name="kind"><option value="vocab" ${kind === 'vocab' ? 'selected' : ''}>단어</option><option value="passage" ${kind === 'passage' ? 'selected' : ''}>본문</option></select></label>`}
@@ -91,11 +116,14 @@ export default {
       try {
         const s = await api.get(`/sets/${encodeURIComponent(setId)}`);
         if (!ctx.isCurrent()) return;
+        baseUpdatedAt = s.updatedAt || null;
         kind = s.kind; title = s.title; description = s.description || ''; visibility = s.visibility; tags = (s.tags || []).join(', ');
         items = kind === 'vocab' ? s.items.map(x => ({ ...x })) : s.passage.sentences.map(x => ({ ...x })); passageSource = s.passage?.source || '';
       } catch (e) { if (ctx.isCurrent()) render(root, html`<div class="page">${errorBox(e.message)}</div>`); return; }
     }
     if (!items.length) items = [kind === 'passage' ? { en: '', ko: '' } : { term: '', meaning: '', example: '', exampleKo: '' }];
+    const found = drafts.load(draftId);
+    if (hasContent(found)) pendingDraft = found;
     draw();
     const offs = [on(root, 'input', '[data-field]', (_e, el) => { const i = Number(el.closest('[data-row]').dataset.row); items[i][el.dataset.field] = el.value; dirty = true; if (el.dataset.field === 'en') selectedWord = null; if (kind === 'passage' && el.dataset.field === 'en') updatePreview(i); }),
       on(root, 'input', 'input[name],textarea[name],select[name]', (_e, el) => { if (el.name === 'title') title = el.value; if (el.name === 'description') description = el.value; if (el.name === 'visibility') visibility = el.value; if (el.name === 'tags') tags = el.value; if (el.name === 'source') passageSource = el.value; if (el.name === 'enPaste') enPaste = el.value; if (el.name === 'koPaste') koPaste = el.value; dirty = true; }),
@@ -133,12 +161,32 @@ export default {
         else { items = items.filter(x => x.term.trim() || x.meaning.trim() || x.example.trim() || x.exampleKo.trim()); if (items.some(x => !x.term.trim() || !x.meaning.trim())) { toast('단어와 뜻이 비어 있는 행을 채우거나 삭제해주세요.', 'bad'); return; } }
         if (!items.length) { toast(kind === 'passage' ? '본문 문장을 하나 이상 입력해주세요.' : '단어를 하나 이상 입력해주세요.', 'bad'); return; }
         const body = { title, description, kind, visibility, tags: tags.split(',').map(x => x.trim()).filter(Boolean), ...(kind === 'passage' ? { passage: { source: passageSource, sentences: items } } : { items }) };
-        try { const saved = setId ? await api.put(`/sets/${encodeURIComponent(setId)}`, body) : await api.post('/sets', body); dirty = false; toast('세트를 저장했어요.', 'ok'); location.hash = `#/sets/${saved._id}`; }
+        try { const saved = setId ? await api.put(`/sets/${encodeURIComponent(setId)}`, body) : await api.post('/sets', body); dirty = false; drafts.clear(draftId); toast('세트를 저장했어요.', 'ok'); location.hash = `#/sets/${saved._id}`; }
         catch (err) { toast(err.message, 'bad'); }
       }),
-      on(root, 'click', 'a[href^="#/"]', (e) => { if (dirty && !window.confirm('저장하지 않은 내용이 있어요. 나갈까요?')) e.preventDefault(); })];
-    const beforeUnload = e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } };
+      on(root, 'click', '[data-draft-restore]', () => {
+        const d = pendingDraft; pendingDraft = null;
+        if (!setId && d.kind) kind = d.kind;
+        ({ title = '', description = '', visibility = 'private', tags = '', passageSource = '', enPaste = '', koPaste = '' } = d);
+        if (Array.isArray(d.items) && d.items.length) items = d.items;
+        selectedWord = null; dirty = true; draw(); toast('임시저장한 내용을 불러왔어요.', 'ok');
+      }),
+      on(root, 'click', '[data-draft-discard]', () => { drafts.clear(draftId); pendingDraft = null; draw(); toast('임시저장을 지웠어요.', 'info'); })];
+    // 1초마다 바뀐 내용만 브라우저에 임시저장. 새로고침(재배포 알림)·탭 닫힘·화면 이동 때도 마지막으로 저장.
+    const timer = setInterval(flushDraft, 1000);
+    const onLeave = () => { flushDraft(); };
+    // 임시저장에 실패한 경우(사생활 모드 등)에만 브라우저의 "나가시겠어요?" 확인을 띄운다
+    const beforeUnload = e => { if (dirty && !flushDraft()) { e.preventDefault(); e.returnValue = ''; } };
+    window.addEventListener('ydm:before-reload', onLeave);
+    window.addEventListener('pagehide', onLeave);
     window.addEventListener('beforeunload', beforeUnload);
-    return () => { offs.forEach(fn => fn()); window.removeEventListener('beforeunload', beforeUnload); };
+    return () => {
+      if (dirty && flushDraft() && hasContent(snapshot())) toast('작성 중인 내용은 임시저장했어요. 다시 열면 이어서 쓸 수 있어요.', 'info');
+      clearInterval(timer);
+      offs.forEach(fn => fn());
+      window.removeEventListener('ydm:before-reload', onLeave);
+      window.removeEventListener('pagehide', onLeave);
+      window.removeEventListener('beforeunload', beforeUnload);
+    };
   },
 };
