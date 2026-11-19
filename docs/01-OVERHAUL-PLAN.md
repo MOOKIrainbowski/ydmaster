@@ -33,15 +33,18 @@
 | R9 | 랭킹: 평균 정답률(쉬운 시험 1회로 1등 가능) → **주간/전체 정답 수**(서버 채점) 기준. | 모순 제거·학습량 동기. |
 | R10 | 아바타·배너 base64 를 목록 응답에 싣지 않는다. `/api/users/:id/avatar` 로 별도 제공(캐시). | 랭킹 50명 × 최대 2.8MB 응답 문제. |
 | R11 | 전화번호 **신규 가입 중단**(SMS 미구현인데 코드가 응답에 노출되어 인증이 무의미). 기존 전화번호 계정 로그인은 유지. | 보안. 사용자 보고 항목. |
+| R13 | 새 프론트와 같은 배포에서 옛 경로 제거: `/api/tests*`, `POST /api/results`(클라 채점), `/api/generate-options`, `/api/wrongnote` 쓰기, `/api/favorites*`, `/api/users/:id/profile`. | 위조 경로 차단, 같은 기능 두 벌(모순) 제거. |
+| R14 | 소셜 로그인: 네이버는 이메일로 기존 계정 자동 연결 금지(안내 후 이메일 로그인), 구글은 확인된 이메일만 연결, 연결해도 loginType 은 유지. 토큰은 `#/oauth?token=` 해시로 전달. | 네이버 이메일 소유 검증 보장 없음 → 계정 탈취 위험. 옛 동작은 로컬 계정을 'naver' 로 바꿔 비밀번호 변경까지 막았음. |
+| R15 | 공개 프로필의 옛 "평균 정답률 순위" 제거(순위는 랭킹 화면 한 곳). 시험 화면 스타일은 별도 play.css 대신 app.css 에 통합. | 모순 제거, 파일 최소화. |
 | R12 | 커밋·푸시·배포는 Claude 만. 배포 = `origin`(MOOKIrainbowski) `main` 푸시 → Vercel 자동 배포. 로컬 작업 브랜치 `master` → `git push origin master:main`. 옛 저장소는 `old-origin`(SJXON). | 사용자 지시 2, 공통 지침. |
 
 ## 3. 단계 · 진행표
 | 단계 | 내용 | 담당 | 상태 | 확인한 것 |
 |---|---|---|---|---|
-| P0 | 분석·계획·계약 초안, 이슈 전수 색인, 디자인 원인 진단, Vercel 조사, 계획 비판 리뷰 | Claude: 계획/계약 · Codex: 색인/진단/조사/리뷰 | 진행 중 | 서버 전체 정독, 프론트 구조 파악, 푸시 권한 확인 |
-| P1 | Vercel 이전: 폴더 재구성(R1~R3), 기존 프론트 그대로 `/api` 로 연결, 급한 보안 수정, 배포 | Claude | 대기 | |
-| P2 | 학습 엔진: 세트 API, 본문 파서, 문제 생성기, 세션·채점, 학습기록, 랭킹·아바타 API + 자동 테스트 | Claude (Codex: golden 데이터·경계 사례) | 대기 | |
-| P3 | 프론트 재작성: 디자인 시스템(app.css), 앱 셸·라우터, 전 페이지 | Claude: 셸·시험·결과 화면 / Codex: app.css·나머지 페이지 | 대기 | |
+| P0 | 분석·계획·계약 초안, 이슈 전수 색인, 디자인 원인 진단, Vercel 조사, 계획 비판 리뷰 | Claude: 계획/계약 · Codex: 색인/진단/조사/리뷰 | 완료(색인 보강은 Codex 2-A 진행 중) | 계약 v2, 디자인 합의안 §3 |
+| P1 | Vercel 이전: 폴더 재구성(R1~R3), 기존 프론트 그대로 `/api` 로 연결, 급한 보안 수정, 배포 | Claude | 완료 05c70a8 | Vercel 배포됨: 정적 200(0.3~0.5초), `/api/*` 함수 응답. **환경변수 미설정이라 DB 503** — 사용자 작업 필요(§5) |
+| P2 | 학습 엔진: 세트 API, 본문 파서, 문제 생성기, 세션·채점, 학습기록, 랭킹·아바타 API + 자동 테스트 | Claude (Codex: golden 데이터·경계 사례) | 완료(로컬) | npm test 통과(golden grading 1건은 Codex 픽스처 손상), dev-server 로 11개 모드 생성 확인 |
+| P3 | 프론트 재작성: 디자인 시스템(app.css), 앱 셸·라우터, 전 페이지 | Claude: 셸·시험·결과 화면 / Codex: app.css·나머지 페이지 | 진행 중 | 셸·play·result·start 완료, Codex 작업 3 진행 |
 | P4 | 통합·교차 리뷰·이슈 색인 잔여 0·E2E·배포·인수인계 | Claude (Codex 교차 리뷰) | 대기 | |
 
 ## 4. 파일 소유권
@@ -50,7 +53,7 @@
 | `server/**`, `api/**`, `vercel.json`, `package.json`, `test/*.test.js` | Claude | |
 | `public/js/shared/**` (본문 파서·채점 정규화) | Claude | 서버·프론트 공용 |
 | `public/index.html`, `public/js/{main,router,api,state,ui}.js` | Claude | 앱 셸 |
-| `public/js/pages/play.js`, `public/js/pages/result.js`, `public/css/play.css` | Claude | 시험·결과 |
+| `public/js/pages/{play,result,oauth}.js`, `public/js/start.js`, `test/dev-server.js` | Claude | 시험·결과·시험 설정 |
 | `public/css/app.css` | Codex | 디자인 시스템 + 페이지 스타일 |
 | `public/js/pages/*.js` (play·result 제외) | Codex | |
 | `test/fixtures/**` | Codex | golden 데이터 |

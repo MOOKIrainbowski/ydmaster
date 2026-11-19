@@ -11,44 +11,37 @@ before(async () => {
 });
 after(() => t.stop());
 
-const q = [{ question: 'apple', answer: '사과' }, { question: 'pear', answer: '배' }];
-
 test('ping', async () => {
   const r = await t.call('GET', '/ping');
   assert.equal(r.status, 200);
 });
 
-test('비공개 테스트는 작성자 외 조회 불가', async () => {
-  const c = await t.call('POST', '/tests', { title: '비밀', questions: q, isPublic: false }, alice.token);
-  assert.equal(c.status, 201);
-  assert.equal((await t.call('GET', `/tests/${c.data._id}`, undefined, bob.token)).status, 404);
-  assert.equal((await t.call('GET', `/tests/${c.data._id}`, undefined, alice.token)).status, 200);
-  assert.equal((await t.call('GET', '/tests/not-an-id', undefined, alice.token)).status, 404);
-});
-
-test('테스트 수정은 허용 필드만 반영(작성자·playCount 위조 불가)', async () => {
-  const c = await t.call('POST', '/tests', { title: 'A', questions: q }, alice.token);
-  const u = await t.call('PUT', `/tests/${c.data._id}`, { title: 'B', author: bob.id, playCount: 999 }, alice.token);
-  assert.equal(u.status, 200);
-  assert.equal(u.data.title, 'B');
-  assert.equal(String(u.data.author), alice.id);
-  assert.equal(u.data.playCount, 0);
-});
-
-test('결과 신고값은 문항 수 범위로 제한', async () => {
-  const c = await t.call('POST', '/tests', { title: 'C', questions: q }, alice.token);
-  const r = await t.call('POST', '/results', { testId: c.data._id, answers: [], correctAnswers: 500, totalQuestions: 500 }, bob.token);
-  assert.equal(r.status, 201);
-  assert.equal(r.data.totalQuestions, 2);
-  assert.equal(r.data.correctAnswers, 2);
+test('옛 클라이언트 채점 경로는 없어짐(점수 위조 차단, R5)', async () => {
+  for (const [m, p] of [['POST', '/results'], ['GET', '/tests'], ['POST', '/generate-options'], ['POST', '/wrongnote']])
+    assert.equal((await t.call(m, p, m === 'GET' ? undefined : {}, alice.token)).status, 404, p);
 });
 
 test('검색어 정규식 주입이 오류를 내지 않음', async () => {
-  const r = await t.call('GET', '/tests?search=' + encodeURIComponent('(a+)+$['), undefined, alice.token);
+  const r = await t.call('GET', '/sets?scope=explore&q=' + encodeURIComponent('(a+)+$['), undefined, alice.token);
   assert.equal(r.status, 200);
   const u = await t.call('GET', '/users/search?q=' + encodeURIComponent('.*'), undefined, alice.token);
   assert.equal(u.status, 200);
   assert.equal(u.data.length, 0);
+});
+
+test('관리자도 자기 자신은 삭제 불가', async () => {
+  await t.mongoose.model('User').updateOne({ _id: alice.id }, { isAdmin: true });
+  const r = await t.call('DELETE', '/admin/users/' + alice.id, undefined, alice.token);
+  assert.equal(r.status, 400);
+});
+
+test('탈퇴 시 즐겨찾기 카운트 복구', async () => {
+  const carl = await t.makeUser('carl');
+  const set = (await t.call('POST', '/sets', { title: 'S', kind: 'vocab', visibility: 'public', items: [{ term: 'a', meaning: '가' }] }, alice.token)).data;
+  await t.call('POST', '/sets/' + set._id + '/favorite', {}, carl.token);
+  const del = await t.call('POST', '/auth/account/delete', { password: 'pass1234' }, carl.token);
+  assert.equal(del.status, 200);
+  assert.equal((await t.call('GET', '/sets/' + set._id, undefined, alice.token)).data.favoriteCount, 0);
 });
 
 test('전화번호 신규 가입 차단, 코드 노출 없음', async () => {

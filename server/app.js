@@ -639,9 +639,11 @@ app.post('/api/auth/reset-password',
       if (!(await codeMatches(record, code)))
         return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
 
+      // 원자적 1회 소비: 동시에 두 요청이 와도 하나만 비밀번호를 바꾼다(I-009)
+      const consumed = await PasswordReset.findOneAndDelete({ _id: record._id });
+      if (!consumed) return res.status(400).json({ message: '이미 사용된 코드입니다. 다시 시도해주세요.' });
       const hashed = await bcrypt.hash(newPassword, 12);
       await User.updateOne({ email: record.email }, { $set: { password: hashed } });
-      await PasswordReset.deleteOne({ token });
       res.json({ message: '비밀번호가 성공적으로 변경되었습니다. 로그인해주세요.' });
     } catch (e) {
       console.error('reset-password error:', e.message);
@@ -912,16 +914,16 @@ app.post('/api/friends/request', auth, async (req, res) => {
 app.put('/api/friends/request/:reqId', auth, async (req, res) => {
   try {
     const { action } = req.body;
-    const fr = await FriendRequest.findById(req.params.reqId);
-    if (!fr) return res.status(404).json({ message: '요청을 찾을 수 없습니다.' });
-    if (fr.to.toString() !== req.user._id.toString())
-      return res.status(403).json({ message: '권한이 없습니다.' });
+    if (!isObjectId(req.params.reqId)) return res.status(404).json({ message: '요청을 찾을 수 없습니다.' });
+    // 대기 중인 내 요청만, 한 번만 상태가 바뀐다(I-017: 두 기기 동시 수락/거절)
+    const fr = await FriendRequest.findOneAndUpdate(
+      { _id: req.params.reqId, to: req.user._id, status: 'pending' },
+      { $set: { status: action === 'accept' ? 'accepted' : 'rejected' } }, { new: true });
+    if (!fr) return res.status(404).json({ message: '이미 처리되었거나 없는 요청입니다.' });
     if (action === 'accept') {
-      await User.findByIdAndUpdate(fr.from, { $addToSet: { friends: fr.to } });
-      await User.findByIdAndUpdate(fr.to, { $addToSet: { friends: fr.from } });
-      fr.status = 'accepted';
-    } else { fr.status = 'rejected'; }
-    await fr.save();
+      await User.updateOne({ _id: fr.from }, { $addToSet: { friends: fr.to } });
+      await User.updateOne({ _id: fr.to }, { $addToSet: { friends: fr.from } });
+    }
     res.json({ message: action === 'accept' ? '친구 요청을 수락했습니다.' : '친구 요청을 거절했습니다.' });
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
@@ -935,215 +937,8 @@ app.delete('/api/friends/:friendId', auth, async (req, res) => {
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
 
-// ==================== OPTION GENERATOR ====================
-function shuffleArr(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-function isKorean(str) { return /[가-힣]/.test(str || ''); }
-function buildDistractors(allAnswers, currentAnswer, needed) {
-  const answerIsKorean = isKorean(currentAnswer);
-  const pool = [...new Set(allAnswers.filter(a => a && a !== currentAnswer && isKorean(a) === answerIsKorean))];
-  return shuffleArr(pool).slice(0, needed);
-}
-
-app.post('/api/generate-options', auth, (req, res) => {
-  try {
-    const { questions } = req.body;
-    if (!questions || questions.length === 0) return res.json([]);
-    const allAnswers = questions.map(q => (q.answer || '').trim()).filter(Boolean);
-    const results = questions.map((q, idx) => {
-      const correctAnswer = (q.answer || '').trim();
-      const otherAnswers = allAnswers.filter((_, i) => i !== idx);
-      const distractors = buildDistractors(otherAnswers, correctAnswer, 4);
-      while (distractors.length < 4) distractors.push(correctAnswer + (distractors.length + 1));
-      const options = shuffleArr([correctAnswer, ...distractors.slice(0, 4)]);
-      const correctIndex = options.indexOf(correctAnswer);
-      return { options, correctAnswer: correctIndex >= 0 ? correctIndex : 0 };
-    });
-    res.json(results);
-  } catch (e) {
-    console.error('generate-options error:', e);
-    res.status(500).json({ message: '보기 생성 실패' });
-  }
-});
-
-// ==================== TESTS ====================
-// 열람 권한 판정은 이 함수 한 곳에서만(이전엔 비공개 테스트도 ID 만 알면 정답까지 조회 가능했음)
-function canViewTest(user, test) {
-  const authorId = String(test.author?._id || test.author);
-  if (authorId === String(user._id)) return true;
-  if (test.isFriendOnly) return (user.friends || []).some(f => String(f) === authorId);
-  return test.isPublic !== false;
-}
-// 작성자가 바꿀 수 있는 필드만(이전엔 req.body 통째 저장 → author·playCount 위조 가능)
-const TEST_EDITABLE = ['title', 'description', 'questions', 'isPublic', 'isFriendOnly', 'tags', 'format', 'testTimeLimit'];
-
-app.get('/api/tests', auth, async (req, res) => {
-  try {
-    const { search, mine } = req.query;
-    const friendIds = req.user.friends.map(f => f.toString());
-    let query;
-    if (mine === 'true') { query = { author: req.user._id }; }
-    else { query = { $or: [{ isPublic: true, isFriendOnly: false }, { author: req.user._id }, { isFriendOnly: true, author: { $in: friendIds } }] }; }
-    if (search) query.title = { $regex: escapeRegex(String(search).slice(0, 50)), $options: 'i' };
-    const tests = await Test.find(query).populate('author', 'username').sort({ createdAt: -1 }).select('-questions');
-    res.json(tests);
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-app.get('/api/tests/:id', auth, async (req, res) => {
-  try {
-    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    const test = await Test.findById(req.params.id).populate('author', 'username');
-    if (!test || !test.author || !canViewTest(req.user, test)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    res.json(test);
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-app.post('/api/tests', auth, createRateLimit(30, 60 * 60 * 1000, '테스트 생성 한도를 초과했습니다.'), async (req, res) => {
-  try {
-    const title = sanitizeString(req.body.title, 100);
-    const description = sanitizeString(req.body.description, 500);
-    const { questions, isPublic, isFriendOnly, tags, format } = req.body;
-    if (!title) return res.status(400).json({ message: '테스트 제목을 입력해주세요.' });
-    if (!Array.isArray(questions) || questions.length === 0) return res.status(400).json({ message: '문항을 1개 이상 추가해주세요.' });
-    if (questions.length > 200) return res.status(400).json({ message: '문항은 최대 200개까지 추가할 수 있습니다.' });
-    const test = await new Test({ title, description, questions, isPublic: isPublic ?? true, isFriendOnly: isFriendOnly ?? false, tags: tags || [], format: format || 'section', author: req.user._id }).save();
-    res.status(201).json(test);
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-app.put('/api/tests/:id', auth, async (req, res) => {
-  try {
-    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    const test = await Test.findById(req.params.id);
-    if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    if (test.author.toString() !== req.user._id.toString()) return res.status(403).json({ message: '수정 권한이 없습니다.' });
-    const update = { updatedAt: new Date() };
-    for (const k of TEST_EDITABLE) if (req.body[k] !== undefined) update[k] = req.body[k];
-    if (update.title !== undefined) { update.title = sanitizeString(update.title, 100); if (!update.title) return res.status(400).json({ message: '테스트 제목을 입력해주세요.' }); }
-    if (update.description !== undefined) update.description = sanitizeString(update.description, 500);
-    if (update.questions !== undefined && (!Array.isArray(update.questions) || !update.questions.length || update.questions.length > 200))
-      return res.status(400).json({ message: '문항은 1~200개여야 합니다.' });
-    const updated = await Test.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
-    res.json(updated);
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-app.delete('/api/tests/:id', auth, async (req, res) => {
-  try {
-    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    const test = await Test.findById(req.params.id);
-    if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    if (test.author.toString() !== req.user._id.toString()) return res.status(403).json({ message: '삭제 권한이 없습니다.' });
-    await Test.findByIdAndDelete(req.params.id);
-    res.json({ message: '테스트가 삭제되었습니다.' });
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-// ==================== RESULTS ====================
-app.post('/api/results', auth, async (req, res) => {
-  try {
-    const { testId, answers, timeTaken, correctAnswers: clientCorrect, totalQuestions: clientTotal } = req.body;
-    if (!isObjectId(testId) || !Array.isArray(answers)) return res.status(400).json({ message: '잘못된 요청입니다.' });
-    const test = await Test.findById(testId);
-    if (!test || !canViewTest(req.user, test)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    // 임시 방어(P1): 신고값을 문항 수 범위로 제한. 완전한 서버 채점은 P2(R5).
-    const qCount = test.questions?.length || 0;
-    const totalQuestions = Math.max(0, Math.min(Number(clientTotal ?? answers.length) || 0, qCount));
-    const correctAnswers = Math.max(0, Math.min(Number(clientCorrect) || 0, totalQuestions));
-    const wrongAnswers = totalQuestions - correctAnswers;
-    const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-    const processedAnswers = answers.slice(0, 200).map((ans, idx) => ({ questionIndex: idx, selectedAnswer: ans.selectedAnswer, isCorrect: ans.isCorrect === true }));
-    const result = await new Result({ user: req.user._id, test: testId, testTitle: test.title, score: correctAnswers, totalQuestions, correctAnswers, wrongAnswers, percentage, answers: processedAnswers, timeTaken: timeTaken || 0 }).save();
-    await Test.findByIdAndUpdate(testId, { $inc: { playCount: 1 } });
-    res.status(201).json(result);
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-// ==================== 오답노트 ====================
-
-// 내 오답노트 전체 조회
-app.get('/api/wrongnote', auth, async (req, res) => {
-  try {
-    const groups = await WrongNote.find({ user: req.user._id })
-      .sort({ savedAt: -1 })
-      .limit(100);
-    res.json({ groups });
-  } catch (e) {
-    res.status(500).json({ message: '오답노트 조회 실패' });
-  }
-});
-
-// 오답 저장 (테스트 결과 → 오답노트)
-app.post('/api/wrongnote', auth, async (req, res) => {
-  try {
-    const { testId, testTitle, words } = req.body;
-    if (!words || !Array.isArray(words) || words.length === 0)
-      return res.status(400).json({ message: '저장할 단어가 없습니다.' });
-
-    // 같은 testId로 오늘 이미 저장한 항목이 있으면 words 합치기 (중복 방지)
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-    const existing = testId
-      ? await WrongNote.findOne({ user: req.user._id, testId, savedAt: { $gte: todayStart } })
-      : null;
-
-    if (existing) {
-      // 기존 단어와 합쳐서 중복 제거
-      const existingQs = new Set(existing.words.map(w => w.question));
-      const newWords = words.filter(w => !existingQs.has(w.question));
-      existing.words.push(...newWords);
-      existing.savedAt = new Date();
-      await existing.save();
-      return res.status(200).json({ group: existing, added: newWords.length });
-    }
-
-    const sanitizedWords = words.slice(0, 200).map(w => ({
-      question: String(w.question || '').slice(0, 200),
-      answer: String(w.answer || '').slice(0, 200),
-    }));
-
-    const group = await new WrongNote({
-      user: req.user._id,
-      testId: testId || null,
-      testTitle: String(testTitle || '').slice(0, 100),
-      words: sanitizedWords,
-    }).save();
-
-    res.status(201).json({ group, added: sanitizedWords.length });
-  } catch (e) {
-    console.error('wrongnote save error:', e.message);
-    res.status(500).json({ message: '저장 실패' });
-  }
-});
-
-// 단어 하나 삭제
-app.delete('/api/wrongnote/:groupId/word/:wordIdx', auth, async (req, res) => {
-  try {
-    const group = await WrongNote.findOne({ _id: req.params.groupId, user: req.user._id });
-    if (!group) return res.status(404).json({ message: '항목을 찾을 수 없습니다.' });
-    const idx = parseInt(req.params.wordIdx);
-    if (isNaN(idx) || idx < 0 || idx >= group.words.length)
-      return res.status(400).json({ message: '잘못된 인덱스입니다.' });
-    group.words.splice(idx, 1);
-    // 단어가 모두 삭제되면 그룹 자체 삭제
-    if (group.words.length === 0) {
-      await WrongNote.findByIdAndDelete(group._id);
-    } else {
-      await group.save();
-    }
-    res.json({ message: '삭제되었습니다.' });
-  } catch (e) {
-    res.status(500).json({ message: '삭제 실패' });
-  }
-});
-
-// 오답노트 전체 삭제 — 반드시 /:groupId 라우트 앞에 위치해야 함
+// ==================== 이전 오답노트(읽기 전용 보관, R8) — 삭제만 허용 ====
+// 전체 삭제 — 반드시 /:groupId 라우트 앞에 위치해야 함
 app.delete('/api/wrongnote', auth, async (req, res) => {
   try {
     await WrongNote.deleteMany({ user: req.user._id });
@@ -1161,45 +956,6 @@ app.delete('/api/wrongnote/:groupId', auth, async (req, res) => {
     res.json({ message: '삭제되었습니다.' });
   } catch (e) {
     res.status(500).json({ message: '삭제 실패' });
-  }
-});
-
-// ==================== 유저 공개 프로필 ====================
-app.get('/api/users/:id/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-      .select('username avatarImage bannerImage bannerGradient imageVersion loginType createdAt');
-    if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
-
-    // 응시 통계
-    const results = await Result.find({ user: req.params.id });
-    const totalAttempts = results.length;
-    const avgScore = totalAttempts > 0
-      ? Math.round(results.reduce((s, r) => s + r.percentage, 0) / totalAttempts)
-      : 0;
-    const bestScore = totalAttempts > 0
-      ? Math.max(...results.map(r => r.percentage))
-      : 0;
-
-    // 만든 테스트 수 (공개만)
-    const totalTests = await Test.countDocuments({ author: req.params.id, ...PUBLIC_SET });
-
-    res.json({
-      user: {
-        _id: user._id,
-        username: user.username,
-        avatarImage: user.avatarImage || '',
-        bannerImage: user.bannerImage || '',
-        bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
-        avatarUrl: avatarUrl(user), bannerUrl: bannerUrl(user),
-        loginType: user.loginType,
-        createdAt: user.createdAt,
-      },
-      stats: { totalAttempts, avgScore, bestScore, totalTests }
-    });
-  } catch (e) {
-    console.error('user profile error:', e.message);
-    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
 
@@ -1306,14 +1062,8 @@ app.get('/api/auth/naver/callback', async (req, res) => {
 
     let user = await User.findOne({ naverId });
 
-    if (!user && email) {
-      user = await User.findOne({ email });
-      if (user) {
-        user.naverId = naverId;
-        user.loginType = 'naver';
-        user.isVerified = true;
-        await user.save();
-      }
+    if (!user && email && await User.exists({ email })) {
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('이미 이 이메일로 가입된 계정이 있습니다. 이메일로 로그인해주세요.')}`);
     }
 
     if (!user) {
@@ -1412,6 +1162,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
 
     let user = await User.findOne({ googleId });
 
+    if (!user && email && profile.verified_email === false)
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('구글 이메일 인증이 확인되지 않았습니다.')}`);
     if (!user && email) {
       user = await User.findOne({ email });
       if (user) {
@@ -1560,7 +1312,7 @@ app.put('/api/admin/inquiries/:id/answer', adminAuth, async (req, res) => {
 
 app.get('/api/admin/users', adminAuth, async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const users = await User.find().select('-password -avatarImage -bannerImage -favorites').sort({ createdAt: -1 }).limit(1000);
     res.json(users);
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
@@ -1570,6 +1322,7 @@ app.put('/api/admin/users/:id/toggle-admin', adminAuth, async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: '유저를 찾을 수 없습니다.' });
     if (ADMIN_EMAILS.includes(user.email)) return res.status(400).json({ message: '기본 관리자는 변경할 수 없습니다.' });
+    if (String(user._id) === String(req.user._id)) return res.status(400).json({ message: '자기 자신의 권한은 바꿀 수 없습니다.' });
     user.isAdmin = !user.isAdmin;
     await user.save();
     res.json({ message: `${user.username}의 관리자 권한이 ${user.isAdmin ? '부여' : '해제'}되었습니다.`, isAdmin: user.isAdmin });
@@ -1581,11 +1334,8 @@ app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: '유저를 찾을 수 없습니다.' });
     if (ADMIN_EMAILS.includes(user.email)) return res.status(400).json({ message: '기본 관리자는 삭제할 수 없습니다.' });
-    await Test.deleteMany({ author: user._id });
-    await Result.deleteMany({ user: user._id });
-    await User.updateMany({ friends: user._id }, { $pull: { friends: user._id } });
-    await FriendRequest.deleteMany({ $or: [{ from: user._id }, { to: user._id }] });
-    await User.findByIdAndDelete(user._id);
+    if (String(user._id) === String(req.user._id)) return res.status(400).json({ message: '자기 자신은 여기서 삭제할 수 없습니다.' });
+    await deleteUserData(user);
     res.json({ message: `${user.username} 계정이 삭제되었습니다.` });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
@@ -1684,6 +1434,27 @@ app.get('/api/admin/logs', adminAuth, async (req, res) => {
 });
 
 // ==================== 계정 삭제 ====================
+// 탈퇴·관리자 삭제가 같은 범위를 지우도록 한 곳에서(I-011). 즐겨찾기 카운트도 되돌린다.
+async function deleteUserData(user) {
+  const userId = user._id;
+  const mySets = await Test.find({ author: userId }).select('_id').lean();
+  const setIds = mySets.map(x => x._id);
+  if (user.favorites?.length) await Test.updateMany({ _id: { $in: user.favorites }, favoriteCount: { $gt: 0 } }, { $inc: { favoriteCount: -1 } });
+  await Promise.all([
+    Test.deleteMany({ author: userId }),
+    Result.deleteMany({ user: userId }),
+    FriendRequest.deleteMany({ $or: [{ from: userId }, { to: userId }] }),
+    EmailVerification.deleteMany({ email: user.email }),
+    PasswordReset.deleteMany({ email: user.email }),
+    Inquiry.deleteMany({ user: userId }),
+    Inquiry.updateMany({ likes: userId }, { $pull: { likes: userId } }),
+    WrongNote.deleteMany({ user: userId }),
+    mongoose.model('Session').deleteMany({ user: userId }),
+    mongoose.model('ItemStat').deleteMany({ $or: [{ user: userId }, { set: { $in: setIds } }] }),
+    User.updateMany({ $or: [{ friends: userId }, { favorites: { $in: setIds } }] }, { $pull: { friends: userId, favorites: { $in: setIds } } }),
+  ]);
+  await User.deleteOne({ _id: userId });
+}
 app.post('/api/auth/account/delete', auth, async (req, res) => {
   try {
     const { password } = req.body;
@@ -1698,17 +1469,7 @@ app.post('/api/auth/account/delete', auth, async (req, res) => {
         return res.status(400).json({ message: '비밀번호가 올바르지 않습니다.' });
     }
 
-    const userId = user._id;
-    await Promise.all([
-      Test.deleteMany({ author: userId }),
-      Result.deleteMany({ user: userId }),
-      FriendRequest.deleteMany({ $or: [{ from: userId }, { to: userId }] }),
-      EmailVerification.deleteMany({ email: user.email }),
-      Inquiry.deleteMany({ user: userId }),
-      WrongNote.deleteMany({ user: userId }),
-      User.updateMany({ friends: userId }, { $pull: { friends: userId } }),
-    ]);
-    await User.findByIdAndDelete(userId);
+    await deleteUserData(user);
 
     console.log(`계정 삭제 완료: ${user.email}`);
     res.json({ message: '계정이 삭제되었습니다.' });
@@ -1716,44 +1477,6 @@ app.post('/api/auth/account/delete', auth, async (req, res) => {
     console.error('account delete error:', e.message);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
-});
-
-// ==================== 즐겨찾기 ====================
-
-app.get('/api/favorites', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).populate({
-      path: 'favorites',
-      populate: { path: 'author', select: 'username' }
-    });
-    res.json(user.favorites || []);
-  } catch { res.status(500).json({ message: '서버 오류' }); }
-});
-
-app.post('/api/favorites/:testId', auth, async (req, res) => {
-  try {
-    const { testId } = req.params;
-    if (!isObjectId(testId)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    const test = await Test.findById(testId);
-    if (!test || !canViewTest(req.user, test)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    const user = await User.findById(req.user._id);
-    const alreadyFav = user.favorites.map(f => f.toString()).includes(testId);
-    if (!alreadyFav) {
-      await User.findByIdAndUpdate(req.user._id, { $addToSet: { favorites: testId } });
-      await Test.findByIdAndUpdate(testId, { $inc: { favoriteCount: 1 } });
-    }
-    res.json({ message: '즐겨찾기에 추가되었습니다.', added: true });
-  } catch { res.status(500).json({ message: '서버 오류' }); }
-});
-
-app.delete('/api/favorites/:testId', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    const wasFav = user.favorites.map(f => f.toString()).includes(req.params.testId);
-    await User.findByIdAndUpdate(req.user._id, { $pull: { favorites: req.params.testId } });
-    if (wasFav) await Test.findByIdAndUpdate(req.params.testId, { $inc: { favoriteCount: -1 } });
-    res.json({ message: '즐겨찾기에서 제거되었습니다.', added: false });
-  } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
 mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit: createRateLimit });
