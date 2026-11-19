@@ -146,6 +146,14 @@ a.card { display: block; color: inherit; text-decoration: none; }
 .bento__cell--span-6[href] { color: inherit; text-decoration: none; }
 .login-card > .tabs, .login-card > .stack, .auth-card > .tabs, .auth-card > .stack { margin-bottom: 20px; }
 .social-actions { display: grid; grid-template-columns: 1fr; gap: 10px; } .social-btn span { white-space: nowrap; }
+/* 로그인 화면: 소셜 구분선과 소셜 로그인 오류 안내(2026-11-20 로그인 점검) */
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 4px 0 0; color: var(--text-2); font-size: 13px; }
+.auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.auth-alert { display: flex; gap: 12px; padding: 14px 16px; border: 1px solid var(--bad); border-radius: var(--r-md); background: var(--bad-soft); color: var(--bad); }
+.auth-alert .icon { flex: none; margin-top: 2px; }
+.auth-alert div { display: grid; gap: 4px; font-size: 14px; line-height: 1.55; }
+.auth-alert strong { font-weight: 800; }
+.auth-alert .muted { color: var(--text-2); font-size: 13px; }
 .section > .explore-controls { margin-top: var(--space-6); } .set-delete { color: var(--bad); }
 .set-card ul.stack { margin: 0; padding: 0; list-style: none; }
 .play { display: flex; width: min(100%,var(--content-narrow)); min-height: calc(100dvh - 40px); flex-direction: column; margin: 0 auto; }

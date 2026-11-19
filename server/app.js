@@ -25,7 +25,15 @@ const REQUIRED_ENV = ['MONGODB_URI', 'JWT_SECRET', 'GMAIL_USER', 'GMAIL_PASS', '
 app.get('/api/health', async (req, res) => {
   let db = 'ok';
   try { await connectDB(); } catch (e) { db = 'fail'; }
-  res.json({ db, env: Object.fromEntries(REQUIRED_ENV.map(k => [k, !!process.env[k]])) });
+  const out = { db, env: Object.fromEntries(REQUIRED_ENV.map(k => [k, !!process.env[k]])) };
+  if (req.query.mail) {
+    // 가입·비밀번호 찾기 메일이 안 갈 때 원인 확인용: 접속·로그인만 시도(메일 발송 없음), 8초 제한
+    out.mail = await Promise.race([
+      transporter.verify().then(() => 'ok', e => 'fail: ' + String(e.code || e.responseCode || e.message).slice(0, 60)),
+      new Promise(r => setTimeout(() => r('fail: timeout'), 8000)),
+    ]);
+  }
+  res.json(out);
 });
 
 // ==================== DB 연결 (서버리스: 인스턴스당 1회, 전역 캐시) ====================
@@ -311,7 +319,7 @@ const auth = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
     if (!decoded.id) return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
-    req.user = await User.findById(decoded.id).select('-password');
+    req.user = await User.findById(decoded.id).select('-password -avatarImage -bannerImage');
     if (!req.user) return res.status(401).json({ message: '사용자를 찾을 수 없습니다.' });
     next();
   } catch (e) {
@@ -329,7 +337,7 @@ const adminAuth = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
     if (!decoded.id) return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
-    req.user = await User.findById(decoded.id).select('-password');
+    req.user = await User.findById(decoded.id).select('-password -avatarImage -bannerImage');
     if (!req.user) return res.status(401).json({ message: '사용자를 찾을 수 없습니다.' });
     if (!req.user.isAdmin) return res.status(403).json({ message: '관리자 권한이 필요합니다.' });
     next();
@@ -579,9 +587,11 @@ app.post('/api/auth/forgot-password',
         return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
 
       const user = await User.findOne({ email });
-      // 보안상 존재 여부와 무관하게 성공 응답
-      if (!user || user.loginType !== 'local') {
-        return res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token: '' });
+      if (!user || !user.password) {
+        await PasswordReset.deleteMany({ email });
+        const token = crypto.randomBytes(32).toString('hex');
+        await new PasswordReset({ email, token, code: crypto.randomBytes(16).toString('hex'), expiresAt: new Date(Date.now() + 10 * 60 * 1000) }).save();
+        return res.json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token });
       }
 
       await PasswordReset.deleteMany({ email });
@@ -765,19 +775,23 @@ app.post('/api/auth/login',
     } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
   });
 
-app.get('/api/auth/me', auth, (req, res) => {
-  res.json({
-    user: {
-      id: req.user._id, username: req.user.username, email: req.user.email,
-      createdAt: req.user.createdAt,
-      isAdmin: req.user.isAdmin || false,
-      avatarImage: req.user.avatarImage || '',
-      bannerImage: req.user.bannerImage || '',
-      bannerGradient: req.user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
-      favorites: (req.user.favorites || []).map(id => id.toString()),
-      avatarUrl: avatarUrl(req.user), bannerUrl: bannerUrl(req.user), loginType: req.user.loginType
-    }
-  });
+app.get('/api/auth/me', auth, async (req, res) => {
+  try {
+    // 이미지 원본은 응답에 싣지 않고 URL 만(R10). URL 을 만들려면 이미지 유무가 필요해 이 요청에서만 읽는다.
+    const img = await User.findById(req.user._id).select('avatarImage bannerImage imageVersion').lean();
+    const u = { ...img, _id: req.user._id };
+    res.json({
+      user: {
+        id: req.user._id, username: req.user.username, email: req.user.email,
+        createdAt: req.user.createdAt,
+        isAdmin: req.user.isAdmin || false,
+        bannerGradient: req.user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
+        favorites: (req.user.favorites || []).map(id => id.toString()),
+        avatarUrl: avatarUrl(u), bannerUrl: bannerUrl(u), loginType: req.user.loginType,
+        hasPassword: !!(await User.exists({ _id: req.user._id, password: { $nin: ['', null] } })),
+      }
+    });
+  } catch (e) { console.error('auth/me error:', e.message); res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
 
 app.put('/api/auth/profile', auth, async (req, res) => {
@@ -809,10 +823,9 @@ app.put('/api/auth/profile', auth, async (req, res) => {
       const newPassword = req.body.newPassword;
       const currentPassword = req.body.currentPassword || '';
 
-      if (req.user.loginType !== 'local')
-        return res.status(400).json({ message: '소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.' });
-
       const currentUser = await User.findById(req.user._id);
+      if (!currentUser.password)
+        return res.status(400).json({ message: '소셜 로그인으로 만든 계정은 비밀번호가 없어요. 소셜 로그인을 이용해주세요.' });
       const match = await bcrypt.compare(currentPassword, currentUser.password || '');
       if (!match)
         return res.status(400).json({ message: '현재 비밀번호가 올바르지 않습니다.' });
@@ -1469,7 +1482,7 @@ app.post('/api/auth/account/delete', auth, async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
 
-    if (user.loginType === 'local' && user.password) {
+    if (user.password) {
       if (!password || password === 'social_delete_bypass')
         return res.status(400).json({ message: '비밀번호를 입력해주세요.' });
       const match = await bcrypt.compare(password, user.password);

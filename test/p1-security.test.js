@@ -86,3 +86,39 @@ test('배포 버전 조회(DB 불필요, 캐시 금지)', async () => {
   assert.equal(r.data.version, 'v-test-1');
   delete process.env.APP_VERSION;
 });
+
+test('비밀번호 찾기: 없는 계정도 같은 응답(가입 여부 비노출), 재설정은 실패', async () => {
+  const r = await t.call('POST', '/auth/forgot-password', { email: 'ghost-nobody@test.dev' });
+  assert.equal(r.status, 200);
+  assert.ok(r.data.token && r.data.token.length >= 32);
+  const reset = await t.call('POST', '/auth/reset-password', { token: r.data.token, code: '123456', newPassword: 'abcd1234' });
+  assert.equal(reset.status, 400);
+});
+
+test('옛 네이버 연결로 loginType 이 바뀐 비밀번호 계정도 비밀번호 변경 가능', async () => {
+  const dan = await t.makeUser('dan');
+  await t.mongoose.model('User').updateOne({ _id: dan.id }, { loginType: 'naver', naverId: 'n-123' });
+  const r = await t.call('PUT', '/auth/profile', { currentPassword: 'pass1234', newPassword: 'newpass123' }, dan.token);
+  assert.equal(r.status, 200);
+  await t.mongoose.model('Rate').deleteMany({});
+  const login = await t.call('POST', '/auth/login', { email: dan.email, password: 'newpass123' });
+  assert.equal(login.status, 200);
+});
+
+test('/auth/me 는 이미지 원본 없이 URL·비밀번호 유무만', async () => {
+  const png = 'data:image/png;base64,' + Buffer.from('img').toString('base64');
+  await t.call('PUT', '/auth/profile', { avatarImage: png }, bob.token);
+  const me = await t.call('GET', '/auth/me', undefined, bob.token);
+  assert.equal(me.data.user.avatarImage, undefined);
+  assert.match(me.data.user.avatarUrl, /\/avatar\?v=/);
+  assert.equal(me.data.user.hasPassword, true);
+});
+
+test('전화번호 계정 로그인(기존 회원)', async () => {
+  await t.mongoose.model('Rate').deleteMany({}); // 앞 테스트가 쓴 로그인 횟수 제한 초기화
+  const bcrypt = (await import('bcryptjs')).default;
+  await t.mongoose.model('User').create({ username: 'phoneuser', email: 'phone_01055556666@ydmaster.local', phone: '01055556666', password: await bcrypt.hash('pass1234', 4), isVerified: true });
+  const r = await t.call('POST', '/auth/login', { email: '010-5555-6666', password: 'pass1234' });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.user.username, 'phoneuser');
+});

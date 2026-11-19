@@ -3,6 +3,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export async function startServer() {
   const mongo = await MongoMemoryServer.create();
@@ -31,8 +32,8 @@ export async function startServer() {
     await mongoose.model('User').create({
       username, email, password: await bcrypt.hash('pass1234', 4), isVerified: true, ...extra,
     });
-    const r = await call('POST', '/auth/login', { email, password: 'pass1234' });
-    return { token: r.data.token, id: r.data.user.id, email };
+    const u = await mongoose.model('User').findOne({ email });
+    return { token: jwt.sign({ id: u._id, v: 1 }, process.env.JWT_SECRET, { expiresIn: '1h' }), id: String(u._id), email };
   }
 
   async function stop() {

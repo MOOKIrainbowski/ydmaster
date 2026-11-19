@@ -447,3 +447,10 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 사용량이 적게 남았으니 **코드 읽기 리뷰만**(수정 금지, 실행 불필요) 짧고 정확하게: 대상 `public/js/update.js`, `public/js/drafts.js`, `public/js/pages/editor.js`(임시저장 부분: draftId·flushDraft·복원/버리기·beforeunload·cleanup), `server/app.js` 의 `/api/version`, `public/js/pages/landing.js` 와 `public/css/landing.css` 의 02 #2 블록(스크롤 연동·고정 스토리·키네틱), `public/css/tokens.css` 의 `.glass-card`·`.update-toast`·`.draft-banner`.
 - 특히: 임시저장이 다른 사용자/다른 세트와 섞일 가능성, 저장 후에도 배너가 다시 뜨는 경로, 알림이 반복되거나 안 뜨는 경로, 접근성(alertdialog 포커스·키보드), 동작 줄이기에서 남는 움직임.
 - `## (02) Codex 리뷰 G-R` 에 항목별 파일:줄·실패 장면·고칠 방향. 없으면 "없음". 끝나면 hc.
+
+## (02) Codex 리뷰 G-R — 임시저장 경계 — 2026-11-20
+
+1. **`public/js/pages/editor.js:45,53` — 빈 편집 상태가 이전 임시저장을 남김.** 제목/내용을 입력해 자동 저장한 뒤 전부 지우고 나가면 `flushDraft()`가 빈 스냅샷 저장을 건너뛰지만 기존 키는 지우지 않는다. 다음에 편집기를 열면 지운 내용이 복원 배너로 다시 나타난다. 빈 스냅샷이면 해당 draft 키도 삭제하도록 처리.
+2. **`public/js/pages/editor.js:45` — 같은 사용자의 새 세트 편집 탭이 임시저장 키를 공유함.** 새 세트 편집기를 두 탭에서 열면 둘 다 `draftId === 'new'`라 1초 자동 저장이 서로 덮어쓴다. 한 탭에서 다른 세트의 제목·문항이 복원될 수 있다. 새 편집 세션별로 draft 키를 분리하고, 새로고침 복원은 유지하도록 식별자를 세션에 보관.
+
+재배포 감지 흐름과 랜딩 스크롤의 모션 감소 처리는 읽은 코드에서 추가 결함을 확인하지 못함. 브라우저 동작은 실행 검증하지 않음.

@@ -9,8 +9,8 @@ export default {
   async render(root, params, query) {
     history.replaceState(null, '', location.pathname + '#/oauth'); // 주소창에서 토큰 제거
     if (query.error || !query.token) {
-      toast(query.error || '로그인에 실패했어요.', 'bad');
-      location.replace('#/login');
+      // 오류는 로그인 화면에 남겨 보여준다(토스트만으로는 금방 사라져 원인을 알 수 없었음)
+      location.replace('#/login?error=' + encodeURIComponent(query.error || '로그인 정보를 받지 못했어요.'));
       return;
     }
     render(root, html`<div class="page"><p class="muted">로그인하는 중…</p></div>`);
