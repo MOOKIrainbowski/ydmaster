@@ -28,6 +28,12 @@ await Test.collection.insertOne({ title: '옛 형식 단어 시험', author: fri
   questions: [{ question: 'apple', answer: '사과' }, { question: 'banana', answer: '바나나' }, { question: 'grape', answer: '포도' }] });
 
 const local = express();
+// 개발 서버 전용: 휴대폰 폭 미리보기(iframe)를 위해 X-Frame-Options 를 빼고 같은 출처 iframe 만 허용. 운영(app.js)은 DENY 유지.
+local.use((req, res, next) => {
+  const set = res.setHeader.bind(res);
+  res.setHeader = (k, v) => (String(k).toLowerCase() === 'x-frame-options' ? set('X-Frame-Options', 'SAMEORIGIN') : set(k, v));
+  next();
+});
 local.use(app);
 local.use(express.static(path.join(here, '..', 'public'), { extensions: ['html'] }));
 const port = process.env.PORT || 5000;
