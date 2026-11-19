@@ -73,9 +73,9 @@
   },
   {
     "name": "quoted question",
-    "text": "She asked, ?Ready?? We nodded.",
+    "text": "She asked, “Ready?” We nodded.",
     "sentences": [
-      "She asked, ?Ready??",
+      "She asked, “Ready?”",
       "We nodded."
     ]
   },
@@ -89,9 +89,9 @@
   },
   {
     "name": "unicode ellipsis",
-    "text": "Wait? then begin.",
+    "text": "Wait… then begin.",
     "sentences": [
-      "Wait? then begin."
+      "Wait… then begin."
     ],
     "note": "Lowercase continuation is deliberately kept together by current parser."
   },
@@ -198,9 +198,9 @@
   },
   {
     "name": "quoted exclamation",
-    "text": "He shouted, ?Go!? Everyone moved.",
+    "text": "He shouted, “Go!” Everyone moved.",
     "sentences": [
-      "He shouted, ?Go!?",
+      "He shouted, “Go!”",
       "Everyone moved."
     ]
   },

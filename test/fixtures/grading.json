@@ -182,7 +182,7 @@
   {
     "fn": "gradeTerm",
     "expected": "don't",
-    "response": "don?t",
+    "response": "don’t",
     "correct": true
   },
   {
@@ -284,7 +284,7 @@
   {
     "fn": "gradeSentence",
     "expected": "They do not give up.",
-    "response": "They don't give up.",
+    "response": "They don’t give up.",
     "correct": false,
     "note": "Contraction expansion should remain incorrect under token-exact grading."
   },

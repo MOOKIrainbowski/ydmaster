@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>영단마스터 디자인 시스템 미리보기</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="main">
+    <div class="page preview-page">
+      <header>
+        <h1>디자인 시스템 미리보기</h1>
+        <p class="muted">화면 폭을 바꾸고 버튼·탭·선택지를 눌러 기본, hover, active, disabled 상태를 확인하세요. Tab 키로 포커스 표시도 살펴보세요.</p>
+      </header>
+
+      <section class="preview-theme" aria-labelledby="light-title">
+        <h2 id="light-title">라이트</h2>
+        <header class="topbar">
+          <a class="topbar__brand" href="#">영단마스터</a>
+          <nav class="topbar__nav" aria-label="미리보기 메뉴"><a class="topbar__link is-active" href="#">홈</a><a class="topbar__link" href="#">세트</a></nav>
+          <a class="topbar__me" href="#" aria-label="내 정보"><span class="avatar avatar--letter">한</span></a>
+        </header>
+        <section class="section">
+          <div class="section__head"><h3 class="section__title">버튼과 배지</h3><span class="badge">기본</span></div>
+          <div class="btn-row"><button class="btn btn--primary">저장</button><button class="btn btn--ghost">취소</button><button class="btn btn--danger">삭제</button><button class="btn btn--icon btn--ghost" aria-label="닫기"><span class="icon">×</span></button><button class="btn btn--primary btn--sm">작은 버튼</button><button class="btn btn--primary" aria-busy="true">처리 중</button><button class="btn" disabled>사용 불가</button><span class="badge badge--ok">정답</span><span class="badge badge--bad">오답</span><span class="badge badge--warn">확인</span></div>
+        </section>
+        <section class="section">
+          <h3 class="section__title">입력·선택·탭</h3>
+          <div class="field-row"><label class="field"><span class="field__label">세트 이름</span><input class="input" placeholder="예: 1과 단어"></label><label class="field"><span class="field__label">시험 종류</span><select class="select"><option>뜻 쓰기</option><option>객관식</option></select></label></div>
+          <label class="check"><input type="checkbox" checked> 알림 받기</label>
+          <div class="tabs" role="tablist"><button class="tabs__tab is-active" role="tab" aria-selected="true">단어</button><button class="tabs__tab" role="tab" aria-selected="false">본문</button></div>
+        </section>
+        <section class="section">
+          <h3 class="section__title">카드·목록·통계</h3>
+          <article class="card"><div class="list-row"><span class="avatar avatar--letter">영</span><div class="list-row__main"><p class="list-row__title">환경과 우리 생활</p><p class="list-row__meta">단어 30개 · 오늘 수정</p></div><button class="btn btn--ghost btn--sm">열기</button></div><dl class="stat-row"><div><dt>외운 문항</dt><dd>12</dd></div><div><dt>연속 학습</dt><dd>3일</dd></div><div><dt>오답</dt><dd>4</dd></div></dl></article>
+        </section>
+        <section class="section">
+          <h3 class="section__title">상태·로딩</h3>
+          <div class="empty"><span class="icon" aria-hidden="true">＋</span><p class="empty__title">아직 세트가 없어요</p><p class="empty__desc">단어 또는 본문 세트를 만들어 학습을 시작하세요.</p><button class="btn btn--primary">세트 만들기</button></div>
+          <div class="empty empty--error"><p class="empty__title">불러오지 못했어요</p><p class="empty__desc">연결을 확인하고 다시 시도해 주세요.</p><button class="btn btn--ghost">다시 시도</button></div>
+          <div class="skeleton-list" aria-label="로딩 중"><div class="skeleton"></div><div class="skeleton"></div></div>
+          <div class="progress" role="progressbar" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"><div class="progress__bar" style="width:55%"></div></div>
+          <div class="toast toast--ok"><span class="icon" aria-hidden="true">✓</span><span>저장했어요.</span></div><div class="toast toast--bad"><span class="icon" aria-hidden="true">!</span><span>입력 내용을 확인해 주세요.</span></div><div class="toast toast--info"><span class="icon" aria-hidden="true">i</span><span>시험을 시작할 수 있어요.</span></div>
+        </section>
+        <section class="section">
+          <h3 class="section__title">시험 컴포넌트</h3>
+          <div class="play__bar"><button class="btn btn--icon btn--ghost" aria-label="그만두기">×</button><div class="progress"><div class="progress__bar" style="width:40%"></div></div><span class="play__count">4 / 10</span></div>
+          <p class="prompt__text prompt__text--en" lang="en">We protect the <input class="blank" value="river" aria-label="빈칸 예시" readonly> together.</p>
+          <p class="passage" lang="en">Small actions can make a difference. They help <span class="inline-choice"><button class="inline-choice__opt" aria-checked="true">people</button><button class="inline-choice__opt" aria-checked="false">person</button></span> care for nature.</p>
+          <div class="choices"><button class="choice"><span class="choice__num">1</span><span class="choice__text">보호하다</span></button><button class="choice is-ok"><span class="choice__num">2</span><span class="choice__text">돌보다</span></button><button class="choice is-bad"><span class="choice__num">3</span><span class="choice__text">낭비하다</span></button><button class="choice is-dim" disabled><span class="choice__num">4</span><span class="choice__text">잊어버리다</span></button></div>
+          <p class="passage-ko">작은 행동은 변화를 만들 수 있습니다.</p>
+          <div class="chip-line"><button class="chip chip--placed">Small</button><button class="chip chip--placed">actions</button></div><div class="chip-pool"><button class="chip">make</button><button class="chip" disabled>Small</button><button class="chip">a difference.</button></div>
+          <ol class="order-list"><li class="order-card"><span class="order-card__num">1</span><span class="order-card__text" lang="en">We learn together.</span><span class="order-card__move"><button class="btn btn--icon btn--ghost" disabled aria-label="위로">↑</button><button class="btn btn--icon btn--ghost" aria-label="아래로">↓</button></span></li></ol>
+          <div class="feedback feedback--bad"><div class="feedback__head"><span class="icon">!</span><strong>다시 확인해요</strong></div><p class="feedback__answer"><span class="feedback__label">정답</span><span class="pre-line" lang="en">Small actions can make a difference.</span></p><p class="diff"><span class="diff__ok">Small</span><span class="diff__miss">actions</span><span class="diff__extra">action</span></p><button class="btn btn--primary btn--block">다음 문제</button></div>
+        </section>
+        <section class="section">
+          <h3 class="section__title">결과·복습</h3>
+          <article class="card result-summary"><p class="result-summary__mode">뜻 쓰기 · 학교와 환경</p><p class="result-summary__score"><strong>80</strong><span>점</span></p><p class="result-summary__grade">잘했어요</p><div class="btn-row"><button class="btn btn--primary">다시 풀기</button><button class="btn btn--ghost">오답 복습</button></div></article>
+          <ol class="review-list"><li class="review-item is-ok"><div class="review-item__head"><span>✓</span><span class="review-item__num">1</span><p class="review-item__prompt">protect</p></div></li><li class="review-item is-bad"><div class="review-item__head"><span>!</span><span class="review-item__num">2</span><p class="review-item__prompt">reduce</p></div><dl class="review-item__answers"><div><dt>내 답</dt><dd>늘리다</dd></div><div><dt>정답</dt><dd><mark class="is-ok">줄이다</mark></dd></div></dl></li></ol>
+        </section>
+        <nav class="tabbar" aria-label="탭 미리보기"><a class="tabbar__item is-active" href="#"><span>⌂</span><span>홈</span></a><a class="tabbar__item" href="#"><span>◉</span><span>둘러보기</span></a><a class="tabbar__item" href="#"><span>◎</span><span>오답</span></a><a class="tabbar__item" href="#"><span>☆</span><span>랭킹</span></a><a class="tabbar__item" href="#"><span>○</span><span>내 정보</span></a></nav>
+      </section>
+
+      <section class="preview-theme" data-theme="dark" aria-labelledby="dark-title">
+        <h2 id="dark-title">다크</h2>
+        <div class="btn-row"><button class="btn btn--primary">강조 버튼</button><button class="btn btn--ghost">보조 버튼</button><button class="btn btn--danger">삭제</button><span class="badge badge--ok">정답</span><span class="badge badge--bad">오답</span><span class="badge badge--warn">경고</span></div>
+        <label class="field"><span class="field__label">영문 답안</span><input class="input" value="protect nature" readonly></label>
+        <div class="tabs" role="tablist"><button class="tabs__tab is-active" role="tab" aria-selected="true">단어</button><button class="tabs__tab" role="tab" aria-selected="false">본문</button></div>
+        <div class="mode-grid"><label class="mode-option"><input type="radio" name="dark-mode" checked><span class="mode-option__label">뜻 쓰기</span><span class="mode-option__desc">뜻을 직접 입력해요.</span></label><label class="mode-option"><input type="radio" name="dark-mode"><span class="mode-option__label">객관식</span><span class="mode-option__desc">정답을 골라요.</span></label></div>
+        <div class="skeleton-list"><div class="skeleton"></div></div>
+        <div class="progress"><div class="progress__bar" style="width:70%"></div></div>
+        <div class="card"><div class="list-row"><span class="avatar avatar--letter">영</span><div class="list-row__main"><p class="list-row__title">본문 연습</p><p class="list-row__meta">10문장 · 고1</p></div><span class="badge badge--ok">공개</span></div><p class="passage" lang="en">Careful practice helps students remember a passage.</p><div class="choices"><button class="choice"><span class="choice__num">1</span><span class="choice__text">기억하다</span></button><button class="choice is-ok"><span class="choice__num">2</span><span class="choice__text">연습하다</span></button></div><div class="chip-line"><button class="chip chip--placed">Careful</button><button class="chip">practice</button></div><ol class="order-list"><li class="order-card"><span class="order-card__num">1</span><span class="order-card__text">Careful practice.</span><span class="order-card__move"><button class="btn btn--icon btn--ghost" aria-label="위로">↑</button></span></li></ol><div class="feedback feedback--ok"><div class="feedback__head"><span class="icon">✓</span><strong>정답이에요</strong></div><p class="feedback__answer"><span class="feedback__label">정답</span>Careful practice.</p><p class="diff"><span class="diff__ok">Careful</span><span class="diff__miss">practice</span><span class="diff__extra">practise</span></p><button class="btn btn--primary">계속</button></div></div>
+        <article class="modal"><div class="modal__head"><h3 class="modal__title">시험을 시작할까요?</h3><button class="btn btn--icon btn--ghost" aria-label="닫기">×</button></div><div class="modal__body"><p>시험 종류와 문항 수를 선택하세요.</p></div><div class="modal__actions"><button class="btn btn--ghost">취소</button><button class="btn btn--primary">시작</button></div></article>
+        <div class="toast toast--info"><span class="icon">i</span><span>다크 테마의 알림 예시</span></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

@@ -67,4 +67,69 @@
 9. **아이콘**: 인라인 SVG 한 세트(ui.js 의 `icon()`). 이모지 아이콘 금지.
 
 ## 4. 컴포넌트 클래스 목록 (app.css 가 제공, 페이지는 이것만 조합)
-(Codex 가 app.css 작성 후 클래스·수식어·사용 예를 채움)
+
+페이지는 `ui.js`의 `html` 템플릿을 사용하고 아래 클래스에 상태 수식어를 붙인다. 사용자 데이터는 텍스트로 전달하고 `raw()`는 `icon()` 등 신뢰 가능한 고정 마크업에만 쓴다.
+
+### 페이지와 레이아웃
+
+| 클래스 | 용도 |
+|---|---|
+| `.page` `.page--narrow` | 기본 960px 콘텐츠, 시험·편집·결과는 720px |
+| `.section` `.section__head` `.section__title` | 페이지 안 콘텐츠 영역과 제목 |
+| `.stack` `.field-row` `.btn-row` | 세로 폼, 반응형 필드 행, 버튼 묶음 |
+| `.topbar` `.topbar__brand` `.topbar__nav` `.topbar__link` `.topbar__me` | 데스크톱 셸 |
+| `.tabbar` `.tabbar__item` | 모바일 하단 내비게이션. 현재 항목에 `.is-active`와 `aria-current="page"` |
+| `.app--focus` `.app--guest` | 시험 중 셸 숨김, 비로그인 하단 탭 숨김 |
+| `.skip-link` `.sr-only` `.muted` `.pre-line` | 건너뛰기 링크, 보조기기 전용 텍스트, 보조 문구, 줄바꿈 |
+
+```html
+<div class="page page--narrow">
+  <section class="section">
+    <div class="section__head"><h2 class="section__title">내 세트</h2></div>
+    <div class="stack"><!-- 내용 --></div>
+  </section>
+</div>
+```
+
+### 공용 컴포넌트
+
+| 컴포넌트 | 클래스 / 상태 |
+|---|---|
+| 버튼 | `.btn`, `.btn--primary`, `.btn--ghost`, `.btn--danger`, `.btn--icon`, `.btn--sm`, `.btn--block`; 진행 중은 `aria-busy="true"`, 불가 상태는 실제 `disabled` |
+| 입력 | `.field`, `.field__label`, `.field__hint`, `.input`, `.select`, `.check`; 가로로 놓을 때 `.field-row` |
+| 카드·목록 | `.card`, `.list-row`, `.list-row__main`, `.list-row__title`, `.list-row__meta`, `.stat-row` |
+| 탭·표식 | `.tabs`, `.tabs__tab`, `.badge`; 선택 탭은 `.is-active` 및 `aria-selected` |
+| 알림 | `.toast-region`, `.toast`, `.toast--ok`, `.toast--bad`, `.toast--info`; `toast()`가 접근성 영역과 제거 타이머 처리 |
+| 모달 | `.modal-backdrop`, `.modal`, `.modal--wide`, `.modal__head`, `.modal__title`, `.modal__body`, `.modal__actions`; `modal()` 사용 |
+| 빈 상태·로딩 | `.empty`, `.empty--error`, `.empty__title`, `.empty__desc`, `.skeleton-list`, `.skeleton`, `.progress`, `.progress__bar` |
+| 아바타·아이콘 | `.avatar` (`--size` 사용자 지정), `.avatar--letter`, `.icon`; 아이콘은 `ui.js`의 SVG `icon()` |
+| 시험 설정 | `.mode-grid`, `.mode-option`, `.mode-option__label`, `.mode-option__desc`; 라디오 `:checked` 항목을 강조 |
+
+```js
+html`<button class="btn btn--primary" data-save>저장</button>
+      <label class="field"><span class="field__label">제목</span>
+        <input class="input" name="title"></label>`
+```
+
+### 시험·결과 전용
+
+| 화면 | 클래스 / 상태 |
+|---|---|
+| 시험 셸 | `.play`, `.play__bar`, `.play__count`, `.play__body`, `.play__foot`, `.play__input` |
+| 질문·본문 | `.prompt`, `.prompt__text`, `.prompt__text--en`, `.prompt__sub`, `.passage`, `.passage--dim`, `.passage-ko` |
+| 빈칸·선택 | `.blank` + `--w` 글자 폭, `.inline-choice`, `.inline-choice__opt[aria-checked]`, `.is-ok`, `.is-bad` |
+| 객관식 | `.choices`, `.choice`, `.choice__num`, `.choice__text`, `.is-ok`, `.is-bad`, `.is-dim` |
+| 어순·문장 배열 | `.chip-line`, `.chip-pool`, `.chip`, `.chip--placed`, `.order-list`, `.order-card`, `.order-card__num`, `.order-card__text`, `.order-card__move` |
+| 피드백·영작 diff | `.feedback`, `.feedback--ok`, `.feedback--bad`, `.feedback__head`, `.feedback__answer`, `.feedback__label`, `.diff`, `.diff__ok`, `.diff__miss`, `.diff__extra` |
+| 결과 | `.result-summary`, `.result-summary__mode`, `.result-summary__score`, `.result-summary__grade`, `.review-list`, `.review-item`, `.review-item__head`, `.review-item__num`, `.review-item__prompt`, `.review-item__answers`; 결과 항목은 `.is-ok`/`.is-bad` |
+
+```html
+<p class="passage" lang="en">We protect the
+  <input class="blank" style="--w:8ch" aria-label="빈칸 1"> together.
+</p>
+<div class="feedback feedback--ok" role="alert">
+  <div class="feedback__head"><strong>정답이에요</strong></div>
+</div>
+```
+
+동적 `--w` 같은 수치만 인라인 스타일을 허용한다. 모든 버튼·입력은 키보드 `:focus-visible` 표시를 유지하고, 애니메이션은 `prefers-reduced-motion` 설정을 따른다. 실제 라이트/다크 컴포넌트 모음은 `public/css/_preview.html`에서 확인한다.
