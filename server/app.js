@@ -12,6 +12,14 @@ app.disable('x-powered-by');
 // Vercel 은 x-forwarded-for 를 실제 클라이언트 IP 로 덮어쓴다 → 레이트리밋 키로 신뢰 가능
 app.set('trust proxy', true);
 
+// 배포 진단: 환경변수 '유무'만 알려준다(값은 절대 응답하지 않음). DB 미들웨어보다 앞에 둔다.
+const REQUIRED_ENV = ['MONGODB_URI', 'JWT_SECRET', 'GMAIL_USER', 'GMAIL_PASS', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'NAVER_CLIENT_ID', 'NAVER_CLIENT_SECRET'];
+app.get('/api/health', async (req, res) => {
+  let db = 'ok';
+  try { await connectDB(); } catch (e) { db = 'fail'; }
+  res.json({ db, env: Object.fromEntries(REQUIRED_ENV.map(k => [k, !!process.env[k]])) });
+});
+
 // ==================== DB 연결 (서버리스: 인스턴스당 1회, 전역 캐시) ====================
 let dbPromise = null;
 export function connectDB() {

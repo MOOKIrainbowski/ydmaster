@@ -42,5 +42,29 @@
 7. **공통 컴포넌트**: 버튼, 입력/선택, 카드, 탭, 칩, 목록 행, 모달, 토스트, 빈 상태, 스켈레톤, 진행바, 하단 탭바. 각 상태는 기본·hover(포인터만)·active·disabled·focus-visible. 터치 영역 44×44 CSS px 이상, 키보드 포커스 외곽선 2px 이상, disabled는 실제 비활성화.
 8. **시험 화면**: 한 번에 한 문항, 영어 문장 크게, 진행률·남은 문항을 텍스트로 제공, 제출 중 중복 입력 방지. 피드백은 색+아이콘+“정답/다시 확인” 문구를 동시에 제공.
 
-## 3. 합의안 — 디자인 원칙 · 토큰
-(토의 후 Claude 가 확정)
+## 3. 합의안 — 디자인 원칙 · 토큰 (Claude 확정 v1, 2026-11-19)
+
+토의 결과: 원인은 "색·폰트 선택" 보다 **공용 디자인 계층이 없는 구조**(C1·C3·X3·X4)이고, 그 위에서 장식(그라데이션·다색)이 정보 위계를 덮은 것(C2·X2). 해결 순서: ① 토큰·컴포넌트 계층을 먼저 만들고 ② 페이지는 그 클래스만 조합(인라인 style 금지, 계약 §4) ③ 장식 제거.
+
+1. **원칙** (Codex 안 채택): 학습 내용 우선·장식 최소 / 한 화면 한 과제 / 라이트·다크 같은 위계 / 모바일 우선·확대 허용 / 상태는 색+아이콘+문구. **그라데이션 배경·네온 그림자 금지**(사용자가 고른 배너 색만 예외).
+2. **테마**: 라이트 기본. `prefers-color-scheme: dark` 를 따르고, 설정에서 라이트/다크/시스템 선택(`html[data-theme="light|dark"]`, 미지정 = 시스템). 강조색은 1개 고정(옛 "강조색 고르기" 폐기 — 대비 보장 불가).
+3. **색 토큰** (Codex 안 + 리뷰 4 반영해 다크 글자용 강조 분리):
+   - 라이트: --bg #f8fafc, --surface #ffffff, --surface-2 #f1f5f9, --text #172033, --text-2 #475569, --border #cbd5e1, --accent #4f46e5, --accent-text #4338ca, --accent-soft #eef2ff, --ok #15803d, --ok-soft #dcfce7, --bad #b91c1c, --bad-soft #fee2e2, --warn #a16207, --warn-soft #fef9c3
+   - 다크: --bg #0f172a, --surface #1e293b, --surface-2 #273449, --text #f1f5f9, --text-2 #cbd5e1, --border #475569, --accent #6366f1(채움용, 흰 글자), --accent-text #a5b4fc(글자용), --accent-soft #312e81, --ok #4ade80, --ok-soft #14532d, --bad #f87171, --bad-soft #7f1d1d, --warn #facc15, --warn-soft #713f12
+   - 규칙: 글자색은 --accent-text, 버튼 채움은 --accent + 흰 글자. 각 조합 대비값을 app.css 상단 주석에 기록.
+4. **글꼴**: Pretendard Variable — `https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css` (OFL). 대체: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif. 영어 본문도 같은 글꼴, 숫자는 tabular-nums.
+5. **크기 단계**: 12/14/16/18/20/24/32. 본문 16/1.65, UI 14~16/1.45, **영어 지문 18/1.8**, 단어 카드 표제어 32.
+6. **간격**: 4/8/12/16/24/32/48/64. 콘텐츠 최대 폭 720px(시험·편집), 목록 960px.
+7. **모서리·그림자**: 입력·칩 8, 카드·모달 12, 그림자는 모달·팝오버만.
+8. **시험 화면 전용 컴포넌트** (리뷰 5 반영. 스타일은 Codex 의 app.css, 마크업은 Claude 의 play.js):
+   - `.blank` 문장 속 빈칸 입력: 폭 = 서버가 주는 글자수 힌트 기반(최소 4ch, 최대 20ch), 밑줄형, `.is-ok`/`.is-bad` 상태.
+   - `.chip` 어순 조각: 최소 높이 44px. 고르면 답 줄로 이동, 답 줄의 칩을 누르면 되돌림.
+   - `.order-card` 문장 순서: 전체 폭 카드, 번호 배지, 위/아래 이동 버튼(드래그 없이 조작).
+   - `.choice` 객관식 보기: 전체 폭, 번호 배지(키보드 1~5), `.is-ok`/`.is-bad`/`.is-dim`.
+   - `.inline-choice` 문장 속 [A / B] 토글 묶음.
+   - `.feedback` 하단 고정 패널: 아이콘+정답/오답 문구+정답 표시+다음 버튼.
+   - `.diff` 영작 비교: `.diff__ok`, `.diff__miss`(밑줄·빠뜨린 단어), `.diff__extra`(취소선).
+9. **아이콘**: 인라인 SVG 한 세트(ui.js 의 `icon()`). 이모지 아이콘 금지.
+
+## 4. 컴포넌트 클래스 목록 (app.css 가 제공, 페이지는 이것만 조합)
+(Codex 가 app.css 작성 후 클래스·수식어·사용 예를 채움)

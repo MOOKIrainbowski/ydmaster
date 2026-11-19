@@ -41,8 +41,11 @@
   questions: [{ q: <공개 문항(아래 §3)>, key: <정답 데이터, 클라이언트로 절대 안 보냄>, ref: { set, item } }],
   answers: [{ i, response, correct, score, at }],
   status: 'active' | 'done', startedAt, finishedAt, resultId,
-  expiresAt }   // active 는 7일 TTL
+  expiresAt }   // active 동안만 7일 TTL, finish 때 $unset → done 은 영구 보관
 ```
+- 답 저장: `{ _id, user, status:'active', 'answers.i': { $ne: i } }` 조건부 `$push`. 실패 시 저장된 답을 `duplicate:true` 로 반환. ItemStat 은 push 성공 요청만 갱신.
+- 종료: `status: active→done` 원자 전이. 이긴 요청만 Result 생성, 나머지는 저장된 `resultId` 의 Result 반환.
+- 보기·조각 순서는 생성 시 고정(재개해도 같음).
 
 ### 1.4 ItemStat (새 컬렉션 `itemstats`) — 오답노트의 원본
 `{ user, set, item, wrong: Number, right: Number, streak: Number, lastMode, lastWrongAt, lastAt }` 고유키 `(user,set,item)`.
@@ -67,6 +70,9 @@
 - `SetSummary = { _id, title, description, kind, visibility, tags, count(단어 수/문장 수), author:{_id,username}, playCount, favoriteCount, favorited, updatedAt }`
 - `SetFull = SetSummary + { items | passage }`
 - `SetInput = { title, description, kind, visibility, tags, items? , passage? }` (kind 는 생성 후 변경 불가)
+- PUT = 그 kind 의 내용 필드 **전체 교체**(다른 kind 필드는 무시). 항목/문장에 `_id` 를 보내면 유지(학습기록 연결), 없으면 새로 발급. 상한: 단어 500, 문장 80, 문장 600자, 요청 1MB.
+- 레거시 변환은 타입 방어: 문자열 아닌 값·빈 term/meaning 항목은 제외.
+- canView: 작성자 / public / friends 이면서 **열람자의 friends 에 작성자가 있음**.
 
 ### 2.2 시험 세션
 | 메서드 경로 | 요청 | 응답 |
@@ -84,7 +90,7 @@
 | GET `/wrong?set=` | `{ items: [{ set:{_id,title,kind}, item, display:{front,back}, wrong, right, lastWrongAt }] }` |
 | DELETE `/wrong/:set/:item` | 오답에서 제거(streak=2로) |
 | GET `/legacy-wrongnote` | 이전 오답노트(읽기 전용) |
-| GET `/ranking?scope=global\|friends&period=week\|all` | `{ ranking:[{ _id, username, avatarUrl, correct, attempts }], me }` |
+| GET `/ranking?scope=global\|friends&period=week\|all` | `{ ranking:[{ _id, username, avatarUrl, learned, attempts }], me }` — `learned` = 기간 내 **맞힌 서로 다른 (세트,문항) 수**(재응시로 부풀리기 불가). 주간 = KST 월 00:00~. 동점: learned → 마지막 갱신 이른 순 → 닉네임. |
 | GET `/users/:id/avatar` | 이미지 바이트(캐시 헤더) |
 - 사용자 객체엔 base64 대신 `avatarUrl`, `bannerUrl`(없으면 '').
 - 인증·친구·공지·문의·관리자 API 는 경로 유지(보안 수정만). 목록은 P1 이후 이 문서에 추가.
@@ -103,6 +109,8 @@
 | `word_order` | passage | 어순 배열(해석 제시) | `order` | 순서 일치(같은 단어 중복 허용 비교) |
 | `sentence_order` | passage | 문장 순서 배열(문단 단위, 3~8문장 묶음) | `order` | 순서 일치 |
 | `translate` | passage | 해석 보고 영작 | `text` (+ 단어 수 힌트) | 정규화 일치 = 정답, `detail.diff` 제공 |
+- `count` 단위 = 문항 수(`sentence_order` 는 묶음 수). 생성 가능한 소스만 쓰고, 0개면 400 + 이유(예: "핵심 표현 { } 이 표시된 문장이 없습니다"). `sentence_order` 는 3문장 이상.
+- `options.feedback: 'instant'(기본) | 'end'` — end 면 answers 응답에 expected·correct 없이 `{ i, saved:true }`, 결과 화면에서 공개.
 - 객관식 오답 보기: 같은 세트 → 같은 작성자의 다른 세트 순으로 채움, 정답과 같은 글/표기 중복 제외. 4개(5지선다) 못 채우면 있는 만큼(최소 2지선다). 가짜 보기 생성 금지.
 - 문항 수가 소스보다 많으면 소스 수로 자름.
 - 공개 문항 공통: `{ i, type, prompt: { text, sub? }, ... }`
@@ -126,3 +134,4 @@
 
 ## 변경 이력
 - v1 (2026-11-19) 초안.
+- v2 (2026-11-19) Codex 리뷰 1 반영: 세션 원자성·TTL·중복 답, SetInput 교체 의미·상한, canView 기준, count 단위·0문항 오류, feedback 옵션, 랭킹 지표 learned.

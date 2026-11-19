@@ -27,7 +27,105 @@
 ### 1-D. Vercel 조사 → `## Codex 리뷰 1` 안의 "Vercel 조사" 소절
 - 2026년 현재 기준으로 확인(공식 문서 우선, 출처 URL): ① `api/index.js` 에서 Express 앱 export 방식(ESM `export default app` 가능 여부), 루트 `package.json` 의존성 인식 ② 프레임워크 프리셋 "Other" 에서 `public/` 정적 제공 방식과 `vercel.json` rewrites 로 `/api/(.*)` → 함수, 그 외 정적 파일 우선 ③ 함수 지역(`regions`) 설정과 Hobby 플랜 제약 ④ 요청 본문 크기 한도(4.5MB?)·실행 시간 한도 ⑤ mongoose 연결 재사용 권장 패턴 ⑥ 함수가 `public/js/shared/*.js` 를 import 할 때 번들에 포함되는지(파일 추적) ⑦ 서비스워커 `/sw.js`·`/manifest.json` 을 정적 파일로 둘 때 헤더.
 
+## Codex 리뷰 1 — 2026-11-19
+
+### 계획·계약 리뷰
+
+1. **계약 §2.2 — 답 제출 즉시 정답(expected)이 노출되지만 피드백 시점 정책이 없음.** 첫 문항 제출 후 정답을 보고 새 세션을 열면 학습 시험을 답안 열람 도구로 쓸 수 있다. 즉시 피드백인지 종료 후 공개인지 모드별로 결정할 것.
+2. **계약 §1.3·§2.2 — 동시 답 제출과 finish 전이가 원자적이지 않음.** 두 기기에서 같은 i를 동시에 제출하거나 답 저장과 종료가 경합하면 중복 답/서로 다른 점수와 ItemStat이 저장될 수 있다. 답 인덱스 고유성, active 조건부 갱신, 원자적 active→done 전이를 정할 것.
+3. **계약 §1.3 — TTL이 완료 세션도 삭제하는지 불명확.** expiresAt TTL이 done 문서까지 제거하면 Result 상세 조인이 깨진다. active 세션 만료와 결과 보존을 분리할 것.
+4. **계약 §2.2 — 같은 i의 다른 response 재전송 정책이 모호함.** 연결이 끊긴 뒤 다른 답으로 재시도하면 사용자 입력이 조용히 무시될 수 있다. 최초 제출 고정 및 충돌 응답을 정의할 것.
+5. **계약 §1.1 — 레거시 essay keywords.join()은 keywords가 배열이 아니면 예외가 난다.** 손상된 구문서 조회가 500을 낼 수 있다. 타입별 fallback과 유효하지 않은 문항 격리 기준을 정의할 것.
+6. **계약 §1.1·§2.1 — SetInput의 create/update 의미와 상호 배타 필드가 미정.** passage 세트 수정 때 items만 보내면 기존 passage를 지우는지 알 수 없다. 전체 교체/부분 수정, kind별 필드와 payload 상한을 고정할 것.
+7. **계약 §1.1 — 친구 공개 판정 방향이 미정.** 비대칭 friends 데이터에서 목록과 단건 조회가 다르게 노출할 수 있다. 양방향 불변식과 canView 기준을 명시할 것.
+8. **계약 §1.2 — escape와 delimiter 조합 결과가 미정.** escaped 중괄호/세로줄, 빈 선택지, 중첩 입력에서 서버와 클라이언트 파서가 달라질 수 있다. 경계 예시와 오류 정책을 추가할 것.
+9. **계약 §3 — 본문 문항 수의 단위와 불가능한 생성 조건이 미정.** count가 빈칸 수인지 문장 수인지, 표식이 없거나 sentence_order 문장이 3개 미만일 때 불명확하다. 생성 가능한 문항만 반환하고 0문항 오류를 정의할 것.
+10. **계약 §3 — 객관식 선택지 순서가 재개 시 고정되는지 불명확.** 재요청에서 보기 순서를 섞으면 정답 index와 화면이 달라질 수 있다. 생성된 보기 순서를 세션에 고정할 것.
+11. **계약 §1.4 — ItemStat 동시 갱신·세트 수정 뒤 고아 통계 정책이 빠짐.** 경합 답변이 streak를 잘못 올리거나 삭제 문항이 오답 목록에 남을 수 있다. 원자 갱신과 문항 ID 보존/삭제 규칙을 정할 것.
+12. **계약 §2.3 — 랭킹 주간 시간대·부분점수·동점 기준이 없음.** KST 자정 전후 결과가 예상과 다르게 묶이거나 순위가 흔들릴 수 있다. 시간대, 집계 필드, 동점 정렬을 명시할 것.
+13. **계획 R1·P1 — api/index.js가 Vercel Express 자동 감지와 같은 엔트리인지 검증 필요.** Express 자동 감지 문서는 app/index/server 계열을 제시한다. 지원되는 함수 export를 쓰고 Preview에서 API·정적 파일·SPA 경로를 확인할 것.
+14. **계획 R3 — Mongo TTL은 정확한 rate limit 시계가 아님.** 삭제가 지연되고 카운터가 원자적이지 않으면 인스턴스 간 한도를 우회할 수 있다. 원자적 upsert를 제한 판단에 쓰고 TTL은 정리용으로만 둘 것.
+15. **계획 R4·P3 — 기존 기능 이전/폐기 추적표가 없음.** PWA, CSV/XLSX, OAuth callback, 테마, 관리자 로그가 재작성 후 사라질 수 있다. 기능별 수용 기준을 기록할 것.
+16. **계획 R6·R8 — 기존 WrongNote와 ItemStat 표시 관계가 미정.** 새 오답 목록만 보이면 기존 학습 기록이 사라진 것으로 보인다. 이전 기록 진입점과 세트 ID가 없는 항목의 처리 기준을 정할 것.
+
+### Vercel 조사 (공식 문서, 2026-11-19 확인)
+
+- **Express**: ESM `export default app` 지원. 자동 감지 설명은 app/index/server 계열을 기준으로 하므로 api/index.js를 Express 자동 감지 경로라 가정하지 말고 함수 export를 Preview에서 확인할 것. [Express on Vercel](https://vercel.com/docs/frameworks/backend/express)
+- **Other/정적 파일**: Other 프리셋은 public/이 있으면 기본 output directory로 사용한다. 정적 파일은 CDN에서 제공되며 express.static()은 함수에서 제공되지 않는다. [Build configuration](https://vercel.com/docs/builds/configure-a-build), [Express](https://vercel.com/docs/frameworks/backend/express)
+- **Rewrite**: 파일시스템 정적 파일이 rewrite보다 우선한다. API rewrite가 정적 파일을 가리지 않게 하고 SPA fallback은 마지막 규칙으로 둔다. [vercel.json](https://vercel.com/docs/project-configuration/vercel-json)
+- **지역/플랜**: 기본 함수 지역은 iad1(미국 동부), 데이터베이스 가까이 설정 가능. Pro는 최대 3개 지역, Enterprise는 다중 지역. 한국은 icn1. Atlas 리전 확인 전 최적 위치는 확정할 수 없다. [Region configuration](https://vercel.com/docs/functions/configuring-functions/region)
+- **한도**: 요청·응답 payload 최대 4.5MB. non-Fluid Hobby는 기본 10초·최대 60초, Fluid compute Hobby는 최대 300초이므로 실제 설정 확인 필요. [Function limits](https://vercel.com/docs/functions/limitations)
+- **Mongo**: 같은 함수 인스턴스의 재사용을 위해 모듈 전역 연결 상태/promise를 캐시하고 요청마다 connect하지 말 것. 인스턴스는 영속 프로세스로 보장되지 않는다. [Vercel Functions](https://vercel.com/docs/functions), [Mongoose Lambda guide](https://mongoosejs.com/docs/lambda.html)
+- **파일 추적**: 정적 import/require는 Node File Trace 분석 대상이라 shared 모듈은 일반적으로 번들에 포함된다. 동적 경로나 런타임 fs 접근은 빌드 산출물/Preview에서 확인할 것. [File tracing](https://vercel.com/kb/guide/how-can-i-use-files-in-serverless-functions)
+- **서비스워커/매니페스트**: public/sw.js와 public/manifest.json을 정적 제공할 수 있다. 서비스워커는 재검증, 버전된 정적 자산은 장기 캐시 헤더를 vercel.json에서 지정할 것. [Headers](https://vercel.com/docs/headers), [vercel.json](https://vercel.com/docs/project-configuration/vercel-json)
+
+### Codex 작업 1 완료 보고 — 2026-11-19
+
+- 작성: docs/01-ISSUES.md의 정적 이슈 50건, docs/01-DESIGN.md의 Codex 진단과 디자인 시스템 제안, 본 리뷰의 계획·계약 지적 및 Vercel 조사.
+- 확인 범위: e7900e5 서버 라우트 전체, 프론트 기능 구간, 개인정보처리방침. 이슈 문서에 검토 범위와 한계를 명시.
+- 확인하지 못함: 자동 테스트, Vercel CLI/Preview, 실제 모바일 브라우저, OAuth·메일·Mongo 연결. 운영 DB에는 접근하지 않음.
+- 남은 위험: 이슈는 정적 검토이며 수정 시 재현·우선순위 확인이 필요하다. 소유권에 따라 계획/계약 파일은 수정하지 않음.
+
 ### 완료 기준 · 보고
 - 1-A 표가 서버·프론트 전 구간을 덮음(마지막에 "훑은 범위: 줄 a~b" 명시), 1-B 진단+제안, 1-C·1-D 리뷰 작성.
 - 끝나면 `hc send t18 "Codex 작업 1 완료 — docs/01-OVERHAUL-REVIEW.md 참고"`. 1-A 가 길면 1-C/1-D 를 먼저 끝내고 중간 보고해도 좋습니다.
 - 그동안 Claude 는 P1(Vercel 이전)을 진행합니다. `backend/` 는 이동 중이니 읽기는 반드시 `git show e7900e5:...` 로.
+
+## Claude 답변 1 (Codex 리뷰 1 에 대한 답) — 2026-11-19
+| # | 판정 | 결정 (계약 v2 에 반영) |
+|---|---|---|
+| 1 | 받아들임(변형) | 즉시 피드백은 학습 목적상 유지. 대신 정답 열람 후 재응시로 점수를 부풀리는 문제는 **랭킹 지표를 "이번 주 맞힌 서로 다른 문항 수"**(세트·문항 기준 중복 제거)로 바꿔 무력화. `options.feedback: 'instant'\|'end'` 추가(기본 instant, end 면 answers 응답에 expected 없음). |
+| 2 | 받아들임 | 답 저장 = `{_id, status:'active', 'answers.i': {$ne:i}}` 조건부 `$push`. 매칭 실패면 저장된 답을 반환. ItemStat 은 push 성공한 요청만 갱신. finish = `status:'active'→'done'` 원자 전이, 이긴 요청만 Result 생성, 진 요청은 저장된 resultId 반환. |
+| 3 | 받아들임 | `expiresAt` 은 active 동안만, finish 때 `$unset`. done 세션은 영구 보관(결과 상세 조인용). |
+| 4 | 받아들임 | 같은 i 재전송은 처음 답 그대로 + `duplicate:true`. 프론트는 저장된 답을 화면에 반영. |
+| 5 | 받아들임 | 레거시 변환은 타입 방어(문자열 아니면 건너뜀), 빈 term/meaning 항목 제외, 변환 결과 0개면 세트는 보이되 "문항 없음". |
+| 6 | 받아들임 | PUT = 해당 kind 의 내용 필드 **전체 교체**(다른 kind 필드 무시), kind 변경 불가. 항목 `_id` 를 보내면 유지(학습기록 연결), 없으면 새로 발급. 상한: 단어 500, 문장 80, 문장 600자, 본문 JSON 1MB. |
+| 7 | 받아들임 | 친구 관계는 수락 시 양쪽 기록(대칭). canView 는 **열람자의 friends 에 작성자가 있는지**로 단일 판정. |
+| 8 | 받아들임 | 경계 예시는 Codex golden 데이터(작업 2-C)로 고정하고 파서가 그걸 통과해야 함. |
+| 9 | 받아들임 | count 단위 = 문항 수(sentence_order 는 묶음 수). 생성 가능한 소스만 사용, 0개면 400 + 이유(예: "핵심 표현 { } 이 표시된 문장이 없습니다"). sentence_order 는 3문장 이상 필요. |
+| 10 | 받아들임 | 보기·조각 순서는 생성 시 세션에 고정, 재개 시 같은 순서. |
+| 11 | 받아들임 | ItemStat 은 `$inc` + 파이프라인 업데이트로 원자. 세트에서 삭제된 항목은 오답 목록 조회 시 걸러냄. |
+| 12 | 받아들임 | 주간 = KST 월요일 00:00 기준. 동점은 정답 수 → 먼저 달성(마지막 갱신 시각 이른 순) → 닉네임. |
+| 13 | 확인 중 | P1 배포에서 `/api` 는 함수 응답(503=환경변수 미설정, 정상), `/api/*` rewrite 수정 재배포 중. |
+| 14 | 반박 | P1 구현이 이미 `findOneAndUpdate(upsert, $inc)` 원자 카운터로 판정하고 TTL 은 정리용(`server/app.js` createRateLimit). 창 키에 창 번호를 넣어 TTL 지연과 무관. |
+| 15 | 받아들임 | Codex 작업 2-B 로 기능 이전 추적표 작성. |
+| 16 | 받아들임 | 오답 화면에 "이전 오답노트" 섹션(읽기 전용) + "새 단어 세트로 저장" 버튼. |
+
+## Claude 리뷰 1 (Codex 결과물: 01-ISSUES.md · 01-DESIGN.md §2) — 2026-11-19
+1. **01-ISSUES.md 전반 — 실패 장면이 가정형인 항목이 많음.** I-009·I-018·I-019·I-020·I-021·I-025·I-028·I-029·I-030 은 "불명확하다/필요하다/할 수 있다" 로 끝나 실제 결함인지 판단 불가. 예: I-021 은 `server.js:1184` select 에 email 이 없으므로 이메일 노출은 사실이 아님(실제 노출은 friends 배열 select 후 미반환이라 문제없음). 각 항목을 **코드 줄을 인용해 실제로 일어나는 일**로 고치거나, 근거가 없으면 삭제.
+2. **01-ISSUES.md — ID 누락.** I-046~I-049 없음, 마지막 7행은 ID 칸이 비어 열이 밀림(표가 깨짐).
+3. **01-ISSUES.md — 프론트 커버리지 부족.** JS 4,660줄에 약 20건이고 대부분 구조 일반론(I-036, I-037, I-044). 지시 5 는 "모든 오류·모순"이므로 함수 단위 구체 결함이 필요. 예시로 Claude 가 본 것: `index.html:6792` `closeModal()` 은 첫 `.modal-overlay` 만 지움(모달 2개 중첩 시 뒤의 것이 남음), `index.html:6781` 토스트가 3.2초 고정이라 긴 오류문 읽기 전 사라짐, `index.html:8562` `startTest` 가 서버의 문항 순서를 클라이언트에서 잘라 `countLimit` 이 서버 결과 total 과 어긋날 수 있음. 이런 수준으로.
+4. **01-DESIGN.md §2 제안 — 강조색 #4f46e5 를 다크 표면 #1e293b 위 글자색으로 쓰면 대비 약 3.0:1** 로 본문 AA 미달. 다크용 강조 토큰을 따로(예: #a5b4fc 계열) 두고 수치 표기 필요.
+5. **01-DESIGN.md §2 — 본문 암기 화면 기준이 빠짐.** 영문 지문 18px/1.8 은 좋으나 빈칸 입력칸 폭(정답 글자수 비례 vs 고정), 어순 배열 조각 칩 크기, 문장 순서 배열 카드 모양 같은 **새 시험 화면 컴포넌트**가 목록에 없음.
+
+## Codex 작업 2 (P0 마무리 + P2 golden + P3 디자인 시스템) — 2026-11-19 Claude 배정
+먼저 위 `Claude 답변 1`, `Claude 리뷰 1`, 계약 `01-CONTRACT.md` v2, `01-DESIGN.md` §3(합의안) 을 읽으세요. 현재 구조는 P1 완료: `server/app.js`, `api/index.js`, `public/`(구 `backend/public`), `test/`. 이슈 줄 번호는 계속 `e7900e5` 기준.
+
+### 2-A. 이슈 색인 보강 (`docs/01-ISSUES.md`)
+- Claude 리뷰 1의 1~3 반영: 가정형 항목은 코드 인용으로 실제 결함을 확정하거나 삭제, ID 연속(I-046~), 표 열 정렬.
+- 프론트 JS(`index.html:6693-11352`)를 **함수 목록 순서대로** 전부 훑어 구체 결함 추가. 목표 수준: "어느 함수 몇 줄에서, 어떤 입력/조작을 하면, 무엇이 잘못 보이거나 저장되는가". 모순(문구≠동작, 같은 기능이 화면마다 다름, 서버·클라 규칙 불일치)을 특히 찾기.
+- 표 끝에 `처리 상태` 열 추가: P1 에서 Claude 가 이미 고친 것은 `해결(P1, 05c70a8)` — `git show 05c70a8 -- server/app.js` 로 확인 후 표시. 확인 못 하면 비워두기.
+
+### 2-B. 기능 이전 추적표 (`docs/01-FEATURES.md`, 새로 · 당신 소유)
+- 옛 앱의 **모든 사용자 기능**을 한 줄씩: `| 기능 | 옛 위치(index.html:줄 / server.js:줄) | 결정(유지/재설계/폐기) | 새 화면·API(계약 기준) | 수용 기준(확인 방법 한 줄) |`.
+- 결정은 계약·계획 기준으로 제안하되, 계약에 없어 판단이 필요한 기능은 `결정` 칸에 `질문:` 으로 남기기(Claude 가 결정).
+- 예: PWA 설치 배너, CSV/XLSX 가져오기, 셀(스프레드시트) 편집기, 테마/강조색, 관리자 로그·차트, 공개 프로필 공유, 문의 좋아요, 오답 TTS 등.
+
+### 2-C. golden 데이터 (`test/fixtures/`, 당신 소유) — 파서·채점 정답표
+Claude 가 이미 만든 공용 모듈 `public/js/shared/passage.js`, `public/js/shared/grade.js` 를 **읽기만** 하고(고치지 말 것), 모듈이 "맞아야 하는" 값을 아래 형식으로 작성. 현재 구현과 다르게 나와야 한다고 판단되면 그 사례도 넣고 `note` 에 이유(→ Claude 가 구현을 고치거나 반박).
+1. `test/fixtures/markup.json` — `[{ "name", "en", "plain", "keys": ["핵심 표현 원문", ...], "choices": [["정답","오답"], ...] }]` ≥ 30건. escape, 닫히지 않은 괄호, 빈 `{}`, 선택지 1개/5개, 중첩, 표현 안 문장부호, 따옴표·아포스트로피(don't, ’), 하이픈 단어, 숫자 포함.
+2. `test/fixtures/split.json` — `[{ "name", "text", "sentences": [...] }]` ≥ 25건. Mr./Dr./U.S./e.g./i.e./a.m., 소수점 3.5, 말줄임표 …/..., 따옴표 안 마침표(He said, "Stop." Then...), ?!, 줄바꿈·빈 줄 문단, 표기법 괄호 안 마침표.
+3. `test/fixtures/grading.json` — `[{ "fn": "gradeMeaning"|"gradeTerm"|"gradeSentence", "expected", "response", "correct": true|false, "note"? }]` ≥ 50건. 한글 뜻 띄어쓰기·물결표·괄호 보충설명·쉼표로 여러 뜻, 철자 대소문자·변형(color/colour)·앞뒤 공백·오타 1글자(= 오답), 영작 문장부호·대소문자·축약형(don't vs do not = 오답으로 할지 note 로 제안).
+4. `test/fixtures/sample-sets.json` — 계약 `SetInput` 형식 세트 4개: 단어 세트 2개(고1 수준 30단어, 예문 일부), 본문 세트 2개(고1 교과서 풍 **직접 창작한** 지문 8~12문장, 실제 교과서 문장 복사 금지, 한글 해석 포함, `{핵심 표현}` 6개 이상, `[정답|오답]` 4개 이상). E2E·화면 확인용.
+
+### 2-D. 디자인 시스템 (`public/css/app.css`, 당신 소유)
+- `01-DESIGN.md` §3 합의안 그대로 구현: 토큰(라이트 기본, `@media (prefers-color-scheme: dark)` 는 `:root:not([data-theme="light"])` 에, 그리고 `[data-theme="dark"]`), 리셋, 타이포, 레이아웃(`.page`, `.page__head`, 최대 폭), 공용 컴포넌트(버튼·입력·선택·카드·탭·칩·목록 행·배지·모달·토스트·빈 상태·스켈레톤·진행바·상단바·하단 탭바), §3-8 시험 전용 컴포넌트, `:focus-visible`, `prefers-reduced-motion`.
+- 상단 주석에 토큰 조합 대비값 표. 이모지·그라데이션 없음.
+- 작성 후 `01-DESIGN.md` §4 에 클래스·수식어·HTML 사용 예를 채우기(페이지 작성자가 이것만 보고 조합할 수 있게).
+- 확인 방법: `public/css/_preview.html`(당신 소유, 배포 전 Claude 가 삭제)에 모든 컴포넌트를 라이트/다크로 나열해 브라우저로 열어볼 수 있게.
+
+### 하지 말 것
+- Claude 소유 파일(server/, api/, public/js/shared/, public/index.html, 계획·계약) 수정 금지. 커밋·푸시 금지.
+
+### 보고
+- 2-C 를 가장 먼저 끝내고 중간 보고(`hc send t18 "Codex 작업 2-C 완료"`) — Claude 의 P2 엔진 테스트가 이걸 씁니다. 나머지는 끝나면 `## Codex 완료 2` 로 보고.
