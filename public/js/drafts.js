@@ -20,4 +20,27 @@ export const drafts = {
     try { localStorage.setItem(key(id), JSON.stringify({ ...data, savedAt: Date.now() })); return true; } catch { return false; }
   },
   clear(id) { try { localStorage.removeItem(key(id)); } catch { /* 무시 */ } },
+  // id 가 prefix 로 시작하는 임시저장 중 가장 최근 것 { id, data } (탭을 닫은 뒤 다른 탭에서 이어 쓰기용)
+  latest(prefix) {
+    try {
+      const head = key('');
+      let best = null;
+      for (let k = 0; k < localStorage.length; k++) {
+        const name = localStorage.key(k);
+        if (!name.startsWith(head + prefix)) continue;
+        const d = JSON.parse(localStorage.getItem(name) || 'null');
+        if (d && Date.now() - d.savedAt <= MAX_AGE && (!best || d.savedAt > best.data.savedAt)) best = { id: name.slice(head.length), data: d };
+      }
+      return best;
+    } catch { return null; }
+  },
 };
+
+// 이 탭의 고유 번호(sessionStorage 는 탭마다 따로, 새로고침해도 유지) — 새 세트를 여러 탭에서 쓸 때 임시저장이 섞이지 않게
+export function tabId() {
+  try {
+    let t = sessionStorage.getItem('ydm_tab');
+    if (!t) { t = Math.random().toString(36).slice(2, 10); sessionStorage.setItem('ydm_tab', t); }
+    return t;
+  } catch { return 'tab'; }
+}

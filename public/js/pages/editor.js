@@ -1,6 +1,6 @@
 import { api } from '../api.js';
 import { html, render, on, $, toast, skeleton, errorBox, icon, fmtDate } from '../ui.js';
-import { drafts } from '../drafts.js';
+import { drafts, tabId } from '../drafts.js';
 import { pairSentences, parseMarkup, tokenize } from '../shared/passage.js';
 
 const IMPORT_LIMIT = 500;
@@ -42,15 +42,17 @@ export default {
   async render(root, params, _query, ctx) {
     let kind = params.id ? '' : params.kind, setId = params.id || '', title = '', description = '', visibility = 'private', tags = '', items = [], passageSource = '', enPaste = '', koPaste = '', dirty = false, selectedWord = null;
     // 임시저장(02 D10): 새 세트는 'new', 수정은 세트 id 로 구분. baseUpdatedAt = 불러온 서버 세트의 수정 시각(충돌 안내용)
-    const draftId = setId || 'new';
-    let baseUpdatedAt = null, pendingDraft = null, lastSaved = '';
+    // 새 세트는 탭마다 따로 저장(두 탭에서 동시에 만들어도 덮어쓰지 않게, Codex 리뷰 G-R #2)
+    const draftId = setId || `new:${tabId()}`;
+    let baseUpdatedAt = null, pendingDraft = null, lastSaved = '', adoptFrom = null;
     const snapshot = () => ({ kind, title, description, visibility, tags, items, passageSource, enPaste, koPaste, baseUpdatedAt });
     const hasContent = d => d && (String(d.title || '').trim() || (d.items || []).some(x => Object.values(x).some(v => typeof v === 'string' && v.trim())) || String(d.enPaste || '').trim());
     const flushDraft = () => {
       if (!dirty) return true;
       const snap = JSON.stringify(snapshot());
       if (snap === lastSaved) return true;
-      if (!hasContent(snapshot())) return true;
+      // 내용을 모두 지웠다면 예전 임시저장도 지운다(다시 열었을 때 지운 내용이 복원되지 않게, Codex 리뷰 G-R #1)
+      if (!hasContent(snapshot())) { drafts.clear(draftId); lastSaved = snap; return true; }
       const ok = drafts.save(draftId, snapshot());
       if (ok) lastSaved = snap;
       return ok;
@@ -122,7 +124,9 @@ export default {
       } catch (e) { if (ctx.isCurrent()) render(root, html`<div class="page">${errorBox(e.message)}</div>`); return; }
     }
     if (!items.length) items = [kind === 'passage' ? { en: '', ko: '' } : { term: '', meaning: '', example: '', exampleKo: '' }];
-    const found = drafts.load(draftId);
+    let found = drafts.load(draftId);
+    // 이 탭에 임시저장이 없으면, 닫힌 다른 탭(또는 옛 'new' 키)에서 쓰던 새 세트를 이어 쓸 수 있게 제안
+    if (!hasContent(found) && !setId) { const o = drafts.latest('new'); if (o && hasContent(o.data)) { found = o.data; adoptFrom = o.id; } }
     if (hasContent(found)) pendingDraft = found;
     draw();
     const offs = [on(root, 'input', '[data-field]', (_e, el) => { const i = Number(el.closest('[data-row]').dataset.row); items[i][el.dataset.field] = el.value; dirty = true; if (el.dataset.field === 'en') selectedWord = null; if (kind === 'passage' && el.dataset.field === 'en') updatePreview(i); }),
@@ -169,9 +173,12 @@ export default {
         if (!setId && d.kind) kind = d.kind;
         ({ title = '', description = '', visibility = 'private', tags = '', passageSource = '', enPaste = '', koPaste = '' } = d);
         if (Array.isArray(d.items) && d.items.length) items = d.items;
-        selectedWord = null; dirty = true; draw(); toast('임시저장한 내용을 불러왔어요.', 'ok');
+        selectedWord = null; dirty = true; draw();
+        // 다른 탭의 임시저장을 가져왔으면 이 탭 키로 옮기고 원래 키는 지움
+        if (adoptFrom && adoptFrom !== draftId) { flushDraft(); drafts.clear(adoptFrom); adoptFrom = null; }
+        toast('임시저장한 내용을 불러왔어요.', 'ok');
       }),
-      on(root, 'click', '[data-draft-discard]', () => { drafts.clear(draftId); pendingDraft = null; draw(); toast('임시저장을 지웠어요.', 'info'); })];
+      on(root, 'click', '[data-draft-discard]', () => { drafts.clear(adoptFrom || draftId); adoptFrom = null; pendingDraft = null; draw(); toast('임시저장을 지웠어요.', 'info'); })];
     // 1초마다 바뀐 내용만 브라우저에 임시저장. 새로고침(재배포 알림)·탭 닫힘·화면 이동 때도 마지막으로 저장.
     const timer = setInterval(flushDraft, 1000);
     const onLeave = () => { flushDraft(); };
