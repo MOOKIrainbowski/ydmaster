@@ -21,8 +21,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
     rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <meta name="apple-mobile-web-app-title" content="영단마스터">
   <style>
     *,
@@ -6694,7 +6694,7 @@
     /* ============================================================
        CONFIG
     ============================================================ */
-    const API = 'https://ydmaster.onrender.com/api';
+    const API = '/api'; // Vercel: 정적 페이지와 API 가 같은 출처(R1)
 
     /* ── SVG Icon helper ── */
     function ic(name,sz){sz=sz||16;const d={
@@ -10590,7 +10590,7 @@
       <!-- Centered Name + Email -->
       <div style="text-align:center;padding:8px 20px 0">
         <div class="pub-username">${esc(u.username)}</div>
-        <div class="pub-url" style="margin-top:2px">ydmaster.onrender.com/#/profile/${esc(u.username)}</div>
+        <div class="pub-url" style="margin-top:2px">${location.host}/#/profile/${esc(u.username)}</div>
       </div>
 
       <!-- Action Buttons -->
@@ -11089,7 +11089,7 @@
     /* ============================================================
        SOCIAL LOGIN (NAVER + GOOGLE)
     ============================================================ */
-    const BACKEND_API = 'https://ydmaster.onrender.com';
+    const BACKEND_API = '';
 
     function naverLogin() {
       showSocialAgreement('naver');

@@ -1,115 +1,114 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
-const path = require('path');
-require('dotenv').config();
+// 영단마스터 API — Vercel 서버리스 함수(api/index.js)와 로컬 서버(server/local.js)가 같이 쓰는 Express 앱.
+// listen·정적 파일·SPA 폴백은 여기 두지 않는다(R1/R2: Vercel 은 public/ 을 CDN 이 직접 제공).
+import express from 'express';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
+import crypto from 'node:crypto';
 
 const app = express();
+app.disable('x-powered-by');
+// Vercel 은 x-forwarded-for 를 실제 클라이언트 IP 로 덮어쓴다 → 레이트리밋 키로 신뢰 가능
+app.set('trust proxy', true);
 
-// ==================== 로그 시스템 ====================
-const LOG_MAX = 2000;
-const logBuffer = [];
-
-function pushLog(level, message) {
-  const entry = {
-    ts: new Date().toISOString(),
-    level,
-    message: typeof message === 'string' ? message.slice(0, 500) : JSON.stringify(message).slice(0, 500)
-  };
-  logBuffer.push(entry);
-  if (logBuffer.length > LOG_MAX) logBuffer.shift();
+// ==================== DB 연결 (서버리스: 인스턴스당 1회, 전역 캐시) ====================
+let dbPromise = null;
+export function connectDB() {
+  if (mongoose.connection.readyState === 1) return Promise.resolve();
+  if (!dbPromise) {
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ydmaster';
+    dbPromise = mongoose.connect(uri, { serverSelectionTimeoutMS: 8000, maxPoolSize: 5 })
+      .then(() => ensureAdmins())
+      .catch(err => { dbPromise = null; throw err; });
+  }
+  return dbPromise;
 }
+app.use('/api', async (req, res, next) => {
+  try { await connectDB(); next(); }
+  catch (e) {
+    console.error('MongoDB 연결 실패:', e.message);
+    res.status(503).json({ message: '서버가 데이터베이스에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.' });
+  }
+});
 
-// Console 프록시
-const _origLog = console.log.bind(console);
+// ==================== 로그 (R3: warn/error 만 Mongo TTL 14일, 메모리 버퍼 폐기) ====================
+const LogSchema = new mongoose.Schema({
+  ts: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 14 },
+  level: String,
+  message: String,
+});
+const Log = mongoose.model('Log', LogSchema);
+function pushLog(level, message) {
+  const text = typeof message === 'string' ? message : JSON.stringify(message);
+  if (mongoose.connection.readyState !== 1) return;
+  Log.create({ level, message: text.slice(0, 500) }).catch(() => {});
+}
 const _origError = console.error.bind(console);
 const _origWarn = console.warn.bind(console);
-console.log = (...a) => { const m = a.map(String).join(' '); pushLog('info', m); _origLog(m); };
 console.error = (...a) => { const m = a.map(String).join(' '); pushLog('error', m); _origError(m); };
 console.warn = (...a) => { const m = a.map(String).join(' '); pushLog('warn', m); _origWarn(m); };
 
-// HTTP 요청 로그 미들웨어
-function requestLogger(req, res, next) {
+app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
-    const ms = Date.now() - start;
-    const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'http';
-    pushLog(level, `${req.method} ${req.path} ${res.statusCode} ${ms}ms — ${req.ip}`);
+    if (res.statusCode >= 500) pushLog('error', `${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms`);
   });
   next();
-}
+});
 
-// ==================== CORS ====================
+// 같은 출처(Vercel 한 도메인)에서만 쓰므로 CORS 는 로컬 개발 출처만 허용
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowed =
-    !origin ||
-    origin.endsWith('.onrender.com') ||
-    origin === 'https://ydmaster.com' ||
-    origin === 'https://www.ydmaster.com' ||
-    origin.startsWith('http://localhost');
-  if (allowed) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  if (origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
-app.use(express.json({ limit: '10mb' }));
-app.use(requestLogger);
+// Vercel 요청 본문 한도 4.5MB. 이미지 base64 2.8MB 를 담을 수 있게 4mb.
+app.use(express.json({ limit: '4mb' }));
 
-// ==================== 정적 파일 서빙 ====================
-const PUBLIC_DIR = path.join(__dirname, 'public');
-app.use(express.static(PUBLIC_DIR, { maxAge: '1h', index: false }));
-
-// ==================== 보안 헤더 ====================
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.removeHeader('X-Powered-By');
+  res.setHeader('Cache-Control', 'no-store');
   next();
 });
 
-// ==================== Rate Limiting ====================
-const rateLimitMap = new Map();
-
-function rateLimit(key, maxRequests, windowMs) {
-  const now = Date.now();
-  const record = rateLimitMap.get(key) || { count: 0, resetAt: now + windowMs };
-  if (now > record.resetAt) {
-    record.count = 0;
-    record.resetAt = now + windowMs;
-  }
-  record.count++;
-  rateLimitMap.set(key, record);
-  return record.count <= maxRequests;
-}
+// ==================== Rate Limiting (R3: 인스턴스 간 공유되도록 Mongo 고정 창) ====================
+const RateSchema = new mongoose.Schema({
+  _id: String,
+  n: { type: Number, default: 0 },
+  exp: { type: Date, expires: 0 },
+});
+const Rate = mongoose.model('Rate', RateSchema);
 
 function createRateLimit(maxRequests, windowMs, message) {
-  return (req, res, next) => {
-    const key = `${req.ip}:${req.path}`;
-    if (!rateLimit(key, maxRequests, windowMs)) {
-      return res.status(429).json({ message: message || '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+  return async (req, res, next) => {
+    try {
+      const win = Math.floor(Date.now() / windowMs);
+      const key = `${req.ip}:${req.path}:${windowMs}:${win}`;
+      const doc = await Rate.findOneAndUpdate(
+        { _id: key },
+        { $inc: { n: 1 }, $setOnInsert: { exp: new Date((win + 1) * windowMs) } },
+        { upsert: true, new: true }
+      );
+      if (doc.n > maxRequests)
+        return res.status(429).json({ message: message || '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    } catch (e) {
+      // 레이트리밋 저장소 장애로 서비스 전체를 막지 않는다
+      _origWarn('rate limit 실패:', e.message);
     }
     next();
   };
 }
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of rateLimitMap.entries()) {
-    if (now > val.resetAt) rateLimitMap.delete(key);
-  }
-}, 3600000);
+function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+const isObjectId = id => mongoose.isValidObjectId(id) && String(id).length === 24;
 
 // ==================== 입력값 검증 헬퍼 ====================
 function sanitizeString(str, maxLen = 200) {
@@ -142,26 +141,14 @@ function isValidBase64Image(str) {
   return /^data:image\/(jpeg|jpg|png|webp|gif);base64,/.test(str);
 }
 
-// ==================== DB ====================
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ydmaster')
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB error:', err));
-
 // ==================== MAILER ====================
+// 서버리스에서는 pool/verify 가 인스턴스 동결로 끊긴다 → 요청마다 단발 연결.
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_PASS,
   },
-  pool: true,
-  maxConnections: 3,
-  rateLimit: 10,
-});
-
-transporter.verify((err, success) => {
-  if (err) console.error('SMTP 연결 실패:', err.message);
-  else console.log('SMTP 연결 성공 ✓');
 });
 
 // ==================== SCHEMAS ====================
@@ -190,6 +177,7 @@ const EmailVerificationSchema = new mongoose.Schema({
   password: { type: String, required: true },
   token: { type: String, required: true },
   code: { type: String, default: '' },
+  attempts: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now, expires: 3600 }
 });
@@ -275,6 +263,7 @@ const PasswordResetSchema = new mongoose.Schema({
   email: { type: String, required: true },
   token: { type: String, required: true, unique: true },
   code: { type: String, required: true },
+  attempts: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
 });
 PasswordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
@@ -328,16 +317,16 @@ const adminAuth = async (req, res, next) => {
 };
 
 const ADMIN_EMAILS = ['sjxonv@gmail.com', 'code.rainbow.ski@gmail.com', 'youngdanmaster@gmail.com'];
-mongoose.connection.once('open', async () => {
+async function ensureAdmins() {
   try {
     await User.updateMany({ email: { $in: ADMIN_EMAILS } }, { $set: { isAdmin: true } });
-    console.log('관리자 권한 설정 완료');
   } catch (e) { console.error('관리자 설정 오류:', e.message); }
-});
+}
 
 // ==================== 이메일 발송 헬퍼 ====================
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ydmaster.onrender.com';
-const BACKEND_URL = process.env.BACKEND_URL || 'https://ydmaster.onrender.com';
+const SITE_URL = 'https://ydmaster.vercel.app';
+const FRONTEND_URL = process.env.FRONTEND_URL || SITE_URL;
+const BACKEND_URL = process.env.BACKEND_URL || SITE_URL;
 
 async function sendVerificationEmail(email, username, code) {
   const now = new Date();
@@ -407,6 +396,15 @@ async function sendVerificationEmail(email, username, code) {
   }
 }
 
+// 6자리 코드 대입 방지: 레코드당 5회 틀리면 폐기(IP 레이트리밋만으로는 IP 를 바꾸면 우회됨)
+async function codeMatches(record, code) {
+  if (record.code === String(code || '').trim()) return true;
+  record.attempts = (record.attempts || 0) + 1;
+  if (record.attempts >= 5) await record.deleteOne();
+  else await record.save();
+  return false;
+}
+
 // ==================== AUTH ====================
 
 app.post('/api/auth/register',
@@ -419,6 +417,9 @@ app.post('/api/auth/register',
       const password = req.body.password || '';
       const { agreedToTerms } = req.body;
       const usePhone = !!phone && !email;
+      // R11: SMS 발송이 구현되지 않아 코드가 응답으로 새던 구조 → 전화번호 신규 가입 중단(기존 계정 로그인은 유지)
+      if (usePhone)
+        return res.status(400).json({ message: '전화번호 가입은 현재 지원하지 않습니다. 이메일로 가입해주세요.' });
 
       if (!username || (!email && !phone) || !password)
         return res.status(400).json({ message: '모든 필드를 입력해주세요.' });
@@ -460,14 +461,8 @@ app.post('/api/auth/register',
       else verifyData.email = email;
       await new EmailVerification(verifyData).save();
 
-      if (usePhone) {
-        // SMS 인증 코드 발송
-        console.log(`[SMS 인증] ${phone} → 코드: ${code}`);
-        res.status(200).json({ message: '인증 코드를 발송했습니다.', token, verifyType: 'phone', devCode: code });
-      } else {
-        await sendVerificationEmail(email, username, code);
-        res.status(200).json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token, verifyType: 'email' });
-      }
+      await sendVerificationEmail(email, username, code);
+      res.status(200).json({ message: '인증 코드를 발송했습니다. 이메일을 확인해주세요.', token, verifyType: 'email' });
     } catch (e) {
       console.error('register error:', e.message);
       res.status(500).json({ message: e.message || '인증 코드 발송 중 오류가 발생했습니다.' });
@@ -489,7 +484,7 @@ app.post('/api/auth/verify-code',
         await EmailVerification.deleteOne({ token });
         return res.status(400).json({ message: '인증 코드가 만료되었습니다. 다시 회원가입을 시도해주세요.' });
       }
-      if (record.code !== String(code).trim())
+      if (!(await codeMatches(record, code)))
         return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
 
       const usePhone = !!record.phone && !record.email;
@@ -513,11 +508,11 @@ app.post('/api/auth/verify-code',
       } else {
         newUserData.email = record.email;
       }
-      await new User(newUserData).save();
+      // 저장한 문서를 그대로 쓴다(전화 가입 레코드는 email 이 비어 findOne({email:''}) 이 엉뚱한/빈 결과를 냈음)
+      const user = await new User(newUserData).save();
 
       await EmailVerification.deleteOne({ token });
 
-      const user = await User.findOne({ email: record.email });
       const jwtToken = jwt.sign({ id: user._id, v: 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.json({ message: '인증이 완료되었습니다!', token: jwtToken, user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin || false } });
     } catch (e) {
@@ -532,8 +527,8 @@ app.post('/api/auth/resend-code',
     try {
       const { token } = req.body;
       const record = await EmailVerification.findOne({ token });
-      if (!record)
-        return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다.' });
+      if (!record || !record.email)
+        return res.status(400).json({ message: '인증 정보를 찾을 수 없습니다. 다시 회원가입을 시도해주세요.' });
 
       const newCode = String(Math.floor(100000 + Math.random() * 900000));
       const newExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -624,7 +619,7 @@ app.post('/api/auth/reset-password',
         await PasswordReset.deleteOne({ token });
         return res.status(400).json({ message: '코드가 만료되었습니다. 다시 시도해주세요.' });
       }
-      if (record.code !== String(code).trim())
+      if (!(await codeMatches(record, code)))
         return res.status(400).json({ message: '인증 코드가 올바르지 않습니다.' });
 
       const hashed = await bcrypt.hash(newPassword, 12);
@@ -764,17 +759,19 @@ app.put('/api/auth/profile', auth, async (req, res) => {
     const update = {};
 
     if (username !== undefined) {
-      const trimmed = username.trim();
-      if (!trimmed) return res.status(400).json({ message: '닉네임을 입력해주세요.' });
-      if (trimmed.length > 20) return res.status(400).json({ message: '닉네임은 20자 이하로 입력해주세요.' });
+      const trimmed = String(username).trim();
+      // 가입 규칙과 같은 규칙(이전엔 수정 시 공백·특수문자 허용 → 공개 프로필 URL 이 깨짐)
+      if (!isValidUsername(trimmed))
+        return res.status(400).json({ message: '닉네임은 2~20자의 영문, 한글, 숫자, 언더스코어만 사용 가능합니다.' });
       const exists = await User.findOne({ username: trimmed, _id: { $ne: req.user._id } });
       if (exists) return res.status(400).json({ message: '이미 사용 중인 닉네임입니다.' });
       update.username = trimmed;
     }
 
     if (email !== undefined) {
-      const trimmed = email.trim().toLowerCase();
-      if (trimmed) {
+      const trimmed = String(email).trim().toLowerCase();
+      if (trimmed && trimmed !== req.user.email) {
+        if (!isValidEmail(trimmed)) return res.status(400).json({ message: '유효한 이메일 주소를 입력해주세요.' });
         const exists = await User.findOne({ email: trimmed, _id: { $ne: req.user._id } });
         if (exists) return res.status(400).json({ message: '이미 사용 중인 이메일입니다.' });
         update.email = trimmed;
@@ -813,7 +810,12 @@ app.put('/api/auth/profile', auth, async (req, res) => {
         return res.status(400).json({ message: '유효한 이미지 파일만 업로드 가능합니다.' });
       update.bannerImage = bannerImage;
     }
-    if (bannerGradient !== undefined) update.bannerGradient = bannerGradient;
+    if (bannerGradient !== undefined) {
+      // style 속성에 그대로 들어가므로 linear-gradient(각도, #hex, #hex...) 형태만 허용(CSS/HTML 주입 차단)
+      if (!/^linear-gradient\(\d{1,3}deg(,\s*#[0-9a-fA-F]{3,8}(\s+\d{1,3}%)?){2,4}\)$/.test(String(bannerGradient)))
+        return res.status(400).json({ message: '배너 색상 형식이 올바르지 않습니다.' });
+      update.bannerGradient = bannerGradient;
+    }
 
     const user = await User.findByIdAndUpdate(req.user._id, update, { new: true }).select('-password');
     res.json({
@@ -837,7 +839,7 @@ app.get('/api/users/search', auth, async (req, res) => {
     const { q } = req.query;
     if (!q || q.trim().length < 1) return res.json([]);
     const users = await User.find({
-      username: { $regex: q.trim(), $options: 'i' },
+      username: { $regex: escapeRegex(String(q).trim().slice(0, 20)), $options: 'i' },
       _id: { $ne: req.user._id }
     }).select('username _id').limit(10);
     const friendIds = req.user.friends.map(f => f.toString());
@@ -870,7 +872,9 @@ app.get('/api/friends/requests', auth, async (req, res) => {
 
 app.post('/api/friends/request', auth, async (req, res) => {
   try {
-    const { toUserId } = req.body;
+    const toUserId = String(req.body.toUserId || '');
+    if (!isObjectId(toUserId) || !(await User.exists({ _id: toUserId })))
+      return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
     if (toUserId === req.user._id.toString())
       return res.status(400).json({ message: '자기 자신에게 친구 요청을 보낼 수 없습니다.' });
     const existing = await FriendRequest.findOne({
@@ -904,6 +908,7 @@ app.put('/api/friends/request/:reqId', auth, async (req, res) => {
 
 app.delete('/api/friends/:friendId', auth, async (req, res) => {
   try {
+    if (!isObjectId(req.params.friendId)) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
     await User.findByIdAndUpdate(req.user._id, { $pull: { friends: req.params.friendId } });
     await User.findByIdAndUpdate(req.params.friendId, { $pull: { friends: req.user._id } });
     res.json({ message: '친구가 삭제되었습니다.' });
@@ -948,6 +953,16 @@ app.post('/api/generate-options', auth, (req, res) => {
 });
 
 // ==================== TESTS ====================
+// 열람 권한 판정은 이 함수 한 곳에서만(이전엔 비공개 테스트도 ID 만 알면 정답까지 조회 가능했음)
+function canViewTest(user, test) {
+  const authorId = String(test.author?._id || test.author);
+  if (authorId === String(user._id)) return true;
+  if (test.isFriendOnly) return (user.friends || []).some(f => String(f) === authorId);
+  return test.isPublic !== false;
+}
+// 작성자가 바꿀 수 있는 필드만(이전엔 req.body 통째 저장 → author·playCount 위조 가능)
+const TEST_EDITABLE = ['title', 'description', 'questions', 'isPublic', 'isFriendOnly', 'tags', 'format', 'testTimeLimit'];
+
 app.get('/api/tests', auth, async (req, res) => {
   try {
     const { search, mine } = req.query;
@@ -955,7 +970,7 @@ app.get('/api/tests', auth, async (req, res) => {
     let query;
     if (mine === 'true') { query = { author: req.user._id }; }
     else { query = { $or: [{ isPublic: true, isFriendOnly: false }, { author: req.user._id }, { isFriendOnly: true, author: { $in: friendIds } }] }; }
-    if (search) query.title = { $regex: search, $options: 'i' };
+    if (search) query.title = { $regex: escapeRegex(String(search).slice(0, 50)), $options: 'i' };
     const tests = await Test.find(query).populate('author', 'username').sort({ createdAt: -1 }).select('-questions');
     res.json(tests);
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
@@ -963,12 +978,9 @@ app.get('/api/tests', auth, async (req, res) => {
 
 app.get('/api/tests/:id', auth, async (req, res) => {
   try {
+    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     const test = await Test.findById(req.params.id).populate('author', 'username');
-    if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    if (test.isFriendOnly && test.author._id.toString() !== req.user._id.toString()) {
-      const isFriend = req.user.friends.map(f => f.toString()).includes(test.author._id.toString());
-      if (!isFriend) return res.status(403).json({ message: '친구만 접근할 수 있는 테스트입니다.' });
-    }
+    if (!test || !test.author || !canViewTest(req.user, test)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     res.json(test);
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
@@ -979,7 +991,7 @@ app.post('/api/tests', auth, createRateLimit(30, 60 * 60 * 1000, '테스트 생�
     const description = sanitizeString(req.body.description, 500);
     const { questions, isPublic, isFriendOnly, tags, format } = req.body;
     if (!title) return res.status(400).json({ message: '테스트 제목을 입력해주세요.' });
-    if (!questions || questions.length === 0) return res.status(400).json({ message: '문항을 1개 이상 추가해주세요.' });
+    if (!Array.isArray(questions) || questions.length === 0) return res.status(400).json({ message: '문항을 1개 이상 추가해주세요.' });
     if (questions.length > 200) return res.status(400).json({ message: '문항은 최대 200개까지 추가할 수 있습니다.' });
     const test = await new Test({ title, description, questions, isPublic: isPublic ?? true, isFriendOnly: isFriendOnly ?? false, tags: tags || [], format: format || 'section', author: req.user._id }).save();
     res.status(201).json(test);
@@ -988,16 +1000,24 @@ app.post('/api/tests', auth, createRateLimit(30, 60 * 60 * 1000, '테스트 생�
 
 app.put('/api/tests/:id', auth, async (req, res) => {
   try {
+    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     if (test.author.toString() !== req.user._id.toString()) return res.status(403).json({ message: '수정 권한이 없습니다.' });
-    const updated = await Test.findByIdAndUpdate(req.params.id, { ...req.body, updatedAt: new Date() }, { new: true });
+    const update = { updatedAt: new Date() };
+    for (const k of TEST_EDITABLE) if (req.body[k] !== undefined) update[k] = req.body[k];
+    if (update.title !== undefined) { update.title = sanitizeString(update.title, 100); if (!update.title) return res.status(400).json({ message: '테스트 제목을 입력해주세요.' }); }
+    if (update.description !== undefined) update.description = sanitizeString(update.description, 500);
+    if (update.questions !== undefined && (!Array.isArray(update.questions) || !update.questions.length || update.questions.length > 200))
+      return res.status(400).json({ message: '문항은 1~200개여야 합니다.' });
+    const updated = await Test.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
     res.json(updated);
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
 
 app.delete('/api/tests/:id', auth, async (req, res) => {
   try {
+    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     if (test.author.toString() !== req.user._id.toString()) return res.status(403).json({ message: '삭제 권한이 없습니다.' });
@@ -1010,13 +1030,16 @@ app.delete('/api/tests/:id', auth, async (req, res) => {
 app.post('/api/results', auth, async (req, res) => {
   try {
     const { testId, answers, timeTaken, correctAnswers: clientCorrect, totalQuestions: clientTotal } = req.body;
+    if (!isObjectId(testId) || !Array.isArray(answers)) return res.status(400).json({ message: '잘못된 요청입니다.' });
     const test = await Test.findById(testId);
-    if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
-    const totalQuestions = clientTotal ?? answers.length;
-    const correctAnswers = clientCorrect ?? 0;
+    if (!test || !canViewTest(req.user, test)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
+    // 임시 방어(P1): 신고값을 문항 수 범위로 제한. 완전한 서버 채점은 P2(R5).
+    const qCount = test.questions?.length || 0;
+    const totalQuestions = Math.max(0, Math.min(Number(clientTotal ?? answers.length) || 0, qCount));
+    const correctAnswers = Math.max(0, Math.min(Number(clientCorrect) || 0, totalQuestions));
     const wrongAnswers = totalQuestions - correctAnswers;
     const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-    const processedAnswers = answers.map((ans, idx) => ({ questionIndex: idx, selectedAnswer: ans.selectedAnswer, isCorrect: ans.isCorrect === true }));
+    const processedAnswers = answers.slice(0, 200).map((ans, idx) => ({ questionIndex: idx, selectedAnswer: ans.selectedAnswer, isCorrect: ans.isCorrect === true }));
     const result = await new Result({ user: req.user._id, test: testId, testTitle: test.title, score: correctAnswers, totalQuestions, correctAnswers, wrongAnswers, percentage, answers: processedAnswers, timeTaken: timeTaken || 0 }).save();
     await Test.findByIdAndUpdate(testId, { $inc: { playCount: 1 } });
     res.status(201).json(result);
@@ -1370,16 +1393,21 @@ app.get('/api/ranking/friends', auth, async (req, res) => {
 
 const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
 const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
-const NAVER_CALLBACK_URL = process.env.BACKEND_URL
-  ? `${process.env.BACKEND_URL}/api/auth/naver/callback`
-  : 'https://ydmaster.onrender.com/api/auth/naver/callback';
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://ydmaster.onrender.com';
+const NAVER_CALLBACK_URL = `${BACKEND_URL}/api/auth/naver/callback`;
+const FRONTEND_ORIGIN = FRONTEND_URL;
+// OAuth state 는 브라우저 쿠키와 대조(이전엔 생성만 하고 검증 안 함 → 로그인 CSRF)
+function readCookie(req, name) {
+  const m = (req.headers.cookie || '').match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+const OAUTH_COOKIE = 'Path=/api/auth; HttpOnly; Secure; SameSite=Lax; Max-Age=600';
 
 app.get('/api/auth/naver', (req, res) => {
   if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET) {
     return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('네이버 로그인이 설정되지 않았습니다.')}`);
   }
   const state = crypto.randomBytes(16).toString('hex');
+  res.setHeader('Set-Cookie', `naver_state=${state}; ${OAUTH_COOKIE}`);
   const url = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(NAVER_CALLBACK_URL)}&state=${state}`;
   res.redirect(url);
 });
@@ -1391,9 +1419,10 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     if (error) {
       return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('네이버 로그인이 취소되었습니다.')}`);
     }
-    if (!code || !state) {
-      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('잘못된 요청입니다.')}`);
+    if (!code || !state || state !== readCookie(req, 'naver_state')) {
+      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('잘못된 요청입니다. 다시 시도해주세요.')}`);
     }
+    res.setHeader('Set-Cookie', `naver_state=; ${OAUTH_COOKIE.replace('Max-Age=600', 'Max-Age=0')}`);
 
     const tokenRes = await fetch(
       `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_CLIENT_SECRET}&redirect_uri=${encodeURIComponent(NAVER_CALLBACK_URL)}&code=${code}&state=${state}`
@@ -1463,22 +1492,23 @@ app.get('/api/auth/naver/callback', async (req, res) => {
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_CALLBACK_URL = process.env.BACKEND_URL
-  ? `${process.env.BACKEND_URL}/api/auth/google/callback`
-  : 'https://ydmaster.onrender.com/api/auth/google/callback';
+const GOOGLE_CALLBACK_URL = `${BACKEND_URL}/api/auth/google/callback`;
 
 app.get('/api/auth/google', (req, res) => {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('구글 로그인이 설정되지 않았습니다.')}`);
   }
+  const googleState = crypto.randomBytes(16).toString('hex');
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: GOOGLE_CALLBACK_URL,
     response_type: 'code',
     scope: 'openid email profile',
     access_type: 'offline',
-    prompt: 'select_account'
+    prompt: 'select_account',
+    state: googleState,
   });
+  res.setHeader('Set-Cookie', `google_state=${googleState}; ${OAUTH_COOKIE}`);
   res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
 });
 
@@ -1489,6 +1519,9 @@ app.get('/api/auth/google/callback', async (req, res) => {
       return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('구글 로그인이 취소되었습니다.')}`);
     }
     if (!code) return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('인증 코드가 없습니다.')}`);
+    if (!req.query.state || req.query.state !== readCookie(req, 'google_state'))
+      return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('잘못된 요청입니다. 다시 시도해주세요.')}`);
+    res.setHeader('Set-Cookie', `google_state=; ${OAUTH_COOKIE.replace('Max-Age=600', 'Max-Age=0')}`);
 
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -1580,7 +1613,13 @@ app.post('/api/notices', adminAuth, async (req, res) => {
 
 app.put('/api/notices/:id', adminAuth, async (req, res) => {
   try {
-    const notice = await Notice.findByIdAndUpdate(req.params.id, { ...req.body, updatedAt: new Date() }, { new: true });
+    if (!isObjectId(req.params.id)) return res.status(404).json({ message: '공지사항을 찾을 수 없습니다.' });
+    const update = { updatedAt: new Date() };
+    if (req.body.title !== undefined) update.title = sanitizeString(req.body.title, 200);
+    if (req.body.content !== undefined) update.content = sanitizeString(req.body.content, 5000);
+    if (req.body.isPinned !== undefined) update.isPinned = !!req.body.isPinned;
+    if (update.title === '' || update.content === '') return res.status(400).json({ message: '제목과 내용을 입력해주세요.' });
+    const notice = await Notice.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!notice) return res.status(404).json({ message: '공지사항을 찾을 수 없습니다.' });
     res.json(notice);
   } catch { res.status(500).json({ message: '서버 오류' }); }
@@ -1771,17 +1810,20 @@ app.get('/api/admin/stats/chart', adminAuth, async (req, res) => {
 });
 
 // ==================== 관리자 로그 API ====================
-app.get('/api/admin/logs', adminAuth, (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 500, 2000);
-  const level = req.query.level || 'all';
-  const search = (req.query.search || '').toLowerCase();
-
-  let entries = [...logBuffer].reverse(); // 최신순
-  if (level !== 'all') entries = entries.filter(e => e.level === level);
-  if (search) entries = entries.filter(e => e.message.toLowerCase().includes(search));
-  entries = entries.slice(0, limit);
-
-  res.json({ logs: entries, total: logBuffer.length });
+app.get('/api/admin/logs', adminAuth, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 500, 2000);
+    const level = String(req.query.level || 'all');
+    const search = String(req.query.search || '').slice(0, 100);
+    const q = {};
+    if (level !== 'all') q.level = level;
+    if (search) q.message = { $regex: escapeRegex(search), $options: 'i' };
+    const [logs, total] = await Promise.all([
+      Log.find(q).sort({ ts: -1 }).limit(limit).lean(),
+      Log.estimatedDocumentCount(),
+    ]);
+    res.json({ logs: logs.map(l => ({ ts: l.ts, level: l.level, message: l.message })), total });
+  } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
 // ==================== 계정 삭제 ====================
@@ -1806,6 +1848,7 @@ app.post('/api/auth/account/delete', auth, async (req, res) => {
       FriendRequest.deleteMany({ $or: [{ from: userId }, { to: userId }] }),
       EmailVerification.deleteMany({ email: user.email }),
       Inquiry.deleteMany({ user: userId }),
+      WrongNote.deleteMany({ user: userId }),
       User.updateMany({ friends: userId }, { $pull: { friends: userId } }),
     ]);
     await User.findByIdAndDelete(userId);
@@ -1833,8 +1876,9 @@ app.get('/api/favorites', auth, async (req, res) => {
 app.post('/api/favorites/:testId', auth, async (req, res) => {
   try {
     const { testId } = req.params;
+    if (!isObjectId(testId)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     const test = await Test.findById(testId);
-    if (!test) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
+    if (!test || !canViewTest(req.user, test)) return res.status(404).json({ message: '테스트를 찾을 수 없습니다.' });
     const user = await User.findById(req.user._id);
     const alreadyFav = user.favorites.map(f => f.toString()).includes(testId);
     if (!alreadyFav) {
@@ -1855,103 +1899,19 @@ app.delete('/api/favorites/:testId', auth, async (req, res) => {
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 
-app.get('/ping', (req, res) => res.json({ status: 'ok', service: '영단마스터', time: new Date().toISOString() }));
-
-// ==================== PWA 파일 ====================
-app.get('/sw.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.send(`
-const CACHE_NAME = 'ydmaster-v2';
-const STATIC_CACHE = 'ydmaster-static-v2';
-const PRECACHE_URLS = ['/'];
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(c => c.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== STATIC_CACHE).map(k => caches.delete(k)))
-    ).then(() => clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) return;
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res && res.status === 200 && e.request.method === 'GET') {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        }
-        return res;
-      })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('/')))
-  );
-});
-  `.trim());
-});
-
-app.get('/manifest.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/manifest+json');
-  res.setHeader('Cache-Control', 'public, max-age=86400');
-  res.json({
-    name: '영단마스터',
-    short_name: '영단마스터',
-    description: '나만의 영어 단어 테스트 플랫폼',
-    start_url: '/',
-    display: 'standalone',
-    background_color: '#0a0a0f',
-    theme_color: '#6c63ff',
-    orientation: 'portrait-primary',
-    lang: 'ko',
-    scope: '/',
-    icons: [
-      {
-        src: '/favicon-fox.svg',
-        sizes: '192x192',
-        type: 'image/svg+xml',
-        purpose: 'any'
-      },
-      {
-        src: '/favicon-fox.svg',
-        sizes: '512x512',
-        type: 'image/svg+xml',
-        purpose: 'any maskable'
-      }
-    ],
-    categories: ['education'],
-    screenshots: []
-  });
-});
-
-// ==================== SPA 캐치올 (API가 아닌 모든 경로 → index.html) ====================
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  const indexPath = path.join(PUBLIC_DIR, 'index.html');
-  res.sendFile(indexPath, err => {
-    if (err) res.status(404).json({ message: '페이지를 찾을 수 없습니다.' });
-  });
-});
+app.get('/api/ping', (req, res) => res.json({ status: 'ok', service: '영단마스터', time: new Date().toISOString() }));
 
 // ==================== 에러 핸들러 ====================
-app.use((req, res) => {
+app.use('/api', (req, res) => {
   res.status(404).json({ message: '요청한 리소스를 찾을 수 없습니다.' });
 });
 
 app.use((err, req, res, next) => {
+  // body-parser 오류(잘못된 JSON 400, 너무 큰 본문 413)는 그 상태 그대로 알려준다
+  if (err.status === 413) return res.status(413).json({ message: '보낸 데이터가 너무 큽니다.' });
+  if (err.status === 400 || err.type === 'entity.parse.failed') return res.status(400).json({ message: '잘못된 요청 형식입니다.' });
   console.error('Unhandled error:', err.message);
   res.status(500).json({ message: '서버 내부 오류가 발생했습니다.' });
 });
 
-// ==================== 서버 시작 ====================
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`영단마스터 server running on port ${PORT}`));
+export default app;

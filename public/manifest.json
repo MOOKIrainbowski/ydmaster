@@ -1,0 +1,16 @@
+{
+  "name": "영단마스터",
+  "short_name": "영단마스터",
+  "description": "단어와 영어 본문을 외우는 학습 앱",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "lang": "ko",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6c63ff",
+  "icons": [
+    { "src": "/favicon-fox.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "categories": ["education"]
+}
