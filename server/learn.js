@@ -65,8 +65,9 @@ export function canView(user, set) {
   return false;
 }
 // 같은 판정의 Mongo 질의형(목록용). 레거시 플래그 문서도 포함.
+export const PUBLIC_SET = { $or: [{ visibility: 'public' }, { visibility: { $exists: false }, isPublic: { $ne: false }, isFriendOnly: { $ne: true } }] };
 function visibleQuery(user) {
-  const pub = { $or: [{ visibility: 'public' }, { visibility: { $exists: false }, isPublic: { $ne: false }, isFriendOnly: { $ne: true } }] };
+  const pub = PUBLIC_SET;
   const fr = { author: { $in: user.friends || [] }, $or: [{ visibility: 'friends' }, { visibility: { $exists: false }, isFriendOnly: true }] };
   return { $or: [pub, fr] };
 }

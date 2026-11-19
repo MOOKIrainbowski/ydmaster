@@ -39,13 +39,13 @@
   },
   {
     "name": "four choices",
-    "en": "She [walk|walks|walking|walked] home.",
+    "en": "She [walks|walk|walking|walked] home.",
     "plain": "She walks home.",
     "keys": [],
     "choices": [
       [
-        "walk",
         "walks",
+        "walk",
         "walking",
         "walked"
       ]

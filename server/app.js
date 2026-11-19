@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import crypto from 'node:crypto';
-import { mountLearn, avatarUrl, bannerUrl } from './learn.js';
+import { mountLearn, avatarUrl, bannerUrl, toSet, PUBLIC_SET } from './learn.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -1182,7 +1182,7 @@ app.get('/api/users/:id/profile', auth, async (req, res) => {
       : 0;
 
     // 만든 테스트 수 (공개만)
-    const totalTests = await Test.countDocuments({ author: req.params.id, isPublic: true });
+    const totalTests = await Test.countDocuments({ author: req.params.id, ...PUBLIC_SET });
 
     res.json({
       user: {
@@ -1218,24 +1218,14 @@ app.get('/api/p/:username', async (req, res) => {
     const bestScore = totalAttempts > 0
       ? Math.max(...results.map(r => r.percentage))
       : 0;
-    const totalTests = await Test.countDocuments({ author: user._id, isPublic: true });
+    const totalTests = await Test.countDocuments({ author: user._id, ...PUBLIC_SET });
     const friendCount = user.friends?.length || 0;
 
     // 최근 공개 테스트 (최대 5개)
-    const recentTests = await Test.find({ author: user._id, isPublic: true, isFriendOnly: false })
-      .sort({ createdAt: -1 }).limit(5).select('title questionCount createdAt');
+    const recentTests = (await Test.find({ author: user._id, ...PUBLIC_SET }).sort({ updatedAt: -1, createdAt: -1 }).limit(5).lean())
+      .map(toSet).map(t => ({ _id: t._id, title: t.title, kind: t.kind, count: t.kind === 'passage' ? t.passage.sentences.length : t.items.length, updatedAt: t.updatedAt }));
 
-    // 랭킹 계산
-    let rank = null;
-    if (totalAttempts > 0) {
-      const higherCount = await Result.aggregate([
-        { $group: { _id: '$user', avgScore: { $avg: '$percentage' } } },
-        { $match: { avgScore: { $gt: avgScore } } },
-        { $count: 'count' }
-      ]);
-      rank = (higherCount[0]?.count || 0) + 1;
-    }
-
+    // 순위는 랭킹 화면 한 곳에서만(R9 지표). 옛 평균 정답률 순위는 모순이라 제거.
     res.json({
       user: {
         _id: user._id,
@@ -1247,7 +1237,7 @@ app.get('/api/p/:username', async (req, res) => {
         loginType: user.loginType,
         createdAt: user.createdAt,
       },
-      stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount, rank },
+      stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount },
       recentTests
     });
   } catch (e) {
@@ -1271,7 +1261,7 @@ const OAUTH_COOKIE = 'Path=/api/auth; HttpOnly; Secure; SameSite=Lax; Max-Age=60
 
 app.get('/api/auth/naver', (req, res) => {
   if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET) {
-    return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('네이버 로그인이 설정되지 않았습니다.')}`);
+    return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('네이버 로그인이 설정되지 않았습니다.')}`);
   }
   const state = crypto.randomBytes(16).toString('hex');
   res.setHeader('Set-Cookie', `naver_state=${state}; ${OAUTH_COOKIE}`);
@@ -1284,10 +1274,10 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     const { code, state, error } = req.query;
 
     if (error) {
-      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('네이버 로그인이 취소되었습니다.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('네이버 로그인이 취소되었습니다.')}`);
     }
     if (!code || !state || state !== readCookie(req, 'naver_state')) {
-      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('잘못된 요청입니다. 다시 시도해주세요.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('잘못된 요청입니다. 다시 시도해주세요.')}`);
     }
     res.setHeader('Set-Cookie', `naver_state=; ${OAUTH_COOKIE.replace('Max-Age=600', 'Max-Age=0')}`);
 
@@ -1297,7 +1287,7 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) {
       console.error('네이버 토큰 발급 실패:', JSON.stringify(tokenData));
-      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('토큰 발급에 실패했습니다. 잠시 후 다시 시도해주세요.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('토큰 발급에 실패했습니다. 잠시 후 다시 시도해주세요.')}`);
     }
 
     const profileRes = await fetch('https://openapi.naver.com/v1/nid/me', {
@@ -1306,7 +1296,7 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     const profileData = await profileRes.json();
     if (profileData.resultcode !== '00') {
       console.error('네이버 프로필 조회 실패:', JSON.stringify(profileData));
-      return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('사용자 정보 조회에 실패했습니다.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('사용자 정보 조회에 실패했습니다.')}`);
     }
 
     const naverUser = profileData.response;
@@ -1345,13 +1335,13 @@ app.get('/api/auth/naver/callback', async (req, res) => {
     }
 
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('서버 설정 오류입니다.')}`);
+    if (!jwtSecret) return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('서버 설정 오류입니다.')}`);
     const jwtToken = jwt.sign({ id: user._id, v: 1 }, jwtSecret, { expiresIn: '7d' });
-    res.redirect(`${FRONTEND_ORIGIN}?naver_token=${jwtToken}&naver_username=${encodeURIComponent(user.username)}`);
+    res.redirect(`${FRONTEND_ORIGIN}/#/oauth?token=${jwtToken}`);
 
   } catch (e) {
     console.error('네이버 콜백 오류:', e.message);
-    res.redirect(`${FRONTEND_ORIGIN}?naver_error=${encodeURIComponent('로그인 처리 중 오류가 발생했습니다.')}`);
+    res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('로그인 처리 중 오류가 발생했습니다.')}`);
   }
 });
 
@@ -1363,7 +1353,7 @@ const GOOGLE_CALLBACK_URL = `${BACKEND_URL}/api/auth/google/callback`;
 
 app.get('/api/auth/google', (req, res) => {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('구글 로그인이 설정되지 않았습니다.')}`);
+    return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('구글 로그인이 설정되지 않았습니다.')}`);
   }
   const googleState = crypto.randomBytes(16).toString('hex');
   const params = new URLSearchParams({
@@ -1383,11 +1373,11 @@ app.get('/api/auth/google/callback', async (req, res) => {
   try {
     const { code, error } = req.query;
     if (error) {
-      return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('구글 로그인이 취소되었습니다.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('구글 로그인이 취소되었습니다.')}`);
     }
-    if (!code) return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('인증 코드가 없습니다.')}`);
+    if (!code) return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('인증 코드가 없습니다.')}`);
     if (!req.query.state || req.query.state !== readCookie(req, 'google_state'))
-      return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('잘못된 요청입니다. 다시 시도해주세요.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('잘못된 요청입니다. 다시 시도해주세요.')}`);
     res.setHeader('Set-Cookie', `google_state=; ${OAUTH_COOKIE.replace('Max-Age=600', 'Max-Age=0')}`);
 
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -1404,7 +1394,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) {
       console.error('구글 토큰 발급 실패:', tokenData);
-      return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('토큰 발급에 실패했습니다.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('토큰 발급에 실패했습니다.')}`);
     }
 
     const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -1412,7 +1402,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     });
     const profile = await profileRes.json();
     if (!profile.id) {
-      return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('사용자 정보 조회에 실패했습니다.')}`);
+      return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('사용자 정보 조회에 실패했습니다.')}`);
     }
 
     const googleId = profile.id;
@@ -1448,13 +1438,13 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
 
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('서버 설정 오류입니다.')}`);
+    if (!jwtSecret) return res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('서버 설정 오류입니다.')}`);
     const jwtToken = jwt.sign({ id: user._id, v: 1 }, jwtSecret, { expiresIn: '7d' });
-    res.redirect(`${FRONTEND_ORIGIN}?google_token=${jwtToken}&google_username=${encodeURIComponent(user.username)}`);
+    res.redirect(`${FRONTEND_ORIGIN}/#/oauth?token=${jwtToken}`);
 
   } catch (e) {
     console.error('구글 콜백 오류:', e.message);
-    res.redirect(`${FRONTEND_ORIGIN}?google_error=${encodeURIComponent('로그인 처리 중 오류가 발생했습니다.')}`);
+    res.redirect(`${FRONTEND_ORIGIN}/#/oauth?error=${encodeURIComponent('로그인 처리 중 오류가 발생했습니다.')}`);
   }
 });
 

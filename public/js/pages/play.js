@@ -1,0 +1,235 @@
+// 시험 화면 — 서버 세션을 한 문항씩 풀고, 채점은 서버가 한다(R5). 문항 형태는 계약 §3 (choice/text/cloze/inline_choice/order).
+// 한 화면 한 과제(디자인 §3-1): 문항 → 확인 → 피드백 패널 → 다음.
+import { api } from '../api.js';
+import { html, render, raw, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
+
+export default {
+  title: '시험',
+  focus: true, // 상단바·탭바 숨김
+  async render(root, { id }, query, ctx) {
+    render(root, html`<div class="play"><p class="muted">시험을 불러오는 중…</p></div>`);
+    const s = await api.get(`/sessions/${id}`);
+    if (!ctx.isCurrent()) return;
+    if (s.status !== 'active' && s.result) { location.replace(`#/result/${s.result}`); return; }
+
+    const answers = new Map(s.answers.map(a => [a.i, a]));
+    let i = s.questions.findIndex(q => !answers.has(q.i));
+    if (i < 0) i = s.questions.length; // 다 풀었으면 바로 종료 처리
+    let phase = 'answer'; // answer | feedback | finishing
+    let draft = null;     // 현재 문항의 입력 상태(order 조각 순서, inline 선택 등)
+    const instant = s.options?.feedback !== 'end';
+
+    const view = () => {
+      if (i >= s.questions.length) return finish();
+      const q = s.questions[i];
+      phase = 'answer';
+      draft = q.type === 'order' ? (q.layout === 'stack' ? q.pieces.map((_, k) => k) : []) : q.type === 'inline_choice' ? [] : null;
+      render(root, html`
+        <div class="play">
+          <header class="play__bar">
+            <button class="btn btn--icon btn--ghost" data-quit aria-label="시험 그만두기">${icon('x', 22)}</button>
+            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${s.total}" aria-valuenow="${i}" aria-label="진행률">
+              <div class="progress__bar" style="width:${(i / s.total) * 100}%"></div>
+            </div>
+            <span class="play__count">${i + 1} / ${s.total}</span>
+          </header>
+          <section class="play__body" aria-live="polite">${question(q)}</section>
+          <footer class="play__foot" data-foot>${actions(q)}</footer>
+        </div>`);
+      if (q.speak) speak(q.speak);
+      ($('.blank, .play__input', root) || $('.choice', root))?.focus();
+    };
+
+    // ── 문항 렌더 ──
+    const promptBlock = q => html`
+      <div class="prompt">
+        <p class="prompt__text${q.prompt.lang === 'en' ? ' prompt__text--en' : ''}" lang="${q.prompt.lang || 'ko'}">${q.prompt.text}
+          ${q.prompt.lang === 'en' || q.speak ? html`<button class="btn btn--icon btn--ghost" data-speak="${q.speak || q.prompt.text}" aria-label="발음 듣기">${icon('volume', 20)}</button>` : ''}</p>
+        ${q.prompt.sub ? html`<p class="prompt__sub">${q.prompt.sub}</p>` : ''}
+      </div>`;
+
+    function question(q) {
+      if (q.type === 'choice') return html`${promptBlock(q)}
+        <div class="choices" role="group" aria-label="보기">${q.choices.map((c, k) => html`
+          <button class="choice" data-choice="${k}"><span class="choice__num">${k + 1}</span><span class="choice__text">${c}</span></button>`)}</div>`;
+      if (q.type === 'text') {
+        const h = q.hint || {};
+        const hintText = h.first ? `${h.first}로 시작, ${h.length}글자` : h.words ? `${h.words}단어` : h.length ? `${h.length}글자` : '';
+        return html`${promptBlock(q)}
+          <label class="field">
+            <span class="sr-only">답 입력</span>
+            ${q.multiline
+              ? html`<textarea class="input play__input" rows="3" lang="en" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="영어 문장을 쓰세요"></textarea>`
+              : html`<input class="input play__input" lang="${q.answerLang || 'en'}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="${q.answerLang === 'ko' ? '뜻을 쓰세요' : '영어로 쓰세요'}">`}
+            ${hintText ? html`<span class="field__hint">${icon('lightbulb', 16)} ${hintText}</span>` : ''}
+          </label>`;
+      }
+      if (q.type === 'cloze') return html`
+        ${q.context?.before ? html`<p class="passage passage--dim" lang="en">${q.context.before}</p>` : ''}
+        <p class="passage" lang="en">${q.segments.map(seg => typeof seg === 'string' ? seg
+          : html`<input class="blank" data-blank="${seg.blank}" style="--w:${Math.max(4, Math.min(20, seg.length + 1))}ch" aria-label="빈칸 ${seg.blank + 1}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="${seg.hint ? seg.hint + '…' : ''}">`)}</p>
+        ${q.context?.after ? html`<p class="passage passage--dim" lang="en">${q.context.after}</p>` : ''}
+        ${q.ko ? html`<p class="passage-ko">${q.ko}</p>` : ''}`;
+      if (q.type === 'inline_choice') return html`
+        <p class="passage" lang="en">${q.segments.map(seg => typeof seg === 'string' ? seg
+          : html`<span class="inline-choice" role="radiogroup" aria-label="선택 ${seg.choice + 1}">${seg.options.map((o, k) => html`<button class="inline-choice__opt" role="radio" aria-checked="false" data-ic="${seg.choice}" data-opt="${k}">${o}</button>`)}</span>`)}</p>
+        ${q.ko ? html`<p class="passage-ko">${q.ko}</p>` : ''}`;
+      if (q.type === 'order') return html`${promptBlock(q)}<div data-order>${orderView(q)}</div>`;
+      return html`<p>지원하지 않는 문항이에요.</p>`;
+    }
+
+    function orderView(q) {
+      if (q.layout === 'stack') return html`<ol class="order-list">${draft.map((k, pos) => html`
+        <li class="order-card"><span class="order-card__num">${pos + 1}</span><span class="order-card__text" lang="en">${q.pieces[k]}</span>
+          <span class="order-card__move">
+            <button class="btn btn--icon btn--ghost" data-move="${pos}" data-dir="-1" ${pos === 0 ? 'disabled' : ''} aria-label="위로">${icon('chevronUp', 20)}</button>
+            <button class="btn btn--icon btn--ghost" data-move="${pos}" data-dir="1" ${pos === draft.length - 1 ? 'disabled' : ''} aria-label="아래로">${icon('chevronDown', 20)}</button>
+          </span></li>`)}</ol>`;
+      const used = new Set(draft);
+      return html`
+        <div class="chip-line" aria-label="내 답">${draft.length ? draft.map((k, pos) => html`<button class="chip chip--placed" data-unplace="${pos}" lang="en">${q.pieces[k]}</button>`) : html`<span class="muted">아래 조각을 순서대로 누르세요</span>`}</div>
+        <div class="chip-pool" aria-label="조각">${q.pieces.map((p, k) => html`<button class="chip" data-place="${k}" lang="en" ${used.has(k) ? 'disabled' : ''}>${p}</button>`)}</div>`;
+    }
+
+    const actions = q => q.type === 'choice' ? html`<button class="btn btn--ghost" data-skip>모르겠어요</button>`
+      : html`<button class="btn btn--ghost" data-skip>모르겠어요</button><button class="btn btn--primary" data-submit>확인</button>`;
+
+    // ── 응답 수집 ──
+    function collect(q) {
+      if (q.type === 'text') return $('.play__input', root).value;
+      if (q.type === 'cloze') return $$('.blank', root).sort((a, b) => a.dataset.blank - b.dataset.blank).map(x => x.value);
+      if (q.type === 'inline_choice') {
+        const n = q.segments.filter(x => typeof x !== 'string').length;
+        if (draft.filter(x => x !== undefined).length < n) { toast('모든 괄호에서 하나씩 골라주세요.', 'info'); return undefined; }
+        return draft;
+      }
+      if (q.type === 'order') {
+        if (draft.length < q.pieces.length) { toast('조각을 모두 배열해주세요.', 'info'); return undefined; }
+        return draft;
+      }
+    }
+    // "모르겠어요" = 형식에 맞는 빈 답(서버가 오답 처리)
+    function skipResponse(q) {
+      if (q.type === 'choice') return -1;
+      if (q.type === 'text') return '';
+      if (q.type === 'cloze') return q.segments.filter(x => typeof x !== 'string').map(() => '');
+      if (q.type === 'inline_choice') return q.segments.filter(x => typeof x !== 'string').map(() => -1);
+      if (q.type === 'order') return q.pieces.map((_, k) => k);
+    }
+
+    async function submit(response, btn) {
+      if (phase !== 'answer' || response === undefined) return;
+      const q = s.questions[i];
+      phase = 'sending';
+      const run = async () => {
+        try {
+          const r = await api.post(`/sessions/${s._id}/answers`, { i: q.i, response });
+          if (!ctx.isCurrent()) return;
+          answers.set(q.i, r);
+          if (!instant || r.saved) { i++; view(); return; }
+          showFeedback(q, response, r);
+        } catch (e) {
+          phase = 'answer';
+          toast(e.message, 'bad');
+        }
+      };
+      btn ? await busy(btn, run) : await run();
+    }
+
+    function showFeedback(q, response, r) {
+      phase = 'feedback';
+      // 문항 안에 정오 표시(색 + 아이콘 + 문구, 디자인 §3-8)
+      if (q.type === 'choice') {
+        $$('.choice', root).forEach((b, k) => {
+          b.disabled = true;
+          b.classList.add(k === q.choices.indexOf(r.expected) ? 'is-ok' : k === response ? 'is-bad' : 'is-dim');
+        });
+      }
+      if (q.type === 'cloze') $$('.blank', root).forEach(b => { b.readOnly = true; b.classList.add(r.detail?.each?.[b.dataset.blank] ? 'is-ok' : 'is-bad'); });
+      if (q.type === 'inline_choice') $$('.inline-choice__opt', root).forEach(b => {
+        b.disabled = true;
+        const k = Number(b.dataset.ic), opt = q.segments.find(x => x.choice === k).options[b.dataset.opt];
+        if (opt === r.expected[k]) b.classList.add('is-ok'); else if (Number(b.dataset.opt) === draft[k]) b.classList.add('is-bad');
+      });
+      if (q.type === 'text') $('.play__input', root).readOnly = true;
+      $$('[data-place], [data-unplace], [data-move]', root).forEach(b => { b.disabled = true; });
+
+      const exp = Array.isArray(r.expected) ? (q.type === 'order' ? r.expected.join(q.layout === 'stack' ? '\n' : ' ') : r.expected.join(' / ')) : r.expected;
+      const last = i + 1 >= s.total;
+      render($('[data-foot]', root), html`
+        <div class="feedback ${r.correct ? 'feedback--ok' : 'feedback--bad'}" role="alert">
+          <div class="feedback__head">${icon(r.correct ? 'check' : 'x', 24)}<strong>${r.correct ? '정답이에요' : r.score > 0 ? `부분 정답 (${Math.round(r.score * 100)}%)` : '틀렸어요'}</strong></div>
+          ${!r.correct ? html`<p class="feedback__answer"><span class="feedback__label">정답</span> <span lang="en" class="pre-line">${exp}</span></p>` : ''}
+          ${r.detail?.diff && !r.correct ? html`<p class="diff" lang="en">${r.detail.diff.map(d => html`<span class="diff__${d.op}">${d.t}</span> `)}</p>` : ''}
+          <button class="btn btn--primary btn--block" data-next>${last ? '결과 보기' : '다음 문제'} ${icon('chevronRight', 18)}</button>
+        </div>`);
+      $('[data-next]', root).focus();
+    }
+
+    async function finish() {
+      if (phase === 'finishing') return;
+      phase = 'finishing';
+      render(root, html`<div class="play"><p class="muted">채점 결과를 정리하는 중…</p></div>`);
+      try {
+        const r = await api.post(`/sessions/${s._id}/finish`);
+        if (ctx.isCurrent()) location.replace(`#/result/${r._id}`);
+      } catch (e) {
+        phase = 'answer';
+        render(root, html`<div class="play">${errorBox(e.message, 'data-finish')}</div>`);
+      }
+    }
+
+    // ── 이벤트(위임) ──
+    const offs = [
+      on(root, 'click', '[data-choice]', (e, b) => submit(Number(b.dataset.choice))),
+      on(root, 'click', '[data-submit]', (e, b) => submit(collect(s.questions[i]), b)),
+      on(root, 'click', '[data-skip]', (e, b) => submit(skipResponse(s.questions[i]), b)),
+      on(root, 'click', '[data-next]', () => { i++; view(); }),
+      on(root, 'click', '[data-finish]', () => finish()),
+      on(root, 'click', '[data-speak]', (e, b) => { if (!speak(b.dataset.speak)) toast('이 브라우저는 발음 듣기를 지원하지 않아요.', 'info'); }),
+      on(root, 'click', '[data-quit]', async () => {
+        if (await confirmDialog('지금 끝내면 안 푼 문항은 틀린 것으로 채점돼요.', { title: '시험을 끝낼까요?', ok: '끝내고 결과 보기' })) finish();
+      }),
+      on(root, 'click', '[data-ic]', (e, b) => {
+        if (phase !== 'answer') return;
+        const k = Number(b.dataset.ic);
+        draft[k] = Number(b.dataset.opt);
+        $$(`[data-ic="${k}"]`, root).forEach(x => x.setAttribute('aria-checked', String(x === b)));
+      }),
+      on(root, 'click', '[data-place]', (e, b) => { draft.push(Number(b.dataset.place)); refreshOrder(); }),
+      on(root, 'click', '[data-unplace]', (e, b) => { draft.splice(Number(b.dataset.unplace), 1); refreshOrder(); }),
+      on(root, 'click', '[data-move]', (e, b) => {
+        const p = Number(b.dataset.move), t = p + Number(b.dataset.dir);
+        [draft[p], draft[t]] = [draft[t], draft[p]];
+        refreshOrder();
+        $$('[data-move]', root).find(x => Number(x.dataset.move) === t && x.dataset.dir === b.dataset.dir && !x.disabled)?.focus();
+      }),
+    ];
+    function refreshOrder() { render($('[data-order]', root), orderView(s.questions[i])); }
+
+    // 키보드: 1~5 보기, Enter 확인/다음, Esc 그만두기
+    const onKey = e => {
+      if (document.querySelector('.modal-backdrop')) return;
+      const q = s.questions[i];
+      if (!q) return;
+      const typing = /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+      if (phase === 'answer' && q.type === 'choice' && /^[1-5]$/.test(e.key) && !typing) {
+        const b = $(`[data-choice="${Number(e.key) - 1}"]`, root);
+        if (b) { e.preventDefault(); b.click(); }
+      } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        if (phase === 'feedback') { e.preventDefault(); $('[data-next]', root)?.click(); }
+        else if (phase === 'answer' && q.type !== 'choice' && (typing || q.type !== 'text')) {
+          // 빈칸이 여러 개면 Enter 로 다음 빈칸으로, 마지막에서 제출
+          const blanks = $$('.blank', root), at = blanks.indexOf(e.target);
+          e.preventDefault();
+          if (at >= 0 && at < blanks.length - 1) blanks[at + 1].focus();
+          else $('[data-submit]', root)?.click();
+        }
+      } else if (e.key === 'Escape') { $('[data-quit]', root)?.click(); }
+    };
+    document.addEventListener('keydown', onKey);
+
+    view();
+    return () => { offs.forEach(f => f()); document.removeEventListener('keydown', onKey); if ('speechSynthesis' in window) speechSynthesis.cancel(); };
+  },
+};

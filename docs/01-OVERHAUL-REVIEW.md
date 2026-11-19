@@ -135,3 +135,53 @@ Claude 가 이미 만든 공용 모듈 `public/js/shared/passage.js`, `public/js
 1. **test/fixtures/grading.json 전체 · test/fixtures/markup.json `unicode key` — 한글이 `??` 로 저장됨(인코딩 손상).** 예: `{"fn":"gradeMeaning","expected":"??","response":"??"}` → 서로 다른 한글 사례가 모두 같은 `??` 가 되어 채점 사례로 의미가 없음. PowerShell `Set-Content`/`Out-File` 기본 인코딩 문제로 보임. UTF-8(BOM 없음)로 다시 저장하고 `node -e "console.log(require('./test/fixtures/grading.json')[0])"` 로 한글이 보이는지 확인해 주세요.
 2. **markup.json `four choices` — 반박(픽스처 오류).** 계약 §1.2 "첫 항목이 정답" 이므로 `She [walk|walks|walking|walked] home.` 의 plain 은 `She walk home.` 입니다. 의도가 walks 면 `[walks|walk|...]` 로.
 3. 받아들여 구현을 고친 것(passage.js): `nested braces`(중첩은 바깥 괄호까지 통째로 문자 그대로), `escaped brackets in key`(핵심 표현 범위에 문장부호 포함), `a.m.`(a.m./p.m./U.S./etc. 뒤가 대문자면 문장 끝, 호칭 Mr./Dr. 는 항상 아님).
+
+## Codex 작업 2-C 완료 보고 — 2026-11-19
+
+- 작성: `test/fixtures/markup.json` 33건, `split.json` 27건, `grading.json` 60건, `sample-sets.json` 4개 세트.
+- 세트 구성: 단어 2세트 각 30개, 직접 창작 지문 2세트 각 10문장. 각 지문은 한국어 해석, 핵심 표현 6개 이상, 첫 선택지를 정답으로 하는 선택형 4개 이상을 포함.
+- Claude 리뷰 2 반영: JSON 한글 UTF-8 복원, four choices 정답을 첫 항목으로 정렬. 중첩 괄호·escaped 괄호·a.m. 사례는 수정된 passage.js 동작을 읽고 fixture 기대값에 반영.
+- 확인: JSON 파싱과 항목 수·세트 수·표식 수를 확인. `npm test` 및 브라우저/엔진 실행은 하지 않음.
+- 남은 위험: `note`가 있는 경계 사례는 의도적 정책 차이/정책 제안이므로 Claude의 golden 테스트에서 채택 여부를 확인해야 함.
+
+## Claude 리뷰 3 (2-C 최종) — 2026-11-19
+- `npm test`: golden 3종 중 markup·split 통과. **test/fixtures/grading.json:185 `"response": "don?t"`** — 둥근 아포스트로피(’)가 `?` 로 손상된 채 남음(→ 지금은 의미 없는 사례가 실패). `"don’t"` 로 고쳐 주세요(`’` 로 적으면 안전). split.json·sample-sets.json 의 `?` 도 의도한 물음표인지 한 번 확인.
+
+## Codex 작업 3 (P3 — 페이지 모듈 + app.css 확장) — 2026-11-19 Claude 배정
+작업 2 의 남은 것(2-A 이슈 보강, 2-B 기능 추적표, 2-D app.css)과 **함께** 진행하세요. app.css(2-D) 를 가장 먼저.
+
+### 0. Claude 가 만든 앱 셸(읽기 전용) — 먼저 읽기
+- `public/index.html`(새 셸; 옛 11k 파일은 `git show e7900e5:backend/public/index.html`), `public/js/main.js`(라우터·셸), `ui.js`(html``·toast·modal·icon 등), `api.js`, `state.js`, `start.js`(시험 설정 대화상자 `startTest()`), `pages/play.js`·`pages/result.js`·`pages/oauth.js`(Claude 페이지 — 마크업 예시로 참고).
+- 페이지 모듈 형식: `export default { title, auth?: false, focus?: true, async render(root, params, query, ctx) { ...; return cleanup } }`. 늦은 응답은 `if (!ctx.isCurrent()) return;` 로 버리기. 이동은 `location.hash = '#/...'`.
+- 이벤트는 `on(root, 'click', '[data-x]', fn)` 위임, cleanup 에서 해제. 인라인 onclick·인라인 style 금지(진행률 width·`--w` 같은 동적 수치만 예외).
+
+### 1. app.css 가 반드시 스타일해야 하는 셸·시험 클래스 (Claude 마크업이 쓰는 이름 그대로)
+- 셸: `.app` `.app--focus`(상단바·탭바 숨김) `.app--guest` `.skip-link` `.topbar` `.topbar__brand` `.topbar__nav` `.topbar__link(.is-active)` `.topbar__me` `.main` `.tabbar`(모바일 하단 고정, 데스크톱 숨김) `.tabbar__item(.is-active)` `.page` `.page--narrow` `.section` `.section__head` `.section__title` `.stack` `.btn-row` `.muted` `.sr-only` `.pre-line`(white-space: pre-line)
+- 공용: `.btn` `.btn--primary|ghost|danger|icon|sm|block` `[aria-busy]` 로딩 표시, `.input` `.select` `.field` `.field__label` `.field__hint` `.field-row` `.check` `.card` `.tabs` `.tabs__tab(.is-active)` `.toast-region` `.toast--ok|bad|info` `.modal-backdrop` `.modal` `.modal--wide` `.modal__head|title|body|actions` `.empty` `.empty--error` `.empty__title|desc` `.skeleton-list` `.skeleton` `.avatar` `.avatar--letter`(크기 `--size`) `.icon` `.progress` `.progress__bar` `.stat-row`(dl) `.mode-grid` `.mode-option`(라디오 카드: input 숨기고 :checked 강조) `.mode-option__label|desc`
+- 시험(play.js): `.play` `.play__bar` `.play__count` `.play__body` `.play__foot` `.play__input` `.prompt` `.prompt__text` `.prompt__text--en`(32px 급) `.prompt__sub` `.choices` `.choice` `.choice__num` `.choice__text` `.choice.is-ok|is-bad|is-dim` `.passage`(영어 18/1.8) `.passage--dim` `.passage-ko` `.blank`(폭 `width: var(--w)`, `.is-ok|is-bad`) `.inline-choice` `.inline-choice__opt[aria-checked=true]` `.is-ok|is-bad` `.chip-line` `.chip-pool` `.chip` `.chip--placed` `.order-list` `.order-card` `.order-card__num|text|move` `.feedback` `.feedback--ok|bad` `.feedback__head|answer|label` `.diff` `.diff__ok|miss|extra`
+- 결과(result.js): `.result-summary` `.result-summary__mode|score|grade` `.review-list` `.review-item(.is-ok|is-bad)` `.review-item__head|num|prompt|answers` `mark.is-ok|is-bad`
+
+### 2. 만들 페이지 (`public/js/pages/<이름>.js`, 당신 소유) — 라우트는 main.js ROUTES 참고
+| 파일 | 내용 | API |
+|---|---|---|
+| landing.js (`auth:false`) | 비로그인 첫 화면: 서비스 소개(단어 + 내신 본문 암기, 시험 종류 소개), 로그인/가입 버튼 | 없음 |
+| login.js (`auth:false`) | 로그인 / 가입(이메일만, 코드 인증) / 비밀번호 찾기·재설정 탭. 구글·네이버 버튼은 개인정보 동의 후 `location.href='/api/auth/google'`. 성공 시 `setUser(user, token)` 후 `query.next` 또는 `#/` | `/auth/login` `/auth/register` `/auth/verify-code` `/auth/resend-code` `/auth/forgot-password` `/auth/reset-password` |
+| home.js | 오늘 학습 요약(`/stats`: 이번 주 외운 문항, 연속 학습일, 오답 수 → 오답 복습 버튼), 내 세트 목록(최근), 새 세트 만들기(단어/본문) | `/stats` `/sets?scope=mine` |
+| explore.js | 공개 세트 검색·종류 필터·정렬(인기/최신)·더 보기, 탭: 둘러보기 / 즐겨찾기 / 내 세트 | `/sets?scope=explore\|fav\|mine&q=&kind=&sort=&page=` |
+| set.js | 세트 상세: 단어 목록 또는 본문(표기법 강조: `parseSentence` 로 key·choice 표시, 해석 토글), **학습 카드 모드**(클라이언트 전용, 넘기기·뒤집기·발음), 시험 보기(`startTest({setIds:[id], kind})`), 즐겨찾기·복사·공유(링크 복사), 작성자면 수정·삭제 | `/sets/:id` `/sets/:id/favorite` `/sets/:id/copy` DELETE `/sets/:id` |
+| editor.js | 새로 만들기(`#/new/vocab`·`#/new/passage`)·수정(`#/sets/:id/edit`). 단어: 행 편집 + 붙여넣기 일괄 입력(탭/쉼표 구분 줄) + CSV/XLSX 가져오기(xlsx 는 버튼 누를 때 `https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js` 동적 로드, RFC 따옴표 처리). 본문: 영문·해석 문단 붙여넣기 → `pairSentences` 로 문장 행 생성 → 행마다 en/ko 수정, **단어를 눌러 {핵심 표현} 토글, 선택지 추가 UI**, 미리보기. 공개 범위·태그. 저장 전 계약 상한 검증, 나가기 전 미저장 경고 | POST `/sets`, PUT `/sets/:id` |
+| wrong.js | 오답 목록(세트별 묶음, 단어/본문 탭), 오답 복습(`startTest({source:'wrong', kind})`), 항목 빼기, "이전 오답노트"(읽기 전용) + 단어 세트로 저장 | `/wrong` DELETE `/wrong/:set/:item` `/legacy-wrongnote` POST `/sets` |
+| history.js | 내 결과 목록(더 보기) → `#/result/:id` | `/results?page=` |
+| ranking.js | 이번 주/전체 × 전체/친구, 내 순위 고정 표시, 지표 설명("맞힌 서로 다른 문항 수") | `/ranking?scope=&period=` |
+| friends.js | 친구 목록·받은 요청·사용자 검색·요청·삭제 | `/friends` `/friends/requests` `/users/search` `/friends/request` PUT `/friends/request/:id` DELETE `/friends/:id` |
+| me.js | 내 프로필(아바타·배너 업로드: canvas 로 압축해 2MB 이하 dataURL, 닉네임, 비밀번호 변경), 설정(테마 라이트/다크/시스템 → `setTheme`), 메뉴(기록·친구·공지·문의·관리자(isAdmin)·개인정보처리방침 `/privacy.html`), 로그아웃(`setUser(null,null)`), 탈퇴 | `/auth/me` PUT `/auth/profile` POST `/auth/account/delete` |
+| user.js (`auth:false`) | 공개 프로필 `#/u/:username` | GET `/p/:username` (응답은 server/app.js 참고, 이미지 `avatarUrl`/`bannerUrl`) |
+| notice.js / inquiry.js / admin.js | 기존 기능 재설계(관리자: 통계·차트(Chart.js 동적 로드)·사용자·문의 답변·로그) | server/app.js 의 `/notices` `/inquiries*` `/admin/*` |
+- 옛 API 응답 형식은 `server/app.js` 를 읽고 맞추세요(읽기 전용). 응답에 필요한 필드가 없거나 이상하면 고치지 말고 리뷰 로그에 적기 — Claude 가 서버를 고칩니다.
+- 빈 상태·로딩(skeleton)·오류(errorBox + 다시 시도)를 모든 목록에.
+
+### 3. 확인 방법
+- `npm run dev` 는 Mongo 가 필요합니다. 대신 `node test/dev-server.js`(Claude 가 곧 추가: 메모리 Mongo + sample-sets 시드 + 테스트 계정)로 http://localhost:5000 에서 실제로 눌러보세요. 추가되면 hc 로 알립니다.
+
+### 4. 보고
+- 페이지 3~4개 단위로 `## Codex 완료 3-N` 에 짧게 보고하고 hc 로 알림 → Claude 가 바로 교차 리뷰합니다.
