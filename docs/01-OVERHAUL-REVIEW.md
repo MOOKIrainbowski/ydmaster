@@ -279,3 +279,4 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 3. **01-FEATURES.md 수용 기준 확인**: 각 기능을 dev-server 에서 실제로 확인할 수 있는 만큼 확인해 결과 열에 기록(못 한 것은 "미확인").
 4. wrong.js 에 영어 앞면 발음 버튼(`speak`) 추가.
 - 끝나면 `## Codex 완료 4` + hc. Claude 는 그동안 배포·운영 확인을 진행합니다.
+- (작업 4 추가) 운영(ydmaster.vercel.app) 랜딩에서 비로그인 상단바 "로그인" 버튼이 로고 바로 옆에 붙음 — `.app--guest .topbar` 에서 오른쪽 정렬.

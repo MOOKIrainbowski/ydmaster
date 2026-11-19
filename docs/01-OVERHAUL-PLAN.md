@@ -44,8 +44,8 @@
 | P0 | 분석·계획·계약 초안, 이슈 전수 색인, 디자인 원인 진단, Vercel 조사, 계획 비판 리뷰 | Claude: 계획/계약 · Codex: 색인/진단/조사/리뷰 | 완료(색인 보강은 Codex 2-A 진행 중) | 계약 v2, 디자인 합의안 §3 |
 | P1 | Vercel 이전: 폴더 재구성(R1~R3), 기존 프론트 그대로 `/api` 로 연결, 급한 보안 수정, 배포 | Claude | 완료 05c70a8 | Vercel 배포됨: 정적 200(0.3~0.5초), `/api/*` 함수 응답. **환경변수 미설정이라 DB 503** — 사용자 작업 필요(§5) |
 | P2 | 학습 엔진: 세트 API, 본문 파서, 문제 생성기, 세션·채점, 학습기록, 랭킹·아바타 API + 자동 테스트 | Claude (Codex: golden 데이터·경계 사례) | 완료(로컬) | npm test 통과(golden grading 1건은 Codex 픽스처 손상), dev-server 로 11개 모드 생성 확인 |
-| P3 | 프론트 재작성: 디자인 시스템(app.css), 앱 셸·라우터, 전 페이지 | Claude: 셸·시험·결과 화면 / Codex: app.css·나머지 페이지 | 진행 중 | 셸·play·result·start 완료, Codex 작업 3 진행 |
-| P4 | 통합·교차 리뷰·이슈 색인 잔여 0·E2E·배포·인수인계 | Claude (Codex 교차 리뷰) | 대기 | |
+| P3 | 프론트 재작성: 디자인 시스템(app.css), 앱 셸·라우터, 전 페이지 | Claude: 셸·시험·결과 화면 / Codex: app.css·나머지 페이지 | 완료·배포 | 14개 화면 자동 순회 오류 0, 운영 배포(ydmaster.vercel.app) 랜딩·API 확인, 옛 채점 경로 404 |
+| P4 | 통합·교차 리뷰·이슈 색인 잔여 0·E2E·배포·인수인계 | Claude (Codex 교차 리뷰) | 진행 중 | Codex 작업 4(교차 리뷰·이슈 처리 상태) 대기 |
 
 ## 4. 파일 소유권
 | 경로 | 소유 | 비고 |
@@ -61,8 +61,8 @@
 | `docs/01-OVERHAUL-PLAN.md`, `docs/01-CONTRACT.md` | Claude | Codex 는 REVIEW 에 의견 |
 
 ## 5. 사용자가 직접 해야 할 것 (진행하며 갱신)
-- [ ] Vercel 프로젝트 → Settings → Environment Variables 에 Render 의 값을 그대로 옮기기: `MONGODB_URI`, `JWT_SECRET`, `GMAIL_USER`, `GMAIL_PASS`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`, 그리고 `FRONTEND_URL=https://ydmaster.vercel.app`, `BACKEND_URL=https://ydmaster.vercel.app` (`PORT`·`NODE_ENV` 는 불필요).
+- [x] Vercel 프로젝트 → Settings → Environment Variables 에 Render 의 값을 그대로 옮기기: `MONGODB_URI`, `JWT_SECRET`, `GMAIL_USER`, `GMAIL_PASS`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`, 그리고 `FRONTEND_URL=https://ydmaster.vercel.app`, `BACKEND_URL=https://ydmaster.vercel.app` (`PORT`·`NODE_ENV` 는 불필요).
 - [ ] Google Cloud Console OAuth 승인된 리디렉션 URI 에 `https://ydmaster.vercel.app/api/auth/google/callback` 추가.
 - [ ] 네이버 개발자센터 Callback URL 에 `https://ydmaster.vercel.app/api/auth/naver/callback` 추가, 서비스 URL 변경.
 - [ ] MongoDB Atlas → Network Access 가 `0.0.0.0/0` 인지 확인(Vercel 은 고정 IP 없음). Atlas 클러스터 지역 알려주기(함수 지역을 가깝게 맞춤).
-- [ ] 새 사이트 확인 후 Render 서비스 중지.
+- [ ] 새 사이트 확인 후 Render 서비스 중지. **주의: Render(옛 코드)와 Vercel(새 코드)이 같은 DB 를 씀** — 새 화면에서 수정한 세트는 옛 형식(questions)이 지워져 Render 화면에서 안 보일 수 있으므로 빨리 전환할 것.
