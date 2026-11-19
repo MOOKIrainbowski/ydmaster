@@ -321,6 +321,14 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - `docs/01-FEATURES.md`에서 개인 결과 차트와 시험 제한시간을 Claude 답변 4의 의도적 폐기로 표시했다.
 - 확인: Claude가 `npm test` 30/30 통과를 보고했다. Codex는 변경 근거 정적 대조, CSS 선택자/DOM 구조 확인, `git diff --check`를 수행했다. 브라우저에서 상단바 배치는 직접 확인하지 않았다.
 
+## (02) Codex 완료 D-2 — app.css 및 앱 화면 다듬기 — 2026-11-20
+
+- `public/css/app.css`를 새 토큰(`tokens.css`)만 참조하도록 전면 재작성했다. 자체 `:root` 토큰·구 팔레트 참조는 제거했고, 상단/하단 내비게이션, 입체 버튼, 카드·세트 카드, 벤토, 입력·탭·모달·토스트·빈 상태·스켈레톤, 시험·결과 컴포넌트를 새 디자인으로 정리했다. 게스트 상단바의 로그인/가입 액션은 오른쪽에 정렬된다.
+- `public/js/pages/home.js`: 실제 통계 기반 8/4/6/6 벤토, 카운트업, 최근 세트로 시험을 여는 “이어서 학습”, 단어/본문 구분 세트 그리드를 추가했다. 이어하기는 기존 `startTest` 설정 모달을 재사용한다.
+- `public/js/pages/login.js`: 글래스 카드, 브랜드 마크, 인사 문구 및 반응형 소셜 버튼 배치를 적용했다. 나머지 앱 화면은 새 공용 컴포넌트 규칙에 맞게 스타일했다.
+- 확인: `node --check public/js/pages/home.js`, `node --check public/js/pages/login.js` 통과. 변경 파일 범위 `git diff --check` 통과. 기존의 동시 변경 `public/js/pages/landing.js`에서는 끝 공백 경고가 관찰되어 건드리지 않았다.
+- 미확인: 브라우저 라이트/다크 및 모바일 화면 확인은 하지 않았다(배정 문서상 Claude가 담당). 전체 테스트는 실행하지 않았다.
+
 ---
 # (02) 디자인 리프레시
 
@@ -357,3 +365,8 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 ### 4. 확인·보고
 - `node test/dev-server.js`(5000 사용 중이면 `PORT=5001`)로 띄워 각 화면 HTML 확인, `node --check`. 브라우저 화면 확인은 Claude 가 합니다.
 - `## (02) Codex 완료 D-2` 에 바꾼 것·확인한 것·못 한 것. 화면이 많으니 app.css 를 먼저 끝내면 중간 보고(`hc send t18`).
+
+### (02) D-2 추가 명세 — Claude 가 시험·결과 마크업을 바꿈(2026-11-20)
+- play.js: 진행바 오른쪽에 `.play__combo`(콤보 자리, 비어 있을 수 있음) 안 `.combo[data-combo]`(아이콘 + `<b>숫자</b>연속`). 문항은 `.play__body > .play__card.reveal[data-qcard]` 로 감쌈. 정답 시 `.is-pop`(정답 보기 또는 `.feedback`), 오답 시 `.play__card.is-shake` 가 붙음(키프레임은 tokens.css). 진행바는 JS 가 width 를 이전→현재로 바꾸므로 `.progress__bar { transition: width var(--dur-4) var(--ease-spring) }` 필요.
+- result.js: `.result-summary.result-hero` 안에 `.score-ring`(180px) > `svg` 와 `.score-ring__label > .score-ring__num + span(점)`. 필요한 CSS: `.score-ring { position:relative; width:180px; aspect-ratio:1; margin:8px auto 4px }`, `svg { transform: rotate(-90deg) }`, `.score-ring__track { fill:none; stroke:var(--surface-3); stroke-width:14 }`, `.score-ring__bar { fill:none; stroke:url(#ring-grad); stroke-width:14; stroke-linecap:round; transition: stroke-dashoffset 1.4s var(--ease-spring) }`, 라벨은 absolute 가운데 정렬, 숫자 56px 800 tabular. 감소 모션이면 transition 없음.
+- 문항별 결과 `.review-item` 에 `.reveal` 이 붙음.

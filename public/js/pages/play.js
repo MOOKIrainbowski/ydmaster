@@ -1,7 +1,8 @@
 // 시험 화면 — 서버 세션을 한 문항씩 풀고, 채점은 서버가 한다(R5). 문항 형태는 계약 §3 (choice/text/cloze/inline_choice/order).
 // 한 화면 한 과제(디자인 §3-1): 문항 → 확인 → 피드백 패널 → 다음.
 import { api } from '../api.js';
-import { html, render, raw, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
+import { html, render, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
+import { burstAt, shake, pop } from '../motion.js';
 
 export default {
   title: '시험',
@@ -18,6 +19,11 @@ export default {
     let phase = 'answer'; // answer | feedback | finishing
     let draft = null;     // 현재 문항의 입력 상태(order 조각 순서, inline 선택 등)
     const instant = s.options?.feedback !== 'end';
+    // 연속 정답(콤보, 02 D6): 이어 풀기여도 이미 푼 답에서 다시 계산 — 실제 채점 결과만 쓴다
+    let combo = 0;
+    for (const q of s.questions) { const a = answers.get(q.i); if (!a) break; combo = a.correct ? combo + 1 : 0; }
+    let shownProgress = Math.max(0, i - 1) / s.total;
+    const comboBadge = () => combo >= 2 ? html`<span class="combo" data-combo>${icon('flame', 16)}<b>${combo}</b>연속</span>` : '';
 
     const view = () => {
       if (i >= s.questions.length) return finish();
@@ -29,15 +35,19 @@ export default {
           <header class="play__bar">
             <button class="btn btn--icon btn--ghost" data-quit aria-label="시험 그만두기">${icon('x', 22)}</button>
             <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${s.total}" aria-valuenow="${i}" aria-label="진행률">
-              <div class="progress__bar" style="width:${(i / s.total) * 100}%"></div>
+              <div class="progress__bar" style="width:${shownProgress * 100}%"></div>
             </div>
+            <span class="play__combo" data-combo-slot>${comboBadge()}</span>
             <span class="play__count">${i + 1} / ${s.total}</span>
           </header>
-          <section class="play__body" aria-live="polite">${question(q)}</section>
+          <section class="play__body" aria-live="polite"><div class="play__card reveal" data-qcard>${question(q)}</div></section>
           <footer class="play__foot" data-foot>${actions(q)}</footer>
         </div>`);
       if (q.speak) speak(q.speak);
       ($('.blank, .play__input', root) || $('.choice', root))?.focus();
+      // 진행바는 이전 위치에서 새 위치로 스프링처럼 차오른다(02 §3.4)
+      shownProgress = i / s.total;
+      requestAnimationFrame(() => { const b = $('.progress__bar', root); if (b) b.style.width = `${shownProgress * 100}%`; });
     };
 
     // ── 문항 렌더 ──
@@ -140,6 +150,9 @@ export default {
 
     function showFeedback(q, response, r) {
       phase = 'feedback';
+      combo = r.correct ? combo + 1 : 0;
+      const slot = $('[data-combo-slot]', root);
+      if (slot) { render(slot, comboBadge()); if (combo >= 2) pop($('[data-combo]', slot)); }
       // 문항 안에 정오 표시(색 + 아이콘 + 문구, 디자인 §3-8)
       if (q.type === 'choice') {
         $$('.choice', root).forEach((b, k) => {
@@ -166,6 +179,12 @@ export default {
           <button class="btn btn--primary btn--block" data-next>${last ? '결과 보기' : '다음 문제'} ${icon('chevronRight', 18)}</button>
         </div>`);
       $('[data-next]', root).focus();
+      // 정답 위치(객관식은 정답 보기, 그 외엔 피드백 아이콘)에서 파티클, 오답은 문항 카드 흔들림
+      if (r.correct) {
+        const target = $('.choice.is-ok', root) || $('.feedback__head .icon', root);
+        pop($('.choice.is-ok', root) || $('.feedback', root));
+        if (target) burstAt(target, combo >= 3 ? 26 : 16);
+      } else shake($('[data-qcard]', root));
     }
 
     async function finish() {
