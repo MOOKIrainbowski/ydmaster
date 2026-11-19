@@ -145,8 +145,7 @@ a.card { display: block; color: inherit; text-decoration: none; }
 .metric__icon--wrong { background: var(--hot); }
 .bento__cell--span-6[href] { color: inherit; text-decoration: none; }
 .login-card > .tabs, .login-card > .stack, .auth-card > .tabs, .auth-card > .stack { margin-bottom: 20px; }
-.social-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .social-actions .btn { padding-inline: 10px; }
-.social-actions [data-oauth="google"] { color: var(--accent-ink); } .social-actions [data-oauth="naver"] { color: var(--hot-ink); }
+.social-actions { display: grid; grid-template-columns: 1fr; gap: 10px; } .social-btn span { white-space: nowrap; }
 .section > .explore-controls { margin-top: var(--space-6); } .set-delete { color: var(--bad); }
 .set-card ul.stack { margin: 0; padding: 0; list-style: none; }
 .play { display: flex; width: min(100%,var(--content-narrow)); min-height: calc(100dvh - 40px); flex-direction: column; margin: 0 auto; }
@@ -277,3 +276,64 @@ mark.is-ok, mark.is-bad { padding: 1px 3px; border-radius: 3px; color: var(--tex
   .score-ring__bar { transition: none; }
 }
 @supports (field-sizing: content) { .sentence-editor textarea[data-autogrow] { field-sizing: content; min-height: 3lh; max-height: 12lh; } }
+
+/* Google/Naver marks use official colors; the Google button keeps its official white face and dark label. */
+.social-btn { display: grid; grid-template-columns: 24px minmax(0,1fr) 24px; align-items: center; min-height: 48px; gap: 8px; padding-inline: 14px; }
+.social-btn__logo { width: 20px; height: 20px; justify-self: center; }
+.social-btn--google { border-color: var(--border-strong); background: #FFFFFF; box-shadow: 0 3px 0 var(--edge-neutral); color: #3C4043; }
+.social-btn--google .social-btn__logo path { fill: none; stroke-width: 7; stroke-linecap: round; }
+.social-btn--google .social-btn__logo path:nth-child(1) { stroke: #4285F4; }
+.social-btn--google .social-btn__logo path:nth-child(2) { stroke: #34A853; }
+.social-btn--google .social-btn__logo path:nth-child(3) { stroke: #FBBC05; }
+.social-btn--google .social-btn__logo path:nth-child(4) { stroke: #EA4335; }
+.social-btn--google .social-btn__logo .social-btn__google-bar { stroke: #4285F4; }
+.social-btn--naver { border: 0; background: #03C75A; box-shadow: var(--shadow-1); color: #FFFFFF; }
+.social-btn--naver .social-btn__logo path { fill: currentColor; }
+.social-btn > span { text-align: center; }
+
+/* D9 glass-card utility applied by the same token recipe to shared app surfaces. */
+:is(.card, .set-card, .bento__cell, .stat-row > div, .list-row, .podium__place, .rank-me, .result-summary.result-hero, .modal, .toast, .tabs, .chip, .badge, .play__card, .review-item, .passage--reading, .auth-card, .explore-controls, form[data-editor], .danger-zone) {
+  position: relative;
+  border: 1px solid var(--border);
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: var(--glass-depth);
+  transition: background var(--dur-2), box-shadow var(--dur-3), border-color var(--dur-2), transform var(--dur-3) var(--ease-spring);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(.card, .set-card, .bento__cell, .stat-row > div, .list-row, .podium__place, .rank-me, .result-summary.result-hero, .modal, .toast, .tabs, .chip, .badge, .play__card, .review-item, .passage--reading, .auth-card, .explore-controls, form[data-editor], .danger-zone) {
+    border-color: transparent;
+    background: var(--glass-card);
+    -webkit-backdrop-filter: var(--glass-blur-card);
+    backdrop-filter: var(--glass-blur-card);
+    box-shadow: var(--glass-inner), var(--glass-depth);
+  }
+  :is(.card, .set-card, .bento__cell, .stat-row > div, .list-row, .podium__place, .rank-me, .result-summary.result-hero, .modal, .toast, .tabs, .chip, .badge, .play__card, .review-item, .passage--reading, .auth-card, .explore-controls, form[data-editor], .danger-zone)::after {
+    position: absolute;
+    z-index: 2;
+    inset: -1px;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--glass-edge);
+    content: "";
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  :is(.card, .set-card, .list-row, .podium__place, .rank-me, .result-summary.result-hero, .modal, .toast, .play__card, .review-item, .passage--reading, .auth-card, .explore-controls, form[data-editor], .danger-zone) { background: var(--glass-card-strong); }
+}
+.list-row { border-radius: var(--r-md); padding-inline: 12px; }
+.passage--reading, .explore-controls { border-radius: var(--r-lg); padding: 16px; }
+.explore-controls { margin-top: var(--space-6); }
+.page form[data-editor] { border-radius: var(--r-lg); padding: var(--space-4); }
+.play__card, .review-item, .passage--reading, .auth-card, .explore-controls, form[data-editor], .modal, .toast, .danger-zone { background: var(--glass-card-strong); }
+.bento__cell.result-hero, .rank-me, .result-summary.result-hero { background: var(--grad-soft); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bento__cell.result-hero, .rank-me, .result-summary.result-hero { background: linear-gradient(135deg,var(--glass-card-strong),var(--glass-card)),var(--grad-soft); }
+}
+@media (hover: hover) {
+  .card:hover, a.card:hover, .set-card:hover, .bento__cell:hover, .podium__place:hover, .rank-me:hover { border-color: transparent; background: var(--glass-card-hover); box-shadow: var(--glass-inner), var(--glass-depth-hover); transform: translateY(-3px); }
+  .social-btn--google:hover:not(:disabled) { border-color: var(--border-strong); background: #FFFFFF; box-shadow: 0 4px 0 var(--edge-neutral); }
+  .social-btn--naver:hover:not(:disabled) { border-color: transparent; background: #03C75A; box-shadow: var(--shadow-2); }
+}

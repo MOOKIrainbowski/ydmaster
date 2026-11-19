@@ -15,6 +15,15 @@ const MODES = [
   ['layers', '문장 순서'], ['edit', '해석 보고 영작'],
 ];
 
+// 키네틱 헤드라인: 글자마다 span(--c = 등장 순번). 화면 낭독은 h1 전체 글을 읽으므로 span 은 시각용
+const chars = (text, start = 0) => [...text].map((c, k) => c === ' ' ? ' ' : html`<span class="lp-ch" style="--c:${start + k}">${c}</span>`);
+// 스크롤로 한 단어씩 밝아지는 문장: 단어마다 --w(순번)·--n(총수)
+const MANIFESTO = '단어 하나에서 시작해 문장을 이해하고, 교과서 본문 전체를 내 것으로. 영단마스터는 외우는 과정을 시험으로, 시험을 다시 복습으로 바꿔요.';
+const manifesto = () => { const ws = MANIFESTO.split(' '); return ws.map((w, k) => html`<span class="lp-manifesto__w" style="--w:${k};--n:${ws.length}">${w}</span> `); };
+const KINETIC_EN = ['VOCAB', 'PASSAGE', 'GRAMMAR', 'ORDER', 'LISTEN', 'WRITE', 'MASTER'];
+const KINETIC_KO = ['단어', '본문', '어법', '어순', '듣기', '영작', '내신'];
+const kineticRow = (words, cls) => html`<div class="lp-kinetic__row ${cls}">${[...words, ...words].map((w, k) => html`<span class="${k % 2 ? 'lp-kinetic__outline' : 'text-grad'}">${w}</span><i aria-hidden="true">✦</i>`)}</div>`;
+
 const wordPill = ([en, ko]) => html`<span class="lp-word"><b class="serif-accent">${en}</b><span>${ko}</span></span>`;
 const marqueeRow = (list, rev) => html`<div class="lp-marquee__track${rev ? ' lp-marquee__track--rev' : ''}">${[...list, ...list].map(wordPill)}</div>`;
 
@@ -24,15 +33,16 @@ export default {
   render(root) {
     render(root, html`
       <div class="lp">
+        <div class="lp-progress" aria-hidden="true"></div>
         <!-- ① 히어로 -->
         <section class="lp-hero" aria-labelledby="lp-title">
           <div class="lp-hero__copy">
             <p class="lp-eyebrow reveal"><span class="lp-eyebrow__dot" aria-hidden="true"></span>단어부터 내신 본문까지 · 11가지 시험</p>
             <h1 class="lp-title" id="lp-title">
-              <span class="lp-title__line reveal" style="--i:1">영어
+              <span class="lp-title__line">${chars('영어')}
                 <span class="lp-rotator" aria-hidden="true"><span class="text-grad">단어</span><span class="text-grad">본문</span><span class="text-grad">내신</span><span class="text-grad">어법</span></span><span class="sr-only">단어·본문·내신·어법</span>,</span>
-              <span class="lp-title__line reveal" style="--i:2">이제 제대로</span>
-              <span class="lp-title__line reveal" style="--i:3"><span class="serif-accent lp-title__serif">Master</span> 하세요.</span>
+              <span class="lp-title__line">${chars('이제 제대로', 3)}</span>
+              <span class="lp-title__line"><span class="serif-accent lp-title__serif lp-ch" style="--c:9">Master</span> ${chars('하세요.', 10)}</span>
             </h1>
             <p class="lp-lead reveal" style="--i:4">내 단어장과 교과서 본문을 넣으면 시험이 만들어지고, <br class="lp-br">틀린 문제는 저절로 다시 나와요. 내신 대비가 게임처럼.</p>
             <div class="lp-cta-row reveal" style="--i:5">
@@ -81,6 +91,11 @@ export default {
         <section class="lp-marquee" aria-hidden="true">
           ${marqueeRow(WORDS.slice(0, 8))}
           ${marqueeRow(WORDS.slice(8), true)}
+        </section>
+
+        <!-- ②-b 스크롤하면 한 단어씩 밝아지는 문장 -->
+        <section class="lp-manifesto" aria-label="영단마스터 소개">
+          <p class="lp-manifesto__text">${manifesto()}</p>
         </section>
 
         <!-- ③ 벤토 기능 소개 -->
@@ -150,20 +165,60 @@ export default {
           </div>
         </section>
 
-        <!-- ④ 3단계 -->
-        <section class="lp-section" id="lp-how" aria-labelledby="lp-how-title">
+        <!-- ③-b 키네틱 타이포 띠(스크롤 따라 좌우로) -->
+        <section class="lp-kinetic" aria-hidden="true">
+          ${kineticRow(KINETIC_EN, 'lp-kinetic__row--l')}
+          ${kineticRow(KINETIC_KO, 'lp-kinetic__row--r')}
+        </section>
+
+        <!-- ④ 공부 흐름: 고정 스토리(왼쪽 단계가 스크롤되면 오른쪽 휴대폰 화면이 바뀜) -->
+        <section class="lp-section lp-story" id="lp-how" aria-labelledby="lp-how-title">
           <header class="lp-head reveal">
             <p class="lp-kicker">공부는 이렇게</p>
             <h2 class="lp-h2" id="lp-how-title">만들고, 풀고, <span class="text-grad">다시 풀면</span> 끝</h2>
           </header>
-          <div class="lp-steps-wrap">
-          <span class="lp-steps__line" aria-hidden="true"></span>
-          <ol class="lp-steps">
-            <li class="lp-step reveal" style="--i:0"><span class="lp-step__num">1</span><h3>세트 만들기</h3><p>단어는 붙여넣기·엑셀로, 본문은 문단째 붙여넣으면 문장별로 정리돼요.</p></li>
-            <li class="lp-step reveal" style="--i:1"><span class="lp-step__num">2</span><h3>시험 보기</h3><p>원하는 방식을 골라 풀면 서버가 바로 채점하고 정답을 보여줘요.</p></li>
-            <li class="lp-step reveal" style="--i:2"><span class="lp-step__num">3</span><h3>오답 복습</h3><p>틀린 것만 모아 다시. 두 번 연속 맞히면 오답 목록에서 졸업해요.</p></li>
-          </ol>
+          <div class="lp-story__grid">
+            <ol class="lp-story__steps">
+              <li class="lp-story__step is-active" data-step="0"><span class="lp-step__num">1</span><h3>세트 만들기</h3><p>단어는 붙여넣기·엑셀로, 본문은 문단째 붙여넣으면 문장별로 정리돼요. 핵심 표현은 단어를 눌러 표시하면 끝.</p></li>
+              <li class="lp-story__step" data-step="1"><span class="lp-step__num">2</span><h3>시험 보기</h3><p>11가지 방식 중 하나를 고르면 서버가 바로 채점하고 정답을 보여줘요. 연속으로 맞히면 콤보가 쌓여요.</p></li>
+              <li class="lp-story__step" data-step="2"><span class="lp-step__num">3</span><h3>오답 복습</h3><p>틀린 것만 모아 다시. 두 번 연속 맞히면 오답 목록에서 졸업하고, 이번 주 외운 문항이 랭킹에 올라가요.</p></li>
+            </ol>
+            <div class="lp-story__stage" aria-hidden="true">
+              <div class="lp-phone glass" data-screen="0">
+                <div class="lp-phone__notch"></div>
+                <div class="lp-screen lp-screen--make">
+                  <p class="lp-screen__title">새 본문 세트</p>
+                  <div class="lp-paste">Every morning, Mina walks through a small park. She notices plastic cups near the benches.</div>
+                  <div class="lp-screen__arrow">${icon('chevronDown', 18)} 문장별로 정리</div>
+                  <p class="lp-sent"><b>1</b><span><mark>Every morning</mark>, Mina walks through a small park.</span></p>
+                  <p class="lp-sent"><b>2</b><span>She notices <mark>plastic cups</mark> near the benches.</span></p>
+                </div>
+                <div class="lp-screen lp-screen--test">
+                  <div class="lp-mini-progress"><i></i></div>
+                  <p class="lp-screen__title">핵심 표현 빈칸 · 3 / 10 <span class="lp-combo">${icon('flame', 14)}<b>3</b>연속</span></p>
+                  <p class="lp-screen__sentence">She notices <span class="lp-blank-done">plastic cups</span> near the benches.</p>
+                  <div class="lp-screen__ok">${icon('check', 16)} 정답이에요</div>
+                </div>
+                <div class="lp-screen lp-screen--review">
+                  <svg viewBox="0 0 44 44" class="lp-ring lp-ring--big"><circle cx="22" cy="22" r="18" class="lp-ring__track"/><circle cx="22" cy="22" r="18" class="lp-ring__bar lp-ring__bar--still"/></svg>
+                  <p class="lp-screen__score"><b>92</b>점 · 잘했어요</p>
+                  <ul class="lp-review">
+                    <li><span class="is-ok">${icon('check', 12)}</span>give up<em>졸업</em></li>
+                    <li><span class="is-ok">${icon('check', 12)}</span>plastic cups<em>졸업</em></li>
+                    <li><span class="is-bad">${icon('x', 12)}</span>reusable<em>복습 1/2</em></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
+        </section>
+
+        <!-- ④-b 숫자로 보는 영단마스터(실제 한도·사양) -->
+        <section class="lp-stats" aria-label="숫자로 보는 영단마스터">
+          <div class="lp-stat glass-card reveal" style="--i:0"><b data-count="11">0</b><span>가지 시험 방식</span></div>
+          <div class="lp-stat glass-card reveal" style="--i:1"><b data-count="500">0</b><span>단어까지 한 세트에</span></div>
+          <div class="lp-stat glass-card reveal" style="--i:2"><b data-count="80">0</b><span>문장까지 한 본문에</span></div>
+          <div class="lp-stat glass-card reveal" style="--i:3"><b>0<small>원</small></b><span>모든 기능 무료</span></div>
         </section>
 
         <!-- ⑤ 마무리 CTA -->
@@ -199,6 +254,20 @@ export default {
       hero.addEventListener('pointerleave', leave);
       offs.push(() => { hero.removeEventListener('pointermove', move); hero.removeEventListener('pointerleave', leave); cancelAnimationFrame(raf); });
     }
+    // 고정 스토리: 화면 가운데 들어온 단계로 휴대폰 화면 전환
+    const phone = root.querySelector('.lp-phone');
+    const steps = [...root.querySelectorAll('.lp-story__step')];
+    const sio = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const n = e.target.dataset.step;
+        phone.dataset.screen = n;
+        steps.forEach(st => st.classList.toggle('is-active', st.dataset.step === n));
+      }
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    steps.forEach(st => sio.observe(st));
+    offs.push(() => sio.disconnect());
+
     // "어떻게 공부하나요?" → 부드럽게 스크롤(해시 라우터를 건드리지 않음)
     offs.push(on(root, 'click', '[data-scroll]', e => {
       e.preventDefault();
