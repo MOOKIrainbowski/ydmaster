@@ -320,3 +320,40 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - `public/css/app.css`의 `.app--guest .topbar > .btn`에 `margin-left: auto`를 추가해 비로그인 상단바의 로그인 버튼을 오른쪽으로 보낸다. `.app--guest`는 main.js가 게스트 상태에 설정하고 상단 로그인 링크는 topbar의 직접 자식임을 확인했다.
 - `docs/01-FEATURES.md`에서 개인 결과 차트와 시험 제한시간을 Claude 답변 4의 의도적 폐기로 표시했다.
 - 확인: Claude가 `npm test` 30/30 통과를 보고했다. Codex는 변경 근거 정적 대조, CSS 선택자/DOM 구조 확인, `git diff --check`를 수행했다. 브라우저에서 상단바 배치는 직접 확인하지 않았다.
+
+---
+# (02) 디자인 리프레시
+
+## (02) Codex 작업 D-2 — app.css 전면 재작성 + 페이지 다듬기 — 2026-11-20 Claude 배정
+**배경**: 사용자가 01 디자인을 보고 "너무 단조롭고 1차원적, GPT 가 만든 기본 사이트 같다, 랜딩을 보고 충격받았다" 고 했습니다. 트렌드를 조사해 **"Aurora Glass + Bento + Playful Depth"** 로 방향을 정했고 퍼스널 컬러는 **붉은색·보라색·연한 붉은색**입니다. 반드시 `docs/02-DESIGN-REFRESH.md` 전체(특히 §2 결정, §3 명세)를 먼저 읽으세요.
+
+**Claude 가 이미 만든 것(읽기 전용)**
+- `public/css/tokens.css` — 색·그라데이션·그림자·유리·오로라·모양·글자·모션 토큰 + 공용 유틸(`.aurora`, `.glass`, `.text-grad`, `.serif-accent`, `.reveal`, `.spotlight`, `.is-shake`, `.is-pop`, `.burst`, View Transition 규칙). 대비 계산값은 파일 상단.
+- `public/js/motion.js` — 페이지는 표시만: `class="reveal" style="--i:N"`(순차 등장), `data-count="123"`(카운트업), `class="spotlight"`(마우스 빛). 자동 처리됨.
+- `public/js/main.js` 셸 마크업 변경: `.topbar.glass` 안에 `.topbar__brand > .logo-mark("영") + .topbar__name`, 활성 링크 안 `<span class="topbar__pill">`, 게스트용 `.topbar__guest`(로그인·무료로 시작 버튼), `.tabbar.glass` 활성 항목 안 `<span class="tabbar__pill">`, `.topbar.is-scrolled`(스크롤 시), `app--landing`(랜딩에서 Claude 의 landing.css 가 상단바를 띄움). 화면 전환은 View Transitions(`#main`).
+
+### 1. app.css 전면 재작성 (당신 소유)
+- **맨 위 `:root`·다크 토큰 블록 전부 삭제** — 값은 tokens.css 만. 옛 이름 매핑: `--accent-fill`→버튼은 `--grad-brand`, `--accent-text`→`--accent`, `--r-sm/--r-md` 등은 tokens 의 같은 이름. **색·그림자·반지름·시간을 숫자로 하드코딩 금지**(레이아웃 px 은 OK).
+- 컴포넌트 명세(02 §3 그대로, 요약):
+  - **상단바**: sticky, 높이 `--topbar-h`, `.glass`. `.is-scrolled` 에서 `--glass-bg-strong` + `--shadow-1`. `.logo-mark` 34px 정사각, `--r-sm`, `--grad-brand`, 흰 "영" 800, 안쪽 위 하이라이트. `.topbar__link` 는 알약형, `.topbar__pill`(absolute inset 0, `--accent-soft`, `view-transition-name: top-pill`, 글자는 그 위).
+  - **하단 탭바(모바일 ≤ 768px)**: 화면 아래 떠 있는 유리 알약(`left/right 12px`, `bottom: calc(12px + env(safe-area-inset-bottom))`, `--r-pill`, 높이 `--tabbar-h`). 항목 = 아이콘+11px 글자. 활성 `.tabbar__pill`(absolute inset 6px, `--grad-brand`, `--shadow-glow`, `view-transition-name: tab-pill`), 활성 아이콘·글자 흰색 + 아이콘 `pop`. `.main` 아래 여백을 탭바 높이+24px.
+  - **버튼(통통한 입체, §3.2)**: `.btn--primary` = `--grad-brand` 배경, 흰 글자 700, `box-shadow: inset 0 1px 0 rgb(255 255 255/35%), 0 4px 0 var(--edge-brand), var(--shadow-glow)`, hover `--grad-brand-hover` + `translateY(-1px)`, active `translateY(3px)` + 아래 두께 1px(120ms). `.btn--ghost` = `--surface` + `--border` + `0 3px 0 var(--edge-neutral)` 동일 눌림. `.btn--danger` 는 글자 `--bad` 의 ghost. 높이 48(`--sm` 40), `--r-btn`. disabled 는 눌림 없음.
+  - **카드**: `--surface`, `--border`, `--r-lg`, `--shadow-1`. `a.card`/클릭 카드: hover `translateY(-3px)` + `--shadow-2`(`--dur-3 --ease-spring`) + `.spotlight` 효과.
+  - **세트 카드 `.set-card`**: 왼쪽 `.kind-tile.kind-tile--vocab|--passage`(52px, `--r-md`, `--grad-vocab|--grad-passage`, 흰 아이콘 24px, inset 하이라이트), 제목 600 17px, 메타 칩. 단어=보라, 본문=빨강 일관 적용(배지 `.badge--vocab`(accent-soft/accent-ink), `.badge--passage`(hot-soft/hot-ink)).
+  - **벤토 `.bento`**: 12열 grid, gap 16, `.bento__cell` + `--span-8/--span-4/--span-6/--span-12`(모바일은 모두 12 또는 6). 칸 안 큰 숫자 `.metric`(40px 800 tabular, `--text`), 이름 `.metric__label`(13px `--text-2`), 아이콘 타일 `.metric__icon`(40px 그라데이션). 연속 학습 칸의 불꽃 아이콘은 `flicker` 키프레임(1.6s 무한, 감소 모션이면 정지).
+  - **입력**: 높이 48, `--r-input`, `--surface`, `--border-strong`, focus 시 테두리 `--accent` + `0 0 0 4px var(--accent-soft)`.
+  - **탭 `.tabs`**: 세그먼트 컨트롤(배경 `--surface-2`, 활성 탭은 `--surface` + `--shadow-1`, 전환 `--dur-3`).
+  - **모달**: 배경 `rgb(17 10 24 / 45%)` + blur(6px) 페이드, 패널 `--r-xl` `--surface` `--shadow-3`, 등장 `scale(.96) translateY(8px)`→1 spring. **토스트**: 하단 중앙 유리 알약, 아래에서 bounce 로 올라옴. **스켈레톤**: `--surface-2` 위 흐르는 하이라이트(shimmer). **빈 상태**: 64px 그라데이션 아이콘 타일 + 제목 600.
+  - **진행바 `.progress__bar`**: `--grad-brand`, width 전환 `--dur-4 --ease-spring`, 끝에 빛나는 점(::after, 흰 원 + glow).
+  - **시험·결과 컴포넌트(Claude 마크업, 스타일은 당신)**: `.play__card`(문항 카드, 불투명 `--surface`, `--r-xl`, `--shadow-2`, 패딩 32/20), `.choice`(통통한 카드: `--surface` + `0 4px 0 var(--edge-neutral)`, 눌림, 숫자 `.choice__num` 은 키캡 모양), `.choice.is-ok`(ok-soft, 테두리 ok, 아래 두께 `--edge-ok`), `.choice.is-bad`(bad-soft, `--edge-bad`), `.combo`(진행바 옆 알약: `--grad-passage` 흰 글자 + 불꽃, 등장 pop), `.feedback`(화면 아래 고정 시트: `--glass-bg-strong` 유리, `--r-xl` 위 모서리, 아래에서 슬라이드업 spring, 정답이면 왼쪽 아이콘 원 `--grad-ok`, 오답이면 `--bad-fill`), `.blank`(밑줄형, focus 시 아래 선 그라데이션), `.chip`(통통한 알약 + 눌림), `.order-card`, `.diff__*`.
+    결과: `.score-ring`(SVG 180px, `.score-ring__track` 은 `--surface-3` 획, `.score-ring__bar` 는 SVG 안 `<linearGradient id="ring-grad">` 획 — Claude 가 마크업), `.score-ring__num`(56px 800), `.result-hero`(`--grad-soft` 배경 큰 카드).
+  - **모든 hover 는 `@media (hover: hover)` 안에서만.** `prefers-reduced-motion` 에서 이동·확대 전부 끄기.
+### 2. 페이지 다듬기 (당신 소유 페이지)
+- **home.js**: 02 §3.5 벤토 — [8칸] `.result-hero` 같은 `--grad-soft` 큰 칸: "{닉네임}님, 오늘도 한 걸음" + `.text-grad` 문구 + "이어서 학습"(가장 최근 내 세트로 `startTest`) / [4칸] 연속 학습일(불꽃, `data-count`) / [6칸] 이번 주 외운 문항(`data-count`) / [6칸] 복습할 오답(바로가기). 아래 "내 세트" `.set-card` 그리드(2열, 모바일 1열). 모두 `.reveal` + `--i`.
+- **login.js**: 가운데 `.auth-card.glass`(최대 440px, `--r-xl`), 위에 `.logo-mark` 크게 + "다시 만나서 반가워요" 같은 따뜻한 문구, 탭은 세그먼트, 폼 영역은 불투명 면. 소셜 버튼 2개 가로.
+- **explore·set·wrong·history·ranking·friends·me·user·notice·inquiry·admin**: 목록 카드에 `.reveal`+`--i`, 세트는 `.set-card`, 큰 숫자는 `data-count`, 랭킹 1~3위는 메달 타일(금 #F59E0B·은 #94A3B8·동 #B45309 그라데이션 — 이 3색만 예외로 app.css 에 하드코딩 허용), 내 순위 칸 `--grad-soft`. 페이지 제목은 `--fs-1` 800 `letter-spacing: var(--tracking-display)`.
+### 3. 하지 말 것
+- tokens.css·landing.css·motion.js·main.js·ui.js·start.js·pages/{landing,play,result,oauth}.js 수정 금지(필요하면 리뷰 로그에). 커밋·푸시 금지.
+### 4. 확인·보고
+- `node test/dev-server.js`(5000 사용 중이면 `PORT=5001`)로 띄워 각 화면 HTML 확인, `node --check`. 브라우저 화면 확인은 Claude 가 합니다.
+- `## (02) Codex 완료 D-2` 에 바꾼 것·확인한 것·못 한 것. 화면이 많으니 app.css 를 먼저 끝내면 중간 보고(`hc send t18`).

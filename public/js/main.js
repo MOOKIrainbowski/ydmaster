@@ -2,6 +2,7 @@
 import { state, setUser, onUser, getTheme, setTheme } from './state.js';
 import { api, ApiError } from './api.js';
 import { html, render, icon, on, toast, closeAllModals, errorBox, avatar } from './ui.js';
+import { initMotion, viewTransition } from './motion.js';
 
 const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
@@ -34,22 +35,41 @@ function parse() {
   return { page: 'notfound', params: {}, query, path };
 }
 
-function shell(active, focus) {
+// 선택된 탭 뒤의 그라데이션 알약. view-transition-name(tab-pill/top-pill) 이 같아서 화면 전환 때 새 위치로 미끄러진다(02 §3.5)
+const pill = name => html`<span class="${name}" aria-hidden="true"></span>`;
+// 랜딩·로그인처럼 브랜드 첫인상이 중요한 화면은 오로라를 진하게, 학습 화면은 은은하게(02 §3.5)
+const VIVID = new Set(['landing', 'login', 'oauth', 'user']);
+
+function shell(active, mod = {}) {
   const u = state.user;
   render(app, html`
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
-    <header class="topbar">
-      <a class="topbar__brand" href="#/">영단마스터</a>
-      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map(t => html`<a class="topbar__link${t.match.includes(active) ? ' is-active' : ''}" href="${t.href}"${t.match.includes(active) ? html` aria-current="page"` : ''}>${t.label}</a>`)}</nav>
-        <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 32)}</a>`
-      : active === 'login' ? '' : html`<a class="btn btn--primary btn--sm" href="#/login">로그인</a>`}
+    <header class="topbar glass">
+      <a class="topbar__brand" href="#/" aria-label="영단마스터 홈"><span class="logo-mark" aria-hidden="true">영</span><span class="topbar__name">영단마스터</span></a>
+      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map(t => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span>${t.label}</span></a>`; })}</nav>
+        <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 34)}</a>`
+      : active === 'login' ? '' : html`<div class="topbar__guest"><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
     </header>
     <main class="main" id="main" tabindex="-1"></main>
-    ${u ? html`<nav class="tabbar" aria-label="주요 메뉴">${TABS.map(t => html`<a class="tabbar__item${t.match.includes(active) ? ' is-active' : ''}" href="${t.href}"${t.match.includes(active) ? html` aria-current="page"` : ''}>${icon(t.icon, 22)}<span>${t.label}</span></a>`)}</nav>` : ''}`);
-  app.classList.toggle('app--focus', !!focus);
+    ${u ? html`<nav class="tabbar glass" aria-label="주요 메뉴">${TABS.map(t => { const on = t.match.includes(active); return html`<a class="tabbar__item${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('tabbar__pill') : ''}${icon(t.icon, 22)}<span>${t.label}</span></a>`; })}</nav>` : ''}`);
+  app.classList.toggle('app--focus', !!mod.focus);
   app.classList.toggle('app--guest', !u);
+  app.classList.toggle('app--landing', active === 'landing');
+  aurora.classList.toggle('aurora--calm', !VIVID.has(active));
+  onScroll();
   return document.getElementById('main');
 }
+
+// 오로라 배경(한 번만 만들고 화면마다 세기만 바꿈)
+const aurora = document.createElement('div');
+aurora.className = 'aurora aurora--calm';
+aurora.setAttribute('aria-hidden', 'true');
+aurora.innerHTML = '<i></i><i></i><i></i><i></i>';
+document.body.prepend(aurora);
+
+// 스크롤하면 상단바에 그림자·진한 유리
+function onScroll() { app.querySelector('.topbar')?.classList.toggle('is-scrolled', window.scrollY > 6); }
+window.addEventListener('scroll', onScroll, { passive: true });
 
 async function navigate() {
   const seq = ++navSeq;
@@ -75,13 +95,20 @@ async function navigate() {
     location.replace('#/login?next=' + encodeURIComponent(location.hash.slice(1) || '/'));
     return;
   }
-  const main = shell(page, mod.focus);
   document.title = mod.title ? `${typeof mod.title === 'function' ? mod.title(params) : mod.title} · 영단마스터` : '영단마스터';
-  window.scrollTo(0, 0);
+  let main, rendering;
+  // 페이지는 isCurrent() 로 자기 화면이 아직 떠 있는지 확인해 늦은 응답이 새 화면을 덮지 않게 한다(I-037)
+  const ctx = { isCurrent: () => seq === navSeq };
+  // 화면 전환(D5): 셸과 페이지의 "첫 그림"(보통 스켈레톤)까지만 전환에 포함한다.
+  // 데이터 응답까지 기다리면 그동안 화면이 얼어 보이므로 최대 120ms 만 기다린다.
+  await viewTransition(() => {
+    main = shell(page, mod);
+    window.scrollTo(0, 0);
+    rendering = Promise.resolve().then(() => mod.render(main, params, query, ctx));
+    return Promise.race([rendering.catch(() => {}), new Promise(r => setTimeout(r, 120))]);
+  });
   try {
-    // 페이지는 isCurrent() 로 자기 화면이 아직 떠 있는지 확인해 늦은 응답이 새 화면을 덮지 않게 한다(I-037)
-    const ctx = { isCurrent: () => seq === navSeq };
-    cleanup = await mod.render(main, params, query, ctx);
+    cleanup = await rendering;
   } catch (e) {
     console.error(e);
     if (seq === navSeq) render(main, html`<div class="page">${errorBox(e instanceof ApiError ? e.message : '문제가 생겼어요.')}</div>`);
@@ -95,7 +122,7 @@ on(app, 'click', '[data-home]', () => { location.hash = '#/'; });
 // 상단바 아바타만 갱신(닉네임·사진 변경 직후)
 function refreshShellUser() {
   const me = app.querySelector('.topbar__me');
-  if (me && state.user) render(me, avatar(state.user, 32));
+  if (me && state.user) render(me, avatar(state.user, 34));
 }
 
 export const go = path => { if (location.hash === '#' + path) navigate(); else location.hash = '#' + path; };
@@ -128,6 +155,7 @@ async function boot() {
   // 로그인/로그아웃이 바뀔 때만 화면을 다시 그림(프로필 수정 같은 갱신은 각 페이지가 처리)
   let wasIn = !!state.user;
   onUser(u => { if (!!u !== wasIn) { wasIn = !!u; navigate(); } else refreshShellUser(); });
+  initMotion(app);
   window.addEventListener('hashchange', navigate);
   navigate();
   if ('serviceWorker' in navigator && location.hostname !== 'localhost') navigator.serviceWorker.register('/sw.js').catch(() => {});

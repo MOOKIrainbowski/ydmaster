@@ -1,0 +1,236 @@
+/*
+  영단마스터 디자인 토큰 — 02 디자인 리프레시(docs/02-DESIGN-REFRESH.md §3)의 유일한 원본(D2).
+  app.css·landing.css 는 값을 하드코딩하지 않고 여기 변수만 쓴다.
+
+  대비(WCAG, 계산값):
+    light  text/bg 17.2 · text-2/surface 8.0 · text-3/surface 4.8 · accent/surface 5.7 · hot/surface 4.7
+           hot-ink/hot-soft 5.2 · ok/ok-soft 4.8 · bad/bad-soft 5.3 · warn/warn-soft 4.5
+           흰 글자 / #E11D48 4.7 · #C026D3 4.7 · #7C3AED 5.7  → 그라데이션 위 흰 글자는 굵은 15px 이상
+    dark   text/bg 17.2 · text-2/surface 9.8 · text-3/surface 5.6 · accent/surface 9.8 · hot/surface 6.7
+           ok/ok-soft 6.5 · bad/bad-soft 8.0 · warn/warn-soft 9.4
+*/
+
+:root {
+  color-scheme: light;
+
+  /* ── 브랜드 원색(퍼스널 컬러: 붉은색 · 보라색 · 연한 붉은색) ── */
+  --red-300: #FDA4AF; --red-400: #FB7185; --red-500: #F43F5E; --red-600: #E11D48; --red-700: #BE123C; --red-800: #9F1239;
+  --magenta-500: #D946EF; --magenta-600: #C026D3;
+  --violet-300: #C4B5FD; --violet-400: #A78BFA; --violet-500: #8B5CF6; --violet-600: #7C3AED; --violet-700: #6D28D9; --violet-800: #5B21B6;
+  --blush-50: #FFF7F9; --blush-100: #FFE4E8; --blush-200: #FECDD6;
+
+  /* ── 면 · 글자 · 선 ── */
+  --bg: #FFF7F9;
+  --surface: #FFFFFF;
+  --surface-2: #FCF1F5;
+  --surface-3: #F7E6EE;
+  --text: #1E1029;
+  --text-2: #5B4A69;
+  --text-3: #786587;
+  --border: #F0DCE5;
+  --border-strong: #E2C3D2;
+
+  /* ── 의미 색 ── */
+  --accent: #7C3AED;        /* 링크·포커스·선택(보라) */
+  --accent-ink: #6D28D9;    /* accent-soft 위 글자 */
+  --accent-soft: #F3EAFF;
+  --hot: #E11D48;           /* 핵심 표현·연속 기록·배지(빨강) */
+  --hot-ink: #BE123C;
+  --hot-soft: #FFE4E8;
+  --ok: #047857;  --ok-soft: #D1FAE5;  --ok-fill: #059669;
+  --bad: #B91C1C; --bad-soft: #FEE2E2; --bad-fill: #DC2626;
+  --warn: #B45309; --warn-soft: #FEF3C7;
+  --focus: #7C3AED;
+
+  /* ── 그라데이션 ── */
+  --grad-brand: linear-gradient(115deg, #E11D48 0%, #C026D3 52%, #7C3AED 100%);
+  --grad-brand-hover: linear-gradient(115deg, #F43F5E 0%, #D946EF 52%, #8B5CF6 100%);
+  --grad-soft: linear-gradient(135deg, #FFE4E8 0%, #F7E1FF 50%, #EDE9FE 100%);
+  --grad-vocab: linear-gradient(140deg, #A78BFA 0%, #7C3AED 55%, #5B21B6 100%);
+  --grad-passage: linear-gradient(140deg, #FB7185 0%, #E11D48 55%, #9F1239 100%);
+  --grad-ok: linear-gradient(135deg, #34D399, #059669);
+  --grad-text: linear-gradient(100deg, #E11D48 10%, #C026D3 50%, #7C3AED 90%);
+
+  /* ── 깊이 ── */
+  --shadow-1: 0 1px 2px rgb(30 16 41 / 6%), 0 4px 14px rgb(124 58 237 / 6%);
+  --shadow-2: 0 2px 4px rgb(30 16 41 / 6%), 0 14px 34px rgb(124 58 237 / 13%), 0 6px 16px rgb(225 29 72 / 6%);
+  --shadow-3: 0 30px 80px rgb(76 29 149 / 24%), 0 10px 24px rgb(30 16 41 / 10%);
+  --shadow-glow: 0 10px 28px -6px rgb(225 29 72 / 45%), 0 6px 18px -4px rgb(124 58 237 / 35%);
+  --edge-brand: #9D174D;    /* 통통한 주요 버튼 아래 두께 */
+  --edge-neutral: #E8CFDB;  /* 보조 버튼 아래 두께 */
+  --edge-ok: #047857;
+  --edge-bad: #991B1B;
+
+  /* ── 유리(떠 있는 층 전용, D4) ── */
+  --glass-bg: rgb(255 255 255 / 64%);
+  --glass-bg-strong: rgb(255 255 255 / 82%);
+  --glass-border: rgb(255 255 255 / 75%);
+  --glass-blur: blur(18px) saturate(170%);
+  --glass-shadow: 0 8px 32px rgb(124 58 237 / 12%), inset 0 1px 0 rgb(255 255 255 / 85%);
+  --glass-fallback: rgb(255 247 249 / 96%);
+
+  /* ── 오로라 배경 ── */
+  --aurora-1: rgb(253 164 175 / 55%);  /* 연분홍 */
+  --aurora-2: rgb(196 181 253 / 55%);  /* 연보라 */
+  --aurora-3: rgb(240 171 252 / 40%);  /* 자홍 */
+  --aurora-4: rgb(254 205 214 / 60%);
+  --noise-opacity: .05;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* ── 모양 ── */
+  --r-xs: 6px; --r-sm: 10px; --r-input: 12px; --r-btn: 14px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px; --r-pill: 999px;
+
+  /* ── 글자 ── */
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-serif: "Instrument Serif", "Iowan Old Style", "Times New Roman", serif;
+  --fs-hero: clamp(40px, 7.2vw, 88px);
+  --fs-1: clamp(28px, 4vw, 40px);
+  --fs-2: 24px; --fs-3: 20px; --fs-body: 16px; --fs-sm: 14px; --fs-xs: 12px;
+  --fs-passage: 19px; --lh-passage: 1.85;
+  --tracking-display: -.035em;
+
+  /* ── 간격 · 크기 ── */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+  --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px; --space-24: 96px;
+  --topbar-h: 64px; --tabbar-h: 72px;
+  --content-narrow: 720px; --content-wide: 1040px; --content-landing: 1180px;
+
+  /* ── 모션(D5) ── */
+  --dur-1: 120ms; --dur-2: 200ms; --dur-3: 320ms; --dur-4: 520ms; --dur-5: 800ms;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  /* 살짝 튀는 스프링(약 3% 넘침) — UI 전반 */
+  --ease-spring: linear(0, .012, .047, .104 4.3%, .254 7.3%, .46 11.1%, .656 15.4%, .818 20.2%, .926 25.3%, .993 31.1%, 1.024 37.6%, 1.031 44.5%, 1.026 51.8%, 1.013 63.5%, 1.004 78%, 1);
+  /* 크게 튀는 스프링(약 16% 넘침) — 정답 팝·축하에만 */
+  --ease-bounce: linear(0, .009, .035 2.1%, .141, .281 6.7%, .723 12.9%, .938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, .991, .977 51%, .974 53.8%, .975 57.1%, .997 69.8%, 1.003 76.9%, 1);
+  --stagger: 45ms;
+}
+
+/* ── 다크: 자두빛 밤하늘 ── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #110A18; --surface: #1C1227; --surface-2: #251832; --surface-3: #2F1F3E;
+    --text: #F8EEF6; --text-2: #CDB8D8; --text-3: #9C88AC;
+    --border: #33233F; --border-strong: #4C3560;
+    --accent: #C4B5FD; --accent-ink: #DDD6FE; --accent-soft: #2C1B47;
+    --hot: #FB7185; --hot-ink: #FDA4AF; --hot-soft: #3A1424;
+    --ok: #34D399; --ok-soft: #0B3B2D; --ok-fill: #10B981;
+    --bad: #FCA5A5; --bad-soft: #4A1219; --bad-fill: #EF4444;
+    --warn: #FCD34D; --warn-soft: #3F2A08;
+    --focus: #C4B5FD;
+    --grad-soft: linear-gradient(135deg, #3A1424 0%, #2E1546 50%, #1F1640 100%);
+    --grad-text: linear-gradient(100deg, #FB7185 10%, #E879F9 50%, #A78BFA 90%);
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 18px rgb(0 0 0 / 22%);
+    --shadow-2: 0 2px 6px rgb(0 0 0 / 35%), 0 18px 40px rgb(76 29 149 / 30%);
+    --shadow-3: 0 30px 90px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 4%);
+    --shadow-glow: 0 10px 30px -6px rgb(225 29 72 / 55%), 0 8px 24px -6px rgb(124 58 237 / 55%);
+    --edge-brand: #6B0F3A; --edge-neutral: #120A1A; --edge-ok: #065F46; --edge-bad: #7F1D1D;
+    --glass-bg: rgb(28 18 39 / 58%); --glass-bg-strong: rgb(28 18 39 / 80%);
+    --glass-border: rgb(255 255 255 / 9%);
+    --glass-shadow: 0 10px 40px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
+    --glass-fallback: rgb(22 14 31 / 96%);
+    --aurora-1: rgb(225 29 72 / 34%); --aurora-2: rgb(124 58 237 / 42%); --aurora-3: rgb(192 38 211 / 28%); --aurora-4: rgb(190 18 60 / 22%);
+    --noise-opacity: .07;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #110A18; --surface: #1C1227; --surface-2: #251832; --surface-3: #2F1F3E;
+  --text: #F8EEF6; --text-2: #CDB8D8; --text-3: #9C88AC;
+  --border: #33233F; --border-strong: #4C3560;
+  --accent: #C4B5FD; --accent-ink: #DDD6FE; --accent-soft: #2C1B47;
+  --hot: #FB7185; --hot-ink: #FDA4AF; --hot-soft: #3A1424;
+  --ok: #34D399; --ok-soft: #0B3B2D; --ok-fill: #10B981;
+  --bad: #FCA5A5; --bad-soft: #4A1219; --bad-fill: #EF4444;
+  --warn: #FCD34D; --warn-soft: #3F2A08;
+  --focus: #C4B5FD;
+  --grad-soft: linear-gradient(135deg, #3A1424 0%, #2E1546 50%, #1F1640 100%);
+  --grad-text: linear-gradient(100deg, #FB7185 10%, #E879F9 50%, #A78BFA 90%);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 18px rgb(0 0 0 / 22%);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 35%), 0 18px 40px rgb(76 29 149 / 30%);
+  --shadow-3: 0 30px 90px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 4%);
+  --shadow-glow: 0 10px 30px -6px rgb(225 29 72 / 55%), 0 8px 24px -6px rgb(124 58 237 / 55%);
+  --edge-brand: #6B0F3A; --edge-neutral: #120A1A; --edge-ok: #065F46; --edge-bad: #7F1D1D;
+  --glass-bg: rgb(28 18 39 / 58%); --glass-bg-strong: rgb(28 18 39 / 80%);
+  --glass-border: rgb(255 255 255 / 9%);
+  --glass-shadow: 0 10px 40px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
+  --glass-fallback: rgb(22 14 31 / 96%);
+  --aurora-1: rgb(225 29 72 / 34%); --aurora-2: rgb(124 58 237 / 42%); --aurora-3: rgb(192 38 211 / 28%); --aurora-4: rgb(190 18 60 / 22%);
+  --noise-opacity: .07;
+}
+
+/* 투명도 줄이기 설정: 유리를 불투명으로(D4) */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass-bg: var(--glass-fallback); --glass-bg-strong: var(--glass-fallback); --glass-blur: none; }
+}
+
+/* ─────────────────────────────────────────────
+   공용 브랜드 유틸 — app.css·landing.css 가 함께 쓰는 "질감" 계층
+   ───────────────────────────────────────────── */
+
+/* 오로라 배경: main.js 가 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div> 를 body 맨 앞에 넣는다 */
+.aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--bg); }
+.aurora i { position: absolute; display: block; width: 60vmax; height: 60vmax; border-radius: 50%; filter: blur(70px); opacity: .9; will-change: transform; }
+.aurora i:nth-child(1) { top: -22vmax; left: -14vmax; background: radial-gradient(circle at 40% 40%, var(--aurora-1), transparent 62%); animation: aurora-a 34s var(--ease-in-out) infinite alternate; }
+.aurora i:nth-child(2) { top: -18vmax; right: -20vmax; background: radial-gradient(circle at 50% 50%, var(--aurora-2), transparent 62%); animation: aurora-b 40s var(--ease-in-out) infinite alternate; }
+.aurora i:nth-child(3) { bottom: -30vmax; left: 10vmax; background: radial-gradient(circle at 50% 50%, var(--aurora-3), transparent 60%); animation: aurora-c 46s var(--ease-in-out) infinite alternate; }
+.aurora i:nth-child(4) { bottom: -24vmax; right: -10vmax; width: 44vmax; height: 44vmax; background: radial-gradient(circle, var(--aurora-4), transparent 62%); animation: aurora-a 52s var(--ease-in-out) infinite alternate-reverse; }
+.aurora::after { content: ""; position: absolute; inset: 0; background-image: var(--noise); opacity: var(--noise-opacity); mix-blend-mode: overlay; }
+/* 앱 화면에서는 오로라를 은은하게(학습 집중), 랜딩·로그인에서만 진하게 */
+.aurora--calm i { opacity: .45; }
+@keyframes aurora-a { to { transform: translate3d(12vmax, 8vmax, 0) scale(1.15) rotate(25deg); } }
+@keyframes aurora-b { to { transform: translate3d(-14vmax, 12vmax, 0) scale(.9) rotate(-20deg); } }
+@keyframes aurora-c { to { transform: translate3d(10vmax, -10vmax, 0) scale(1.2); } }
+
+/* 유리 면: 불투명 대체값 먼저, 지원 시 유리 */
+.glass { background: var(--glass-fallback); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+}
+
+/* 그라데이션 글자(굵은 24px 이상만) */
+.text-grad { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.serif-accent { font-family: var(--font-serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+
+/* 등장 모션: 페이지가 .reveal 에 --i(순번)를 주면 순차 등장. 화면 밖 요소는 motion.js 가 보일 때 .is-in 을 붙임 */
+.reveal { opacity: 0; transform: translateY(14px) scale(.985); }
+.reveal.is-in { opacity: 1; transform: none; transition: opacity var(--dur-4) var(--ease-out), transform var(--dur-4) var(--ease-spring); transition-delay: calc(var(--i, 0) * var(--stagger)); }
+
+/* 마우스를 따라오는 빛(spotlight): motion.js 가 --mx/--my 를 설정 */
+.spotlight { position: relative; isolation: isolate; }
+.spotlight::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none; transition: opacity var(--dur-3) var(--ease-out);
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(225 29 72 / 10%), rgb(124 58 237 / 8%) 40%, transparent 70%); }
+.spotlight:hover::before { opacity: 1; }
+
+/* 화면 전환(View Transitions, D5): 본문만 살짝 떠오르며 바뀌고 상단바·탭바는 고정 */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(main) { animation: vt-out var(--dur-2) var(--ease-out) both; }
+::view-transition-new(main) { animation: vt-in var(--dur-4) var(--ease-spring) both; }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(14px); } }
+
+/* 본문 영역 전환 이름(상단바·탭바는 그대로 두고 본문만 전환) */
+#main { view-transition-name: main; }
+
+/* 1회 재생 모션(motion.js shake/pop) */
+.is-shake { animation: shake 380ms var(--ease-out); }
+.is-pop { animation: pop 520ms var(--ease-bounce); }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+@keyframes pop { 0% { transform: scale(.92); } 100% { transform: scale(1); } }
+
+/* 정답 파티클(motion.js burst) */
+.burst { position: fixed; z-index: 90; pointer-events: none; width: 0; height: 0; }
+.burst i { position: absolute; width: 8px; height: 8px; border-radius: 3px; background: var(--c, var(--hot)); animation: burst-fly 760ms var(--ease-out) forwards; }
+@keyframes burst-fly {
+  0% { transform: translate(-50%, -50%) scale(.4) rotate(0); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora i { animation: none; }
+  .reveal { transform: none; }
+  .reveal.is-in { transition: opacity var(--dur-1) linear; transition-delay: 0s; }
+  .burst { display: none; }
+  ::view-transition-old(main), ::view-transition-new(main) { animation: none; }
+}
