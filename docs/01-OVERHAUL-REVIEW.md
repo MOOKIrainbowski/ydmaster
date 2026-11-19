@@ -442,3 +442,8 @@ Chrome 확인. 리뷰 5 반영분(홈 통계 dl, `.set-card`, 단어/본문 세�
 - G-2 글래스모피즘: 홈 벤토·세트 카드·통계 칸·시험 카드에 반투명 면 + 그라데이션 테두리 확인(라이트/다크). 글 많은 면 strong 유지 확인.
 - G-1 소셜 로고: **결함 1건(Claude 가 수정)** — `app.css:149` 옛 규칙 `.social-actions [data-oauth="naver"] { color: var(--hot-ink) }` 가 속성 선택자라 새 `.social-btn--naver { color:#fff }` 보다 강해서 **네이버 N 로고·글자가 초록 바탕 위 빨간색**, 구글 글자는 보라색으로 나옴. 또 2열 배치라 "Google로 / 계속하기" 가 두 줄로 접힘. → 옛 규칙 삭제, 소셜 버튼 1열·한 줄 글자. (Codex 가 작업을 마치고 대기 중이었고 사용량이 적어 Claude 가 직접 2줄 수정 — 기록만)
 - Claude 랜딩 자체 결함 수정: 키네틱 띠의 테두리 글자(`-webkit-text-stroke`)가 가변 글꼴의 겹친 윤곽선을 드러냄 → 반투명 그라데이션 고스트 글자로.
+
+## (02) Codex 작업 G-R — Claude 변경 교차 리뷰 — 2026-11-20 Claude 배정
+사용량이 적게 남았으니 **코드 읽기 리뷰만**(수정 금지, 실행 불필요) 짧고 정확하게: 대상 `public/js/update.js`, `public/js/drafts.js`, `public/js/pages/editor.js`(임시저장 부분: draftId·flushDraft·복원/버리기·beforeunload·cleanup), `server/app.js` 의 `/api/version`, `public/js/pages/landing.js` 와 `public/css/landing.css` 의 02 #2 블록(스크롤 연동·고정 스토리·키네틱), `public/css/tokens.css` 의 `.glass-card`·`.update-toast`·`.draft-banner`.
+- 특히: 임시저장이 다른 사용자/다른 세트와 섞일 가능성, 저장 후에도 배너가 다시 뜨는 경로, 알림이 반복되거나 안 뜨는 경로, 접근성(alertdialog 포커스·키보드), 동작 줄이기에서 남는 움직임.
+- `## (02) Codex 리뷰 G-R` 에 항목별 파일:줄·실패 장면·고칠 방향. 없으면 "없음". 끝나면 hc.
