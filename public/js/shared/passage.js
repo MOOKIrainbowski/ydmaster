@@ -26,8 +26,14 @@ export function parseMarkup(en) {
     if (c === '{' || c === '[') {
       const close = c === '{' ? '}' : ']';
       const end = findClose(s, i + 1, close);
-      const inner = end === -1 ? null : unescape(s.slice(i + 1, end));
-      if (inner !== null && inner.trim() && !/[{}[\]]/.test(stripEscapes(s.slice(i + 1, end)))) {
+      const raw = end === -1 ? null : s.slice(i + 1, end);
+      if (raw !== null && /[{[]/.test(stripEscapes(raw))) {
+        // 중첩 금지: 바깥 괄호 짝까지 통째로 문자 그대로(안쪽만 표기로 해석하면 작성자 의도와 달라짐)
+        const outer = findBalanced(s, i);
+        buf += unescape(s.slice(i, outer + 1)); i = outer; continue;
+      }
+      const inner = raw === null ? null : unescape(raw);
+      if (inner !== null && inner.trim()) {
         if (c === '{') { flush(); parts.push({ type: 'key', text: inner.trim() }); i = end; continue; }
         const options = splitPipes(s.slice(i + 1, end)).map(o => o.trim()).filter(Boolean);
         if (options.length >= 2 && options.length <= 4) { flush(); parts.push({ type: 'choice', options }); i = end; continue; }
@@ -37,6 +43,17 @@ export function parseMarkup(en) {
   }
   flush();
   return parts;
+}
+
+// 여는 괄호 i 부터 깊이가 0 이 되는 위치(없으면 문자열 끝)
+function findBalanced(s, i) {
+  let d = 0;
+  for (let j = i; j < s.length; j++) {
+    if (s[j] === '\\') { j++; continue; }
+    if (s[j] === '{' || s[j] === '[') d++;
+    else if ((s[j] === '}' || s[j] === ']') && --d === 0) return j;
+  }
+  return s.length - 1;
 }
 
 function findClose(s, from, close) {
@@ -65,7 +82,7 @@ export function parseSentence(en) {
   let group = 0;
   for (const p of parseMarkup(en)) {
     if (p.type === 'text') tokens.push(...tokenize(p.text));
-    else if (p.type === 'key') { const g = group++; tokenize(p.text).forEach(t => tokens.push(t.kind === 'word' ? { ...t, key: g } : t)); }
+    else if (p.type === 'key') { const g = group++; tokenize(p.text).forEach(t => tokens.push(t.kind !== 'space' ? { ...t, key: g } : t)); }
     else tokens.push({ text: p.options[0], kind: 'choice', options: p.options });
   }
   return { plain: tokens.map(t => t.text).join(''), tokens };
@@ -74,7 +91,9 @@ export function parseSentence(en) {
 export const plainText = en => parseSentence(en).plain;
 
 // 문단 → 문장 배열. 약어·소수·이니셜·따옴표 안 문장부호를 문장 끝으로 보지 않는다.
-const ABBR = new Set(['mr', 'mrs', 'ms', 'dr', 'prof', 'sr', 'jr', 'st', 'vs', 'etc', 'e.g', 'i.e', 'no', 'u.s', 'u.k', 'a.m', 'p.m', 'fig', 'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct', 'nov', 'dec', 'co', 'inc', 'ltd', 'mt']);
+// ABBR: 뒤에 무엇이 와도 문장 끝 아님(호칭 등). ABBR_END: 뒤가 대문자로 시작하면 문장 끝.
+const ABBR = new Set(['mr', 'mrs', 'ms', 'dr', 'prof', 'sr', 'jr', 'st', 'vs', 'e.g', 'i.e', 'no', 'fig', 'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct', 'nov', 'dec', 'mt']);
+const ABBR_END = new Set(['etc', 'u.s', 'u.k', 'a.m', 'p.m', 'co', 'inc', 'ltd']);
 export function splitSentences(text) {
   const src = String(text ?? '').replace(/\r\n?/g, '\n').trim();
   if (!src) return [];
@@ -96,7 +115,9 @@ export function splitSentences(text) {
     if (c === '.') {
       const word = (src.slice(start, i).match(/([\p{L}.]+)$/u) || [])[1] || '';
       const w = word.toLowerCase();
-      if (ABBR.has(w) || /^\p{L}$/u.test(word) || /^(\p{L}\.)+\p{L}$/u.test(word)) { i = j; continue; }
+      const upperNext = /^\s+["“'‘]?\p{Lu}/u.test(next);
+      if (ABBR.has(w) || /^\p{L}$/u.test(word)) { i = j; continue; }
+      if ((ABBR_END.has(w) || /^(\p{L}\.)+\p{L}$/u.test(word)) && !upperNext) { i = j; continue; }
     }
     const after = next.trimStart();
     if (after && /^[\p{Ll}]/u.test(after)) { i = j; continue; } // 다음이 소문자면 문장 중간

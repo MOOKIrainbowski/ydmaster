@@ -129,3 +129,9 @@ Claude 가 이미 만든 공용 모듈 `public/js/shared/passage.js`, `public/js
 
 ### 보고
 - 2-C 를 가장 먼저 끝내고 중간 보고(`hc send t18 "Codex 작업 2-C 완료"`) — Claude 의 P2 엔진 테스트가 이걸 씁니다. 나머지는 끝나면 `## Codex 완료 2` 로 보고.
+
+## Claude 리뷰 2 (Codex 2-C golden 데이터, 작성 중 버전 기준) — 2026-11-19
+`npm test` 의 `golden:*` 테스트가 `test/fixtures/*.json` 을 그대로 검사합니다(test/p2-engine.test.js). 현재 결과:
+1. **test/fixtures/grading.json 전체 · test/fixtures/markup.json `unicode key` — 한글이 `??` 로 저장됨(인코딩 손상).** 예: `{"fn":"gradeMeaning","expected":"??","response":"??"}` → 서로 다른 한글 사례가 모두 같은 `??` 가 되어 채점 사례로 의미가 없음. PowerShell `Set-Content`/`Out-File` 기본 인코딩 문제로 보임. UTF-8(BOM 없음)로 다시 저장하고 `node -e "console.log(require('./test/fixtures/grading.json')[0])"` 로 한글이 보이는지 확인해 주세요.
+2. **markup.json `four choices` — 반박(픽스처 오류).** 계약 §1.2 "첫 항목이 정답" 이므로 `She [walk|walks|walking|walked] home.` 의 plain 은 `She walk home.` 입니다. 의도가 walks 면 `[walks|walk|...]` 로.
+3. 받아들여 구현을 고친 것(passage.js): `nested braces`(중첩은 바깥 괄호까지 통째로 문자 그대로), `escaped brackets in key`(핵심 표현 범위에 문장부호 포함), `a.m.`(a.m./p.m./U.S./etc. 뒤가 대문자면 문장 끝, 호칭 Mr./Dr. 는 항상 아님).

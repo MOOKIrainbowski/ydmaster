@@ -1,0 +1,299 @@
+[
+  {
+    "name": "plain",
+    "en": "We learn together.",
+    "plain": "We learn together.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "one key",
+    "en": "We {protect nature} daily.",
+    "plain": "We protect nature daily.",
+    "keys": [
+      "protect nature"
+    ],
+    "choices": []
+  },
+  {
+    "name": "two keys",
+    "en": "{Small actions} can {help everyone}.",
+    "plain": "Small actions can help everyone.",
+    "keys": [
+      "Small actions",
+      "help everyone"
+    ],
+    "choices": []
+  },
+  {
+    "name": "two choices",
+    "en": "Plants need [sunlight|moonlight].",
+    "plain": "Plants need sunlight.",
+    "keys": [],
+    "choices": [
+      [
+        "sunlight",
+        "moonlight"
+      ]
+    ]
+  },
+  {
+    "name": "four choices",
+    "en": "She [walk|walks|walking|walked] home.",
+    "plain": "She walks home.",
+    "keys": [],
+    "choices": [
+      [
+        "walk",
+        "walks",
+        "walking",
+        "walked"
+      ]
+    ]
+  },
+  {
+    "name": "escape brace open",
+    "en": "Print \\{ today.",
+    "plain": "Print { today.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "escape brace close",
+    "en": "Print \\} today.",
+    "plain": "Print } today.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "escape bracket open",
+    "en": "Print \\[ today.",
+    "plain": "Print [ today.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "escape bracket close",
+    "en": "Print \\] today.",
+    "plain": "Print ] today.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "escape pipe",
+    "en": "A\\|B is a label.",
+    "plain": "A|B is a label.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "escaped pipe choice",
+    "en": "Choose [A\\|B|C].",
+    "plain": "Choose A|B.",
+    "keys": [],
+    "choices": [
+      [
+        "A|B",
+        "C"
+      ]
+    ]
+  },
+  {
+    "name": "escape backslash",
+    "en": "Use C:\\\\docs.",
+    "plain": "Use C:\\docs.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "unclosed key",
+    "en": "Keep {this text.",
+    "plain": "Keep {this text.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "unclosed choice",
+    "en": "Keep [this|text.",
+    "plain": "Keep [this|text.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "empty key",
+    "en": "Keep {} literal.",
+    "plain": "Keep {} literal.",
+    "keys": [],
+    "choices": [],
+    "note": "Empty marker is not a valid key; contract says malformed markers stay literal."
+  },
+  {
+    "name": "one option",
+    "en": "Keep [only] literal.",
+    "plain": "Keep [only] literal.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "five options",
+    "en": "Keep [a|b|c|d|e] literal.",
+    "plain": "Keep [a|b|c|d|e] literal.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "nested braces",
+    "en": "Keep {a {b} c} literal.",
+    "plain": "Keep {a {b} c} literal.",
+    "keys": [],
+    "choices": [],
+    "note": "Nested markup is forbidden and should remain literal."
+  },
+  {
+    "name": "nested brackets",
+    "en": "Keep [a [b]|c] literal.",
+    "plain": "Keep [a [b]|c] literal.",
+    "keys": [],
+    "choices": [],
+    "note": "Nested markup is forbidden and should remain literal."
+  },
+  {
+    "name": "punctuation in key",
+    "en": "Value {care, kindness, and courage}.",
+    "plain": "Value care, kindness, and courage.",
+    "keys": [
+      "care, kindness, and courage"
+    ],
+    "choices": []
+  },
+  {
+    "name": "ascii apostrophe",
+    "en": "{don't give up} now.",
+    "plain": "don't give up now.",
+    "keys": [
+      "don't give up"
+    ],
+    "choices": []
+  },
+  {
+    "name": "curly apostrophe",
+    "en": "{students’ ideas} matter.",
+    "plain": "students’ ideas matter.",
+    "keys": [
+      "students’ ideas"
+    ],
+    "choices": []
+  },
+  {
+    "name": "hyphen word",
+    "en": "A {well-known} story.",
+    "plain": "A well-known story.",
+    "keys": [
+      "well-known"
+    ],
+    "choices": []
+  },
+  {
+    "name": "number key",
+    "en": "The {3.5-kilometer} path.",
+    "plain": "The 3.5-kilometer path.",
+    "keys": [
+      "3.5-kilometer"
+    ],
+    "choices": []
+  },
+  {
+    "name": "choice punctuation",
+    "en": "Use [“a”|“the”] answer.",
+    "plain": "Use “a” answer.",
+    "keys": [],
+    "choices": [
+      [
+        "“a”",
+        "“the”"
+      ]
+    ]
+  },
+  {
+    "name": "adjacent markers",
+    "en": "{Save}[water|energy] now.",
+    "plain": "Savewater now.",
+    "keys": [
+      "Save"
+    ],
+    "choices": [
+      [
+        "water",
+        "energy"
+      ]
+    ]
+  },
+  {
+    "name": "key at start",
+    "en": "{Healthy food} matters.",
+    "plain": "Healthy food matters.",
+    "keys": [
+      "Healthy food"
+    ],
+    "choices": []
+  },
+  {
+    "name": "key at end",
+    "en": "Practice {every day}.",
+    "plain": "Practice every day.",
+    "keys": [
+      "every day"
+    ],
+    "choices": []
+  },
+  {
+    "name": "literal bracket phrase",
+    "en": "The note [is optional] here.",
+    "plain": "The note [is optional] here.",
+    "keys": [],
+    "choices": []
+  },
+  {
+    "name": "two choices in sentence",
+    "en": "[He|They] [is|are] ready.",
+    "plain": "He is ready.",
+    "keys": [],
+    "choices": [
+      [
+        "He",
+        "They"
+      ],
+      [
+        "is",
+        "are"
+      ]
+    ]
+  },
+  {
+    "name": "escaped brackets in key",
+    "en": "Code {\\[tag\\]} works.",
+    "plain": "Code [tag] works.",
+    "keys": [
+      "[tag]"
+    ],
+    "choices": []
+  },
+  {
+    "name": "escaped closing brace",
+    "en": "Keep {a\\}b} here.",
+    "plain": "Keep a}b here.",
+    "keys": [
+      "a}b"
+    ],
+    "choices": []
+  },
+  {
+    "name": "unicode key",
+    "en": "{함께 배우기} is fun.",
+    "plain": "함께 배우기 is fun.",
+    "keys": [
+      "함께 배우기"
+    ],
+    "choices": []
+  }
+]

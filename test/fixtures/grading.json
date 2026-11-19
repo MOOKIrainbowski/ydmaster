@@ -1,0 +1,363 @@
+[
+  {
+    "fn": "gradeMeaning",
+    "expected": "사과",
+    "response": "사과",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "사과",
+    "response": " 사과 ",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "포기하다",
+    "response": "포 기 하 다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "~을 포기하다",
+    "response": "을포기하다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "능력",
+    "response": "능 력",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "빠르게 달리다",
+    "response": "빠르게달리다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "기회, 기회들",
+    "response": "기회",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "사과, 능금",
+    "response": "능금",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "능금 (과일)",
+    "response": "능금",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "돌보다 / 보살피다",
+    "response": "보살피다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "포기하다",
+    "response": "포기 하다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "사과",
+    "response": "배",
+    "correct": false
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "사과",
+    "response": "",
+    "correct": false
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "사과",
+    "response": "사과!",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "가능성",
+    "response": "가능 성",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "~에 의존하다",
+    "response": "에 의존하다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "의미 있는",
+    "response": "의미있는",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "마침내",
+    "response": "결국",
+    "correct": false
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "대부분",
+    "response": "거의 모두",
+    "correct": false
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "관심을 갖다",
+    "response": "관심 갖다",
+    "correct": false
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "잘 보존하다",
+    "response": "잘 보존 하다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "책임",
+    "response": "책 임",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "작은 변화",
+    "response": "작은 변화들",
+    "correct": false
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "기대하다 (바라다)",
+    "response": "기대하다",
+    "correct": true
+  },
+  {
+    "fn": "gradeMeaning",
+    "expected": "밝은",
+    "response": "어두운",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "Apple",
+    "response": "apple",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "STUDY",
+    "response": "study",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "color / colour",
+    "response": "colour",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "organize/organise",
+    "response": "organise",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "well-known",
+    "response": "well-known",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "don't",
+    "response": "don?t",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "3.5-kilometer",
+    "response": "3.5-kilometer",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "book",
+    "response": "books",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "environment",
+    "response": "enviroment",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "receive",
+    "response": "recieve",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "careful",
+    "response": "carefully",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "light",
+    "response": "lights",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "take part",
+    "response": "takeapart",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "U.S.",
+    "response": "u.s.",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "A.M.",
+    "response": "a.m.",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "co-operate",
+    "response": "co-operate",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "mother-in-law",
+    "response": "mother-in-law",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "hope",
+    "response": "",
+    "correct": false
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "grow",
+    "response": "grow!",
+    "correct": true
+  },
+  {
+    "fn": "gradeTerm",
+    "expected": "study hard",
+    "response": "study  hard",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "We protect nature.",
+    "response": "we protect nature",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "She is kind.",
+    "response": "She is kind!",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "They do not give up.",
+    "response": "They don't give up.",
+    "correct": false,
+    "note": "Contraction expansion should remain incorrect under token-exact grading."
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "He walks to school.",
+    "response": "He walk to school.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "Small actions make a difference.",
+    "response": "Small action make a difference.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "We can help.",
+    "response": "We can help today.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "Read the book.",
+    "response": "Read book.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "Plants need sunlight.",
+    "response": "Plants need sunlight",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "I am ready!",
+    "response": "i am ready?",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "They share ideas.",
+    "response": "They share idea.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "We learn together.",
+    "response": "We learn   together.",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "I like apples.",
+    "response": "I like apple.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "The park is clean.",
+    "response": "The park is clean.",
+    "correct": true
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "Birds fly high.",
+    "response": "Birds fly hi.",
+    "correct": false
+  },
+  {
+    "fn": "gradeSentence",
+    "expected": "He said, \"Go.\"",
+    "response": "he said go",
+    "correct": true
+  }
+]

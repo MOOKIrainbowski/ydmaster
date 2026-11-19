@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import crypto from 'node:crypto';
+import { mountLearn, avatarUrl, bannerUrl } from './learn.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -175,6 +176,7 @@ const UserSchema = new mongoose.Schema({
   bannerGradient: { type: String, default: 'linear-gradient(135deg,#6c63ff,#ff6584)' },
   isAdmin: { type: Boolean, default: false },
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],
+  imageVersion: { type: Number, default: 0 }, // 아바타·배너 URL 캐시 무효화용(R10)
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -213,10 +215,15 @@ const TestSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   questions: [QuestionSchema],
-  format: { type: String, enum: ['section', 'cell', 'essay'], default: 'section' },
+  format: { type: String, enum: ['section', 'cell', 'essay'] }, // 레거시
+  // ── P2 세트 형식(계약 §1.1). 레거시 문서엔 없고 learn.js 의 toSet() 이 읽을 때 변환 ──
+  kind: { type: String, enum: ['vocab', 'passage'] },
+  visibility: { type: String, enum: ['public', 'friends', 'private'] },
+  items: [{ term: String, meaning: String, example: String, exampleKo: String }],
+  passage: { source: String, sentences: [{ en: String, ko: String }] },
   testTimeLimit: { type: Number, default: 0 },
-  isPublic: { type: Boolean, default: true },
-  isFriendOnly: { type: Boolean, default: false },
+  isPublic: { type: Boolean },
+  isFriendOnly: { type: Boolean },
   tags: [String],
   playCount: { type: Number, default: 0 },
   favoriteCount: { type: Number, default: 0 },
@@ -235,6 +242,8 @@ const ResultSchema = new mongoose.Schema({
   percentage: { type: Number, required: true },
   answers: [{ questionIndex: Number, selectedAnswer: Number, isCorrect: Boolean }],
   timeTaken: { type: Number, default: 0 },
+  mode: String, kind: String,
+  session: { type: mongoose.Schema.Types.ObjectId, ref: 'Session' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -756,7 +765,8 @@ app.get('/api/auth/me', auth, (req, res) => {
       avatarImage: req.user.avatarImage || '',
       bannerImage: req.user.bannerImage || '',
       bannerGradient: req.user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
-      favorites: (req.user.favorites || []).map(id => id.toString())
+      favorites: (req.user.favorites || []).map(id => id.toString()),
+      avatarUrl: avatarUrl(req.user), bannerUrl: bannerUrl(req.user), loginType: req.user.loginType
     }
   });
 });
@@ -825,6 +835,7 @@ app.put('/api/auth/profile', auth, async (req, res) => {
       update.bannerGradient = bannerGradient;
     }
 
+    if (update.avatarImage !== undefined || update.bannerImage !== undefined) update.imageVersion = Date.now();
     const user = await User.findByIdAndUpdate(req.user._id, update, { new: true }).select('-password');
     res.json({
       user: {
@@ -832,7 +843,8 @@ app.put('/api/auth/profile', auth, async (req, res) => {
         isAdmin: user.isAdmin || false,
         avatarImage: user.avatarImage || '',
         bannerImage: user.bannerImage || '',
-        bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)'
+        bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
+        avatarUrl: avatarUrl(user), bannerUrl: bannerUrl(user)
       }
     });
   } catch (e) {
@@ -1054,24 +1066,6 @@ app.post('/api/results', auth, async (req, res) => {
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
 
-app.get('/api/results', auth, async (req, res) => {
-  try {
-    const results = await Result.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(20);
-    res.json(results);
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
-app.get('/api/stats', auth, async (req, res) => {
-  try {
-    const totalTests = await Test.countDocuments({ author: req.user._id });
-    const results = await Result.find({ user: req.user._id });
-    const totalAttempts = results.length;
-    const avgScore = totalAttempts > 0 ? Math.round(results.reduce((s, r) => s + r.percentage, 0) / totalAttempts) : 0;
-    const bestScore = totalAttempts > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
-    res.json({ totalTests, totalAttempts, avgScore, bestScore });
-  } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
-});
-
 // ==================== 오답노트 ====================
 
 // 내 오답노트 전체 조회
@@ -1174,7 +1168,7 @@ app.delete('/api/wrongnote/:groupId', auth, async (req, res) => {
 app.get('/api/users/:id/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('username avatarImage bannerImage bannerGradient loginType createdAt');
+      .select('username avatarImage bannerImage bannerGradient imageVersion loginType createdAt');
     if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
 
     // 응시 통계
@@ -1197,6 +1191,7 @@ app.get('/api/users/:id/profile', auth, async (req, res) => {
         avatarImage: user.avatarImage || '',
         bannerImage: user.bannerImage || '',
         bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
+        avatarUrl: avatarUrl(user), bannerUrl: bannerUrl(user),
         loginType: user.loginType,
         createdAt: user.createdAt,
       },
@@ -1212,7 +1207,7 @@ app.get('/api/users/:id/profile', auth, async (req, res) => {
 app.get('/api/p/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
-      .select('username avatarImage bannerImage bannerGradient loginType createdAt friends');
+      .select('username avatarImage bannerImage bannerGradient imageVersion loginType createdAt friends');
     if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
 
     const results = await Result.find({ user: user._id });
@@ -1248,6 +1243,7 @@ app.get('/api/p/:username', async (req, res) => {
         avatarImage: user.avatarImage || '',
         bannerImage: user.bannerImage || '',
         bannerGradient: user.bannerGradient || 'linear-gradient(135deg,#6c63ff,#ff6584)',
+        avatarUrl: avatarUrl(user), bannerUrl: bannerUrl(user),
         loginType: user.loginType,
         createdAt: user.createdAt,
       },
@@ -1257,143 +1253,6 @@ app.get('/api/p/:username', async (req, res) => {
   } catch (e) {
     console.error('public profile error:', e.message);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-  }
-});
-
-// ==================== 랭킹 ====================
-
-// 전체 랭킹 (평균 정답률 기준, 상위 50명)
-app.get('/api/ranking', auth, async (req, res) => {
-  try {
-    const ranking = await Result.aggregate([
-      {
-        $group: {
-          _id: '$user',
-          totalAttempts: { $sum: 1 },
-          avgScore: { $avg: '$percentage' },
-          bestScore: { $max: '$percentage' },
-        }
-      },
-      { $sort: { avgScore: -1, totalAttempts: -1 } },
-      { $limit: 50 },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'userInfo'
-        }
-      },
-      { $unwind: '$userInfo' },
-      {
-        $project: {
-          _id: '$userInfo._id',
-          username: '$userInfo.username',
-          avatarImage: '$userInfo.avatarImage',
-          totalAttempts: 1,
-          avgScore: { $round: ['$avgScore', 1] },
-          bestScore: { $round: ['$bestScore', 1] },
-        }
-      }
-    ]);
-
-    // 내 순위 계산
-    const myId = req.user._id.toString();
-    const myIdx = ranking.findIndex(u => u._id.toString() === myId);
-    let myRank = null;
-
-    if (myIdx !== -1) {
-      myRank = { ...ranking[myIdx], rank: myIdx + 1 };
-    } else {
-      // 상위 50위 밖인 경우 — 내 데이터 따로 집계
-      const myAgg = await Result.aggregate([
-        { $match: { user: req.user._id } },
-        {
-          $group: {
-            _id: '$user',
-            totalAttempts: { $sum: 1 },
-            avgScore: { $avg: '$percentage' },
-            bestScore: { $max: '$percentage' },
-          }
-        }
-      ]);
-      if (myAgg.length) {
-        const myAvg = Math.round(myAgg[0].avgScore * 10) / 10;
-        // 나보다 평균 높은 유저 수
-        const higherCount = await Result.aggregate([
-          {
-            $group: {
-              _id: '$user',
-              avgScore: { $avg: '$percentage' },
-              totalAttempts: { $sum: 1 },
-            }
-          },
-          { $match: { avgScore: { $gt: myAvg } } },
-          { $count: 'count' }
-        ]);
-        myRank = {
-          rank: (higherCount[0]?.count || 0) + 1,
-          avgScore: myAvg,
-          bestScore: Math.round(myAgg[0].bestScore * 10) / 10,
-          totalAttempts: myAgg[0].totalAttempts,
-        };
-      }
-    }
-
-    res.json({ ranking, myRank });
-  } catch (err) {
-    console.error('ranking error:', err);
-    res.status(500).json({ message: '랭킹 조회 실패' });
-  }
-});
-
-// 친구 랭킹
-app.get('/api/ranking/friends', auth, async (req, res) => {
-  try {
-    const me = await User.findById(req.user._id).select('friends');
-    const friendOids = (me?.friends || []);           // ObjectId 배열
-    const allOids = [...friendOids, req.user._id]; // 나 포함
-
-    const ranking = await Result.aggregate([
-      { $match: { user: { $in: allOids } } },
-      {
-        $group: {
-          _id: '$user',
-          totalAttempts: { $sum: 1 },
-          avgScore: { $avg: '$percentage' },
-          bestScore: { $max: '$percentage' },
-        }
-      },
-      { $sort: { avgScore: -1, totalAttempts: -1 } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'userInfo'
-        }
-      },
-      { $unwind: '$userInfo' },
-      {
-        $project: {
-          _id: '$userInfo._id',
-          username: '$userInfo.username',
-          avatarImage: '$userInfo.avatarImage',
-          totalAttempts: 1,
-          avgScore: { $round: ['$avgScore', 1] },
-          bestScore: { $round: ['$bestScore', 1] },
-        }
-      }
-    ]);
-
-    const myId = req.user._id.toString();
-    const myIdx = ranking.findIndex(u => u._id.toString() === myId);
-    const myRank = myIdx !== -1 ? { ...ranking[myIdx], rank: myIdx + 1 } : null;
-
-    res.json({ ranking, myRank });
-  } catch (err) {
-    console.error('friends ranking error:', err);
-    res.status(500).json({ message: '친구 랭킹 조회 실패' });
   }
 });
 
@@ -1906,6 +1765,8 @@ app.delete('/api/favorites/:testId', auth, async (req, res) => {
     res.json({ message: '즐겨찾기에서 제거되었습니다.', added: false });
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
+
+mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit: createRateLimit });
 
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', service: '영단마스터', time: new Date().toISOString() }));
 

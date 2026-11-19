@@ -1,0 +1,215 @@
+[
+  {
+    "name": "basic",
+    "text": "Learn together. Share ideas!",
+    "sentences": [
+      "Learn together.",
+      "Share ideas!"
+    ]
+  },
+  {
+    "name": "Mr",
+    "text": "Mr. Kim teaches science. We listen.",
+    "sentences": [
+      "Mr. Kim teaches science.",
+      "We listen."
+    ]
+  },
+  {
+    "name": "Dr",
+    "text": "Dr. Lee studies plants. She writes.",
+    "sentences": [
+      "Dr. Lee studies plants.",
+      "She writes."
+    ]
+  },
+  {
+    "name": "U.S.",
+    "text": "The U.S. has many parks. Some are large.",
+    "sentences": [
+      "The U.S. has many parks.",
+      "Some are large."
+    ]
+  },
+  {
+    "name": "e.g.",
+    "text": "Bring fruit, e.g. apples. Share them.",
+    "sentences": [
+      "Bring fruit, e.g. apples.",
+      "Share them."
+    ]
+  },
+  {
+    "name": "i.e.",
+    "text": "One habit, i.e. daily reading, helps. Start today.",
+    "sentences": [
+      "One habit, i.e. daily reading, helps.",
+      "Start today."
+    ]
+  },
+  {
+    "name": "a.m.",
+    "text": "We meet at 8 a.m. The bus arrives.",
+    "sentences": [
+      "We meet at 8 a.m.",
+      "The bus arrives."
+    ]
+  },
+  {
+    "name": "decimal",
+    "text": "It grew 3.5 cm. It needs light.",
+    "sentences": [
+      "It grew 3.5 cm.",
+      "It needs light."
+    ]
+  },
+  {
+    "name": "quoted period",
+    "text": "He said, \"Stop.\" Then he smiled.",
+    "sentences": [
+      "He said, \"Stop.\"",
+      "Then he smiled."
+    ]
+  },
+  {
+    "name": "quoted question",
+    "text": "She asked, ?Ready?? We nodded.",
+    "sentences": [
+      "She asked, ?Ready??",
+      "We nodded."
+    ]
+  },
+  {
+    "name": "?!",
+    "text": "Really?! We should check.",
+    "sentences": [
+      "Really?!",
+      "We should check."
+    ]
+  },
+  {
+    "name": "unicode ellipsis",
+    "text": "Wait? then begin.",
+    "sentences": [
+      "Wait? then begin."
+    ],
+    "note": "Lowercase continuation is deliberately kept together by current parser."
+  },
+  {
+    "name": "ascii ellipsis",
+    "text": "Wait... Then begin.",
+    "sentences": [
+      "Wait...",
+      "Then begin."
+    ]
+  },
+  {
+    "name": "single newline",
+    "text": "First line.\nSecond line.",
+    "sentences": [
+      "First line.",
+      "Second line."
+    ]
+  },
+  {
+    "name": "blank line",
+    "text": "First paragraph.\n\nSecond paragraph.",
+    "sentences": [
+      "First paragraph.",
+      "Second paragraph."
+    ]
+  },
+  {
+    "name": "markup abbreviation",
+    "text": "Read {the U.S. Constitution} carefully. Discuss it.",
+    "sentences": [
+      "Read {the U.S. Constitution} carefully.",
+      "Discuss it."
+    ]
+  },
+  {
+    "name": "choice punctuation",
+    "text": "Choose [Mr.|Dr.] Lee. Read on.",
+    "sentences": [
+      "Choose [Mr.|Dr.] Lee.",
+      "Read on."
+    ]
+  },
+  {
+    "name": "Prof abbreviation",
+    "text": "Prof. Park explains. We take notes.",
+    "sentences": [
+      "Prof. Park explains.",
+      "We take notes."
+    ]
+  },
+  {
+    "name": "Inc abbreviation",
+    "text": "Green Inc. opened a garden. Students help.",
+    "sentences": [
+      "Green Inc. opened a garden.",
+      "Students help."
+    ]
+  },
+  {
+    "name": "initials",
+    "text": "J. K. Rowling wrote stories. Readers enjoy them.",
+    "sentences": [
+      "J. K. Rowling wrote stories.",
+      "Readers enjoy them."
+    ]
+  },
+  {
+    "name": "lowercase after period",
+    "text": "This is not the end. because we continue.",
+    "sentences": [
+      "This is not the end. because we continue."
+    ],
+    "note": "Current parser treats lowercase continuation as within the same sentence."
+  },
+  {
+    "name": "no whitespace",
+    "text": "Wait.Next step.",
+    "sentences": [
+      "Wait.Next step."
+    ],
+    "note": "Adjacent letters do not trigger a sentence boundary."
+  },
+  {
+    "name": "question lowercase",
+    "text": "Are you ready? yes, we are.",
+    "sentences": [
+      "Are you ready? yes, we are."
+    ],
+    "note": "Current parser retains a lowercase continuation."
+  },
+  {
+    "name": "empty",
+    "text": "  \n\n ",
+    "sentences": []
+  },
+  {
+    "name": "spaces",
+    "text": "One.   Two.",
+    "sentences": [
+      "One.",
+      "Two."
+    ]
+  },
+  {
+    "name": "quoted exclamation",
+    "text": "He shouted, ?Go!? Everyone moved.",
+    "sentences": [
+      "He shouted, ?Go!?",
+      "Everyone moved."
+    ]
+  },
+  {
+    "name": "bracket decimal",
+    "text": "The result [3.5|35] is right. Next item.",
+    "sentences": [
+      "The result [3.5|35] is right.",
+      "Next item."
+    ]
+  }
+]

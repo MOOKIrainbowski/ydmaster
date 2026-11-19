@@ -1,0 +1,496 @@
+[
+  {
+    "title": "학교와 환경 어휘",
+    "description": "직접 만든 고1 수준 어휘 예시 세트입니다.",
+    "kind": "vocab",
+    "visibility": "private",
+    "tags": [
+      "고1",
+      "golden"
+    ],
+    "items": [
+      {
+        "term": "protect",
+        "meaning": "보호하다",
+        "example": "We protect the river.",
+        "exampleKo": "우리는 강을 보호한다."
+      },
+      {
+        "term": "share",
+        "meaning": "나누다",
+        "example": "They share their ideas.",
+        "exampleKo": "그들은 생각을 나눈다."
+      },
+      {
+        "term": "environment",
+        "meaning": "환경",
+        "example": "We care for the environment.",
+        "exampleKo": "우리는 환경을 돌본다."
+      },
+      {
+        "term": "reduce",
+        "meaning": "줄이다",
+        "example": "We reduce plastic waste.",
+        "exampleKo": "우리는 플라스틱 쓰레기를 줄인다."
+      },
+      {
+        "term": "reuse",
+        "meaning": "재사용하다",
+        "example": "Please reuse this bag.",
+        "exampleKo": "이 가방을 재사용해 주세요."
+      },
+      {
+        "term": "resource",
+        "meaning": "자원",
+        "example": "Water is a valuable resource.",
+        "exampleKo": "물은 귀중한 자원이다."
+      },
+      {
+        "term": "community",
+        "meaning": "공동체",
+        "example": "Our community works together.",
+        "exampleKo": "우리 공동체는 함께 일한다."
+      },
+      {
+        "term": "habit",
+        "meaning": "습관",
+        "example": "Reading is a good habit.",
+        "exampleKo": "독서는 좋은 습관이다."
+      },
+      {
+        "term": "purpose",
+        "meaning": "목적",
+        "example": "We have a clear purpose.",
+        "exampleKo": "우리에게는 분명한 목적이 있다."
+      },
+      {
+        "term": "discover",
+        "meaning": "발견하다",
+        "example": "Students discover new plants.",
+        "exampleKo": "학생들은 새로운 식물을 발견한다."
+      },
+      {
+        "term": "support",
+        "meaning": "지지하다",
+        "example": "Friends support one another.",
+        "exampleKo": "친구들은 서로를 돕는다."
+      },
+      {
+        "term": "improve",
+        "meaning": "향상시키다",
+        "example": "Practice improves your skills.",
+        "exampleKo": "연습은 실력을 향상시킨다."
+      },
+      {
+        "term": "attention",
+        "meaning": "주의",
+        "example": "Pay attention to the signs.",
+        "exampleKo": "표지판에 주의를 기울여라."
+      },
+      {
+        "term": "carefully",
+        "meaning": "주의 깊게",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "healthy",
+        "meaning": "건강한",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "volunteer",
+        "meaning": "자원봉사자",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "local",
+        "meaning": "지역의",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "repair",
+        "meaning": "수리하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "instead",
+        "meaning": "대신에",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "valuable",
+        "meaning": "가치 있는",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "challenge",
+        "meaning": "도전",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "solution",
+        "meaning": "해결책",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "pollution",
+        "meaning": "오염",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "protective",
+        "meaning": "보호하는",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "encourage",
+        "meaning": "격려하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "survive",
+        "meaning": "살아남다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "especially",
+        "meaning": "특히",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "responsible",
+        "meaning": "책임이 있는",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "future",
+        "meaning": "미래",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "conserve",
+        "meaning": "보존하다",
+        "example": "",
+        "exampleKo": ""
+      }
+    ]
+  },
+  {
+    "title": "배움과 협력 어휘",
+    "description": "직접 만든 고1 수준 어휘 예시 세트입니다.",
+    "kind": "vocab",
+    "visibility": "private",
+    "tags": [
+      "고1",
+      "golden"
+    ],
+    "items": [
+      {
+        "term": "curious",
+        "meaning": "호기심이 많은",
+        "example": "The curious child asks questions.",
+        "exampleKo": "호기심 많은 아이는 질문한다."
+      },
+      {
+        "term": "patient",
+        "meaning": "참을성 있는",
+        "example": "Be patient with yourself.",
+        "exampleKo": "스스로에게 참을성을 가져라."
+      },
+      {
+        "term": "prepare",
+        "meaning": "준비하다",
+        "example": "We prepare for the presentation.",
+        "exampleKo": "우리는 발표를 준비한다."
+      },
+      {
+        "term": "confident",
+        "meaning": "자신감 있는",
+        "example": "She feels confident today.",
+        "exampleKo": "그녀는 오늘 자신감이 있다."
+      },
+      {
+        "term": "decision",
+        "meaning": "결정",
+        "example": "It was a difficult decision.",
+        "exampleKo": "그것은 어려운 결정이었다."
+      },
+      {
+        "term": "experience",
+        "meaning": "경험",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "cooperate",
+        "meaning": "협력하다",
+        "example": "We cooperate on the project.",
+        "exampleKo": "우리는 그 프로젝트에서 협력한다."
+      },
+      {
+        "term": "opportunity",
+        "meaning": "기회",
+        "example": "This is an opportunity to learn.",
+        "exampleKo": "이것은 배울 기회다."
+      },
+      {
+        "term": "creative",
+        "meaning": "창의적인",
+        "example": "He has a creative idea.",
+        "exampleKo": "그에게는 창의적인 생각이 있다."
+      },
+      {
+        "term": "communicate",
+        "meaning": "의사소통하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "tradition",
+        "meaning": "전통",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "journey",
+        "meaning": "여정",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "achieve",
+        "meaning": "성취하다",
+        "example": "You can achieve your goal.",
+        "exampleKo": "너는 목표를 이룰 수 있다."
+      },
+      {
+        "term": "effort",
+        "meaning": "노력",
+        "example": "Your effort matters.",
+        "exampleKo": "너의 노력은 중요하다."
+      },
+      {
+        "term": "respect",
+        "meaning": "존중하다",
+        "example": "We respect different opinions.",
+        "exampleKo": "우리는 서로 다른 의견을 존중한다."
+      },
+      {
+        "term": "ordinary",
+        "meaning": "평범한",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "imagine",
+        "meaning": "상상하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "combine",
+        "meaning": "결합하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "pattern",
+        "meaning": "양식",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "exchange",
+        "meaning": "교환하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "meaningful",
+        "meaning": "의미 있는",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "depend",
+        "meaning": "의존하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "patiently",
+        "meaning": "참을성 있게",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "influence",
+        "meaning": "영향을 주다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "courage",
+        "meaning": "용기",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "successful",
+        "meaning": "성공적인",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "express",
+        "meaning": "표현하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "notice",
+        "meaning": "알아차리다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "compare",
+        "meaning": "비교하다",
+        "example": "",
+        "exampleKo": ""
+      },
+      {
+        "term": "steady",
+        "meaning": "꾸준한",
+        "example": "",
+        "exampleKo": ""
+      }
+    ]
+  },
+  {
+    "title": "작은 행동이 만드는 변화",
+    "description": "교과서 문체를 참고해 직접 창작한 지문입니다.",
+    "kind": "passage",
+    "visibility": "private",
+    "tags": [
+      "?1",
+      "golden"
+    ],
+    "passage": {
+      "source": "창작 지문 · 환경 프로젝트",
+      "sentences": [
+        {
+          "en": "{Every morning}, Mina [walks|walk] through a small park on her way to school.",
+          "ko": "매일 아침 미나는 학교 가는 길에 작은 공원을 걷는다."
+        },
+        {
+          "en": "She {notices plastic cups} near the benches.",
+          "ko": "그녀는 벤치 근처의 플라스틱 컵을 알아차린다."
+        },
+        {
+          "en": "Mina believes {small actions} can [make|makes] a difference.",
+          "ko": "미나는 작은 행동이 변화를 만들 수 있다고 믿는다."
+        },
+        {
+          "en": "She asks classmates to {bring reusable bottles}.",
+          "ko": "그녀는 반 친구들에게 재사용 가능한 병을 가져오라고 부탁한다."
+        },
+        {
+          "en": "At first, {only a few students} [join|joins] the project.",
+          "ko": "처음에는 몇몇 학생만 프로젝트에 참여한다."
+        },
+        {
+          "en": "The group places {clear signs} beside the bins.",
+          "ko": "모둠은 쓰레기통 옆에 알기 쉬운 표지판을 둔다."
+        },
+        {
+          "en": "The signs explain why people should [reuse|reuses] bags.",
+          "ko": "표지판은 사람들이 왜 가방을 재사용해야 하는지 설명한다."
+        },
+        {
+          "en": "Soon, more students {take part in the project}.",
+          "ko": "곧 더 많은 학생이 프로젝트에 참여한다."
+        },
+        {
+          "en": "They [invite|invites] neighbors to clean the park together.",
+          "ko": "그들은 이웃에게 공원을 함께 청소하자고 권한다."
+        },
+        {
+          "en": "After a month, the park looks {cleaner and more welcoming}.",
+          "ko": "한 달 뒤 공원은 더 깨끗하고 쾌적해 보인다."
+        }
+      ]
+    }
+  },
+  {
+    "title": "관찰에서 시작된 발견",
+    "description": "교과서 문체를 참고해 직접 창작한 지문입니다.",
+    "kind": "passage",
+    "visibility": "private",
+    "tags": [
+      "?1",
+      "golden"
+    ],
+    "passage": {
+      "source": "창작 지문 · 새 관찰",
+      "sentences": [
+        {
+          "en": "Joon is {curious about the birds} in his neighborhood.",
+          "ko": "준은 동네의 새들이 궁금하다."
+        },
+        {
+          "en": "He {keeps a notebook} and records what he sees.",
+          "ko": "그는 공책에 자신이 본 것을 기록한다."
+        },
+        {
+          "en": "His teacher says {careful observation} begins discovery.",
+          "ko": "선생님은 주의 깊은 관찰이 발견의 시작이라고 말한다."
+        },
+        {
+          "en": "Joon learns that some birds [migrate|migrates] in winter.",
+          "ko": "준은 어떤 새들은 겨울에 이동한다는 것을 배운다."
+        },
+        {
+          "en": "He {compares their calls} and draws simple maps.",
+          "ko": "그는 새들의 울음소리를 비교하고 간단한 지도를 그린다."
+        },
+        {
+          "en": "One afternoon, he [finds|find] a bird with an injured wing.",
+          "ko": "어느 오후 그는 날개를 다친 새를 발견한다."
+        },
+        {
+          "en": "Joon tells an adult and {keeps a safe distance}.",
+          "ko": "준은 어른에게 알리고 안전한 거리를 유지한다."
+        },
+        {
+          "en": "Together, they [contact|contacts] a local wildlife center.",
+          "ko": "그들은 함께 지역 야생동물 보호 센터에 연락한다."
+        },
+        {
+          "en": "The worker explains how people can [help|helps] safely.",
+          "ko": "직원은 사람들이 안전하게 도울 방법을 설명한다."
+        },
+        {
+          "en": "Joon feels proud because he {acted responsibly}.",
+          "ko": "준은 책임감 있게 행동해서 자랑스럽다."
+        }
+      ]
+    }
+  }
+]
