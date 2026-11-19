@@ -75,6 +75,7 @@ a.card { display: block; color: inherit; text-decoration: none; }
 .set-card__title { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 17px; font-weight: 700; }
 .set-card__meta { color: var(--text-2); font-size: 13px; } .set-card__description { margin: 0; color: var(--text-2); } .set-card__author { display: inline-flex; align-items: center; gap: 8px; }
 .set-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.explore-controls + .set-grid { margin-top: var(--space-4); }
 .explore-intro { margin-bottom: 20px; }
 .kind-tile { display: grid; width: 52px; height: 52px; flex: none; place-items: center; border-radius: var(--r-md); box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%); color: white; }
 .kind-tile--vocab { background: var(--grad-vocab); } .kind-tile--passage { background: var(--grad-passage); }
