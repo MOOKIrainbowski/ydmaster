@@ -11,7 +11,10 @@ export const raw = s => new Safe(String(s ?? ''));
 function part(v) {
   if (v instanceof Safe) return v.s;
   if (Array.isArray(v)) return v.map(part).join('');
-  if (v === null || v === undefined || v === false || v === true) return '';
+  // 불리언은 글자로("true"/"false"): aria-selected="${a === b}" 같은 속성 값이 비지 않게.
+  // 조건부 렌더는 `${cond ? html`…` : ''}` 삼항으로 쓴다(`&&` 금지 — false 가 글자로 찍힘).
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'boolean') return String(v);
   return esc(v);
 }
 export function html(strings, ...vals) {

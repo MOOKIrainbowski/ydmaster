@@ -105,6 +105,15 @@
 | 아바타·아이콘 | `.avatar` (`--size` 사용자 지정), `.avatar--letter`, `.icon`; 아이콘은 `ui.js`의 SVG `icon()` |
 | 시험 설정 | `.mode-grid`, `.mode-option`, `.mode-option__label`, `.mode-option__desc`; 라디오 `:checked` 항목을 강조 |
 
+추가 페이지 구성요소:
+
+| 클래스 | 용도 |
+|---|---|
+| `.set-card`, `.set-card__head/title/meta/description/author` | 세트 링크형 카드, 제목·종류·개수·작성자 정보 |
+| `.passage--reading`, `.passage__sentence`, `.passage__num` | 세트 상세에서 문장 번호와 본문을 이어서 읽기 |
+| `.editor-word`, `.sentence-editor`, `.editor-preview` | 본문 편집기에서 단어 단위로 핵심 표현을 고르고 짧은 행으로 편집 |
+| `.login-card`, `.set-delete`, `.profile-banner`, `.admin-chart` | 인증 패널, 위험 보조 액션, 프로필 배너, 관리자 차트 |
+
 ```js
 html`<button class="btn btn--primary" data-save>저장</button>
       <label class="field"><span class="field__label">제목</span>
