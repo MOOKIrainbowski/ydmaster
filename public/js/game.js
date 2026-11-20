@@ -3,6 +3,7 @@
 import { html, icon, toast } from './ui.js';
 import { api } from './api.js';
 import { reduced, burst } from './motion.js';
+import { getPref } from './prefs.js';
 
 // ── 효과음: 파일 없이 Web Audio 로 합성(용량 0). 끄기 설정은 이 브라우저에 저장 ──
 const SFX_KEY = 'ydm_sfx';
@@ -10,6 +11,8 @@ let ctx;
 export const sfxOn = () => { try { return localStorage.getItem(SFX_KEY) !== 'off'; } catch { return true; } };
 export function setSfx(on) { try { localStorage.setItem(SFX_KEY, on ? 'on' : 'off'); } catch { /* 무시 */ } }
 function tone(freq, start, dur, type = 'sine', gain = 0.12) {
+  gain *= Math.max(0, Math.min(100, Number(getPref('sfxVolume') ?? 70))) / 70; // 설정의 효과음 크기(07), 70 = 원래 크기
+  if (gain <= 0) return;
   const t = ctx.currentTime + start;
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = type; o.frequency.setValueAtTime(freq, t);

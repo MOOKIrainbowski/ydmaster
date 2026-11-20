@@ -20,10 +20,11 @@ export function setUser(user, token, persist = true) {
 }
 export function onUser(fn) { subs.add(fn); return () => subs.delete(fn); }
 
-// 테마: 'light' | 'dark' | 'system'(기본). html[data-theme] 로 반영(디자인 §3-2)
-export function getTheme() { return read('ydmaster_theme_v2') || 'system'; }
+// 테마: 'light'(기본, 07 사용자 지시) | 'dark' | 'system'(기기 설정 따름). html[data-theme] 로 반영(디자인 §3-2)
+// 저장 안 된 값 = 라이트. index.html 의 첫 그림 스크립트도 같은 규칙(깜빡임 방지).
+export function getTheme() { return read('ydmaster_theme_v2') || 'light'; }
 export function setTheme(t) {
-  write('ydmaster_theme_v2', t === 'system' ? null : t);
+  write('ydmaster_theme_v2', t === 'light' ? null : t);
   if (t === 'system') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.dataset.theme = t;
 }

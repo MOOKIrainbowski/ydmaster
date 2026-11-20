@@ -11,7 +11,8 @@ export const DEFAULTS = {
   underline: false,    // 링크 밑줄 항상
   motion: 'system',    // system | reduce     애니메이션 줄이기
   aurora: true,        // 배경 오로라
-  voiceRate: 'normal', // slow | normal | fast 발음 속도
+  voiceRate: 0.9,      // 0.6 ~ 1.3 발음 속도(배)
+  sfxVolume: 70,       // 0 ~ 100 효과음 크기
   voiceLang: 'en-US',  // en-US | en-GB      발음 억양
   autoSpeak: false,    // 시험에서 영어 문제를 자동으로 읽어 줌
 };
@@ -29,7 +30,7 @@ export function setPref(k, v) {
 export function resetPrefs() {
   cache = { ...DEFAULTS };
   try { localStorage.removeItem(KEY); } catch { /* 무시 */ }
-  setTheme('system');
+  setTheme('light');
   applyPrefs();
 }
 export function applyPrefs() {
@@ -40,5 +41,7 @@ export function applyPrefs() {
   p.motion === 'reduce' ? (d.motion = 'reduce') : delete d.motion;
   p.aurora ? delete d.aurora : (d.aurora = 'off');
 }
-export const VOICE_RATE = { slow: 0.7, normal: 0.9, fast: 1.1 };
+// 발음 속도: 예전(06) 단계 값('slow'…)도 읽음
+const OLD_RATE = { slow: 0.7, normal: 0.9, fast: 1.1 };
+export const voiceRate = () => { const v = getPrefs().voiceRate; return typeof v === 'number' ? v : OLD_RATE[v] || 0.9; };
 export { getTheme, setTheme };
