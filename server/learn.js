@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import { buildQuestions, grade, expectedOf, MODES, MODE_BY_ID, GenError } from './generators.js';
 import { plainText } from '../public/js/shared/passage.js';
-import { xpOf, levelOf, achievementsOf, XP } from './game.js';
+import { xpOf, levelOf, achievementsOf, XP, questsOf, QUEST_BY_ID, questKey, canClaim } from './game.js';
 
 const { ObjectId } = mongoose.Types;
 const LIMITS = { items: 500, sentences: 80, term: 200, meaning: 200, example: 300, en: 600, ko: 600, tags: 10, tag: 20 };
@@ -30,6 +30,17 @@ const ItemStatSchema = new mongoose.Schema({
 ItemStatSchema.index({ user: 1, set: 1, item: 1 }, { unique: true });
 ItemStatSchema.index({ user: 1, wrong: 1, streak: 1 });
 const ItemStat = mongoose.model('ItemStat', ItemStatSchema);
+
+// 퀘스트 보상 기록(05): 사용자·키 고유 인덱스 → 같은 보상을 두 번 받을 수 없음(동시 요청도 하나만 성공).
+// key = 퀘스트 id (매일 퀘스트는 'id:YYYY-MM-DD' KST)
+const QuestClaimSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  key: { type: String, required: true }, quest: String, xp: Number,
+}, { timestamps: { createdAt: true, updatedAt: false } });
+QuestClaimSchema.index({ user: 1, key: 1 }, { unique: true });
+const QuestClaim = mongoose.model('QuestClaim', QuestClaimSchema);
+const kstDay = (t = Date.now()) => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
+const kstDayStart = () => new Date(Date.parse(kstDay() + 'T00:00:00+09:00'));
 
 // ── 레거시 → 새 형식(R6: 읽을 때 변환, 계약 v2 타입 방어) ──
 const str = v => (typeof v === 'string' ? v.trim() : '');
@@ -432,35 +443,79 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     res.json(await resultView(r));
   }));
 
-  app.get('/api/stats', auth, wrap(async (req, res) => {
-    const since = weekStartKST();
-    const [sets, attempts, wrongCount, weekLearned, days, xpAgg, learned] = await Promise.all([
-      Test.countDocuments({ author: req.user._id }),
-      Result.countDocuments({ user: req.user._id }),
-      ItemStat.countDocuments({ user: req.user._id, wrong: { $gt: 0 }, streak: { $lt: 2 } }),
-      learnedCount(req.user._id, since),
+  // 게임 지표 한 번에 계산(05): 경험치 = 결과 경험치 + 퀘스트 보상. 홈·결과·퀘스트·프로필이 모두 이것을 씀.
+  async function gameOf(userId) {
+    const uid = new ObjectId(String(userId));
+    const today = kstDayStart();
+    const [user, sets, publicSets, attempts, wrongCount, days, resAgg, modes, learned, cleared, wrongReviews, claims] = await Promise.all([
+      User.findById(uid).select('friends avatarImage').lean(),
+      Test.countDocuments({ author: uid }),
+      Test.countDocuments({ author: uid, ...PUBLIC_SET }),
+      Result.countDocuments({ user: uid }),
+      ItemStat.countDocuments({ user: uid, wrong: { $gt: 0 }, streak: { $lt: 2 } }),
       Result.aggregate([
-        { $match: { user: req.user._id, createdAt: { $gte: new Date(Date.now() - 400 * 864e5) } } },
+        { $match: { user: uid, createdAt: { $gte: new Date(Date.now() - 400 * 864e5) } } },
         { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } } } },
       ]),
-      // 경험치는 결과에서 매번 계산(game.js 규칙과 같은 식 — golden 테스트로 일치 확인)
+      // 경험치는 결과에서 매번 계산(game.js xpOf 와 같은 식 — golden·API 테스트로 일치 확인)
       Result.aggregate([
-        { $match: { user: req.user._id } },
+        { $match: { user: uid } },
         { $group: { _id: null, correct: { $sum: { $ifNull: ['$correctAnswers', 0] } }, n: { $sum: 1 },
-          perfects: { $sum: { $cond: [{ $and: [{ $gte: ['$totalQuestions', XP.perfectMin] }, { $eq: ['$correctAnswers', '$totalQuestions'] }] }, 1, 0] } } } },
+          perfects: { $sum: { $cond: [{ $and: [{ $gte: ['$totalQuestions', XP.perfectMin] }, { $eq: ['$correctAnswers', '$totalQuestions'] }] }, 1, 0] } },
+          passage: { $sum: { $cond: [{ $eq: ['$kind', 'passage'] }, 1, 0] } },
+          today: { $sum: { $cond: [{ $gte: ['$createdAt', today] }, 1, 0] } },
+          todayCorrect: { $sum: { $cond: [{ $gte: ['$createdAt', today] }, { $ifNull: ['$correctAnswers', 0] }, 0] } } } },
       ]),
-      learnedCount(req.user._id, null),
+      Result.distinct('mode', { user: uid, mode: { $in: Object.keys(MODE_BY_ID) } }),
+      learnedCount(uid, null),
+      ItemStat.countDocuments({ user: uid, wrong: { $gt: 0 }, streak: { $gte: 2 } }),
+      Session.countDocuments({ user: uid, 'source.type': 'wrong', status: 'done' }),
+      QuestClaim.find({ user: uid }).select('key xp').lean(),
     ]);
     // 연속 학습일: 오늘(또는 어제)부터 거꾸로 이어진 날 수
     const set = new Set(days.map(d => d._id));
-    const kst = t => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
     let streakDays = 0, t = Date.now();
-    if (!set.has(kst(t))) t -= 864e5;
-    while (set.has(kst(t))) { streakDays++; t -= 864e5; }
-    const g = xpAgg[0] || { correct: 0, n: 0, perfects: 0 };
-    const xp = g.correct * XP.perCorrect + g.n * XP.perFinish + g.perfects * XP.perfectBonus;
-    res.json({ sets, attempts, wrongCount, weekLearned, streakDays, learned, perfects: g.perfects,
-      game: { ...levelOf(xp), achievements: achievementsOf({ attempts, perfects: g.perfects, streakDays, learned, sets, xp }) } });
+    if (!set.has(kstDay(t))) t -= 864e5;
+    while (set.has(kstDay(t))) { streakDays++; t -= 864e5; }
+    const g = resAgg[0] || { correct: 0, n: 0, perfects: 0, passage: 0, today: 0, todayCorrect: 0 };
+    const questXp = claims.reduce((a, c) => a + (c.xp || 0), 0);
+    const xp = g.correct * XP.perCorrect + g.n * XP.perFinish + g.perfects * XP.perfectBonus + questXp;
+    const m = {
+      attempts, perfects: g.perfects, streakDays, learned, sets, publicSets, xp, modesUsed: modes.length,
+      passageTests: g.passage, cleared, wrongReviews, friends: user?.friends?.length || 0, hasAvatar: !!user?.avatarImage,
+      questsDone: claims.length, todayAttempts: g.today, todayCorrect: g.todayCorrect,
+    };
+    return { m, wrongCount, claims, level: levelOf(xp), achievements: achievementsOf(m) };
+  }
+
+  app.get('/api/stats', auth, wrap(async (req, res) => {
+    const [G, weekLearned] = await Promise.all([gameOf(req.user._id), learnedCount(req.user._id, weekStartKST())]);
+    const { m } = G;
+    const day = kstDay();
+    const quests = questsOf(m, G.claims.map(c => c.key), day);
+    res.json({ sets: m.sets, attempts: m.attempts, wrongCount: G.wrongCount, weekLearned, streakDays: m.streakDays, learned: m.learned, perfects: m.perfects,
+      game: { ...G.level, achievements: G.achievements, questsReady: quests.filter(q => q.status === 'ready').length } });
+  }));
+
+  // ── 퀘스트(05) ──
+  app.get('/api/quests', auth, wrap(async (req, res) => {
+    const G = await gameOf(req.user._id);
+    res.json({ day: kstDay(), quests: questsOf(G.m, G.claims.map(c => c.key), kstDay()), level: G.level });
+  }));
+  app.post('/api/quests/:id/claim', auth, wrap(async (req, res) => {
+    const q = QUEST_BY_ID[req.params.id];
+    if (!q) return res.status(404).json({ message: '없는 퀘스트예요.' });
+    const G = await gameOf(req.user._id);
+    if (!canClaim(q, G.m)) return res.status(400).json({ message: '아직 퀘스트 조건을 채우지 못했어요.' });
+    const key = questKey(q, kstDay());
+    try {
+      await QuestClaim.create({ user: req.user._id, key, quest: q.id, xp: q.xp });
+    } catch (e) {
+      if (e.code !== 11000) throw e;
+      return res.json({ already: true, xp: 0, level: G.level }); // 이미 받음(멱등)
+    }
+    const after = levelOf(G.level.xp + q.xp);
+    res.json({ already: false, xp: q.xp, level: after, levelUp: after.level > G.level.level });
   }));
 
   // ── 오답(학습 기록) ──
@@ -553,5 +608,5 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     }));
   }
 
-  return { Session, ItemStat };
+  return { Session, ItemStat, QuestClaim, gameOf };
 }

@@ -106,6 +106,8 @@ export default {
         } else fill.style.setProperty('--p', g.need ? g.into / g.need : 0);
         slot.querySelector('[data-lvnum]').textContent = `${g.into} / ${g.need} XP`;
       }, 1500 + stars * 260);
+      // 조건을 채운 퀘스트가 있으면 보상 받으러 가기 안내(05)
+      if (g.questsReady) { const box = root.querySelector('.result-xp'); if (box) box.insertAdjacentHTML('beforeend', String(html`<a class="quest-nudge" href="#/">${icon('flame', 16)}완료한 퀘스트 ${g.questsReady}개 — 홈에서 보상 받기 ${icon('chevronRight', 14)}</a>`)); }
       const fresh_ = newAchievements(state.user?.id || state.user?._id, g.achievements);
       if (fresh && fresh_.length) later(() => {
         const box = root.querySelector('[data-ach]');

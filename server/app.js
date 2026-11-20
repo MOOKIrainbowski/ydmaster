@@ -981,6 +981,7 @@ app.delete('/api/wrongnote/:groupId', auth, async (req, res) => {
 });
 
 // ==================== 공개 프로필 (by username) ====================
+let learnApi; // mountLearn 이 돌려주는 gameOf(아래에서 채움 — 요청 시점엔 이미 준비됨)
 app.get('/api/p/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
@@ -1015,6 +1016,8 @@ app.get('/api/p/:username', async (req, res) => {
         createdAt: user.createdAt,
       },
       stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount },
+      game: await learnApi.gameOf(user._id).then(G => ({ level: G.level.level, title: G.level.title, xp: G.level.xp, into: G.level.into, need: G.level.need,
+        achievements: G.achievements.filter(x => x.got).map(({ id, tier, icon, title, desc }) => ({ id, tier, icon, title, desc, got: true })), total: G.achievements.length })).catch(() => null),
       recentTests
     });
   } catch (e) {
@@ -1500,7 +1503,7 @@ app.post('/api/auth/account/delete', auth, async (req, res) => {
   }
 });
 
-mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit: createRateLimit });
+learnApi = mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit: createRateLimit });
 
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', service: '영단마스터', time: new Date().toISOString() }));
 

@@ -3,7 +3,7 @@ import { state } from '../state.js';
 import { html, render, on, icon, skeleton, errorBox, toast, confirmDialog, speak, $ } from '../ui.js';
 import { parseSentence } from '../shared/passage.js';
 import { startTest } from '../start.js';
-import { sfx, floatText, banner, COMBO_LINES } from '../game.js';
+import { sfx, floatText, banner, COMBO_LINES, reportQuest } from '../game.js';
 import { burstAt } from '../motion.js';
 
 export default {
@@ -86,6 +86,8 @@ export default {
       if (!deck.length) {
         done = true; draw(); sfx.levelUp();
         const m = $('.flash-done__mascot', root); if (m) setTimeout(() => burstAt(m, 34), 200);
+        // 학습 카드 퀘스트(05): 서버가 볼 수 없는 활동이라 보고로 완료 — 첫걸음 + 오늘의 퀘스트(이미 받았으면 조용히 무시)
+        if (state.user) setTimeout(async () => { const t = $('.flash-done__title', root); await reportQuest('first_cards', t); await reportQuest('daily_cards', t); }, 900);
         return;
       }
       if (pos >= deck.length) pos = 0;

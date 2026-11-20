@@ -181,7 +181,7 @@ export const errorBox = (message, retryAttr = 'data-retry') =>
 
 // 사용자 아바타: 이미지 URL 이 있으면 img, 없으면 첫 글자
 export const avatar = (u, size = 40) => u?.avatarUrl
-  ? html`<img class="avatar" src="${u.avatarUrl}" alt="" width="${size}" height="${size}" loading="lazy">`
+  ? html`<img class="avatar" src="${u.avatarUrl}" alt="" width="${size}" height="${size}" style="--size:${size}px" loading="lazy">` // --size 가 없으면 사진 아바타만 40px 로 줄던 문제(05)
   : html`<span class="avatar avatar--letter" style="--size:${size}px" aria-hidden="true">${(u?.username || '?')[0].toUpperCase()}</span>`;
 
 // 로고 마크 = 마스코트 '영이' 머리(03 결정 M1, 에셋은 public/brand/logo.svg 한 곳)

@@ -1,6 +1,7 @@
 // 게임 연출(04, 2026-11-20 사용자 요청: 공부가 지치지 않게 게임처럼 성취감) — 효과음·떠오르는 글자·큰 배너·별.
 // 점수·경험치·업적 판정은 서버(server/game.js)가 한다. 여기는 보여주기만.
-import { html, icon } from './ui.js';
+import { html, icon, toast } from './ui.js';
+import { api } from './api.js';
 import { reduced, burst } from './motion.js';
 
 // ── 효과음: 파일 없이 Web Audio 로 합성(용량 0). 끄기 설정은 이 브라우저에 저장 ──
@@ -75,8 +76,23 @@ export const levelBar = g => html`<div class="lvbar" data-lvbar>
   <div class="lvbar__main"><p class="lvbar__title"><b data-lvtitle>${g.title}</b><span data-lvnum>${g.into} / ${g.need} XP</span></p>
     <div class="lvbar__track"><i data-lvfill style="--p:${g.need ? g.into / g.need : 0}"></i></div></div></div>`;
 
-// 업적 배지
-export const badge = a => html`<div class="ach${a.got ? ' is-got' : ''}" title="${a.desc}"><span class="ach__icon">${icon(a.icon, 22)}</span><span class="ach__title">${a.title}</span><span class="ach__desc">${a.desc}</span></div>`;
+// 업적 배지: 단계 1 하(동) · 2 중(은) · 3 상(금)
+export const TIER = ['', '하', '중', '상'];
+export const badge = a => html`<div class="ach ach--t${a.tier || 1}${a.got ? ' is-got' : ''}" title="${a.desc}"><span class="ach__tier">${TIER[a.tier || 1]}</span><span class="ach__icon">${icon(a.icon, 22)}</span><span class="ach__title">${a.title}</span><span class="ach__desc">${a.desc}</span></div>`;
+
+// 업적 보드: 전체/하/중/상 거르기(홈·프로필 공용)
+export function achBoard(list, { filter = 'all' } = {}) {
+  const n = t => list.filter(a => (t === 'all' || a.tier === t)).length, g = t => list.filter(a => (t === 'all' || a.tier === t) && a.got).length;
+  return html`<div class="ach-board" data-ach-board>
+    <div class="seg seg--sm" role="radiogroup" aria-label="업적 단계">${['all', 1, 2, 3].map(t => html`<label class="seg__opt"><input type="radio" name="ach-tier" value="${t}" ${String(t) === String(filter) ? 'checked' : ''}><span>${t === 'all' ? '전체' : TIER[t]} <small>${g(t)} / ${n(t)}</small></span></label>`)}</div>
+    <div class="ach-grid">${list.filter(a => filter === 'all' || a.tier === Number(filter)).sort((a, b) => (b.got - a.got) || (a.tier - b.tier)).map(badge)}</div></div>`;
+}
+// 보드의 단계 칩을 누르면 다시 그림
+export function bindAchBoard(root, getList) { // getList: 지금 목록을 돌려주는 함수(화면이 다시 불러와도 최신)
+  const fn = e => { if (e.target.name !== 'ach-tier') return; const box = e.target.closest('[data-ach-board]'); box.outerHTML = String(achBoard(getList(), { filter: e.target.value })); };
+  root.addEventListener('change', fn);
+  return () => root.removeEventListener('change', fn);
+}
 
 // 업적: 이미 본 것은 브라우저에 기억해 "새로 달성" 만 축하
 export function newAchievements(userId, list) {
@@ -87,3 +103,39 @@ export function newAchievements(userId, list) {
   try { localStorage.setItem(key, JSON.stringify(got)); } catch { /* 무시 */ }
   return list.filter(a => a.got && !seen.includes(a.id));
 }
+
+// ── 퀘스트(05) ──
+export const GUIDE_TITLES = { start: '영단마스터 둘러보기', vocab: '단어 세트 만들기', passage: '본문 세트 만들기', test: '시험 보기', wrong: '오답 복습', cards: '학습 카드', game: '경험치·레벨·업적·퀘스트', social: '랭킹·친구·공유' };
+const GROUP = { daily: '오늘의 퀘스트', start: '첫걸음 퀘스트', guide: '가이드 퀘스트' };
+const questTitle = q => (q.group === 'guide' ? `가이드 읽기: ${GUIDE_TITLES[q.desc] || q.desc}` : q.title);
+export const questRow = q => html`<li class="quest quest--${q.status}">
+  <span class="quest__icon" aria-hidden="true">${icon(q.status === 'claimed' ? 'check' : q.group === 'daily' ? 'clock' : q.group === 'guide' ? 'lightbulb' : 'flame', 18)}</span>
+  <div class="quest__main"><p class="quest__title">${questTitle(q)}</p>
+    ${q.group !== 'guide' ? html`<p class="quest__desc">${q.desc}</p>` : ''}
+    ${q.progress && q.status === 'todo' ? html`<div class="quest__bar"><i style="--p:${q.progress[0] / q.progress[1]}"></i></div><span class="quest__num">${q.progress[0]} / ${q.progress[1]}</span>` : ''}</div>
+  <span class="quest__xp">+${q.xp} XP</span>
+  ${q.status === 'ready' ? html`<button class="btn btn--primary btn--sm" data-claim="${q.id}">보상 받기</button>`
+    : q.status === 'claimed' ? html`<span class="quest__done">받음</span>` : html`<a class="btn btn--ghost btn--sm" href="${q.go}">하러 가기</a>`}
+</li>`;
+// 그룹별 목록. groups 로 보여줄 묶음을 고름(가이드 퀘스트는 가이드 화면에서)
+export function questBoard(quests, groups = ['daily', 'start']) {
+  return html`<div class="quest-board">${groups.map(gr => { const list = quests.filter(q => q.group === gr); if (!list.length) return '';
+    const left = list.filter(q => q.status !== 'claimed').length;
+    return html`<section class="quest-group"><h3 class="quest-group__title">${GROUP[gr]} <small>${list.length - left} / ${list.length}</small></h3><ul class="quest-list">${list.sort((a, b) => ({ ready: 0, todo: 1, claimed: 2 }[a.status] - { ready: 0, todo: 1, claimed: 2 }[b.status])).map(questRow)}</ul></section>`; })}</div>`;
+}
+// 보상 받기(서버가 조건·중복 판정). 성공하면 +XP 연출, 레벨이 오르면 배너. 결과를 돌려줌
+export async function claimQuest(id, from) {
+  try {
+    const r = await api.post(`/quests/${id}/claim`);
+    if (!r.already) {
+      floatText(from, `+${r.xp} XP`); sfx.correct(4);
+      if (r.levelUp) { sfx.levelUp(); banner(`레벨 업! Lv.${r.level.level}`, r.level.title, 'level'); }
+    }
+    return r;
+  } catch (e) { toast(e.message, 'bad'); return null; }
+}
+// 보고형 퀘스트(가이드 읽기·학습 카드)는 조용히 받기 — 이미 받았으면 아무 일 없음
+export async function reportQuest(id, from) {
+  try { const r = await api.post(`/quests/${id}/claim`); if (!r.already) { floatText(from, `퀘스트 완료 +${r.xp} XP`, 'good'); if (r.levelUp) banner(`레벨 업! Lv.${r.level.level}`, r.level.title, 'level'); } return r; } catch { return null; }
+}
+

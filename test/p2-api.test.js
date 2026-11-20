@@ -96,6 +96,18 @@ test('세션: 서버 채점·중복 답 멱등·종료 멱등·결과·오답·�
   assert.equal(stats.data.game.level, 1);
   assert.equal(stats.data.game.achievements.find(x => x.id === 'first').got, true);
   assert.equal(stats.data.game.achievements.find(x => x.id === 'perfect').got, false);
+  // 퀘스트(05): 조건 미충족은 거절, 충족하면 한 번만(동시 요청도 하나만), 보상은 경험치에 더해짐
+  assert.equal((await t.call('POST', '/quests/first_set/claim', {}, b.token)).status, 400); // b 는 세트를 안 만듦
+  const [c1, c2] = await Promise.all([1, 2].map(() => t.call('POST', '/quests/first_test/claim', {}, b.token)));
+  assert.equal([c1.data.already, c2.data.already].filter(x => x === false).length, 1);
+  assert.equal((await t.call('POST', '/quests/guide_start/claim', {}, b.token)).data.xp, 5);
+  assert.equal((await t.call('POST', '/quests/guide_start/claim', {}, b.token)).data.already, true);
+  assert.equal((await t.call('POST', '/quests/nope/claim', {}, b.token)).status, 404);
+  const qs = await t.call('GET', '/quests', undefined, b.token);
+  assert.equal(qs.data.quests.find(q => q.id === 'first_test').status, 'claimed');
+  assert.equal((await t.call('GET', '/stats', undefined, b.token)).data.game.xp, 30 + 20 + 5);
+  const prof = await t.call('GET', '/p/' + encodeURIComponent((await t.call('GET', '/auth/me', undefined, b.token)).data.user.username), undefined, a.token);
+  assert.equal(prof.data.game.xp, 55);
 
   // 오답 복습 세션 → 2번 연속 맞히면 오답에서 빠짐
   for (let k = 0; k < 2; k++) {

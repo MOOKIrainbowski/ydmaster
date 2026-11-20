@@ -9,7 +9,7 @@ const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
   ['/play/:id', 'play'], ['/result/:id', 'result'], ['/wrong', 'wrong'], ['/history', 'history'], ['/ranking', 'ranking'],
   ['/friends', 'friends'], ['/me', 'me'], ['/u/:username', 'user'], ['/notice', 'notice'], ['/inquiry', 'inquiry'],
-  ['/admin', 'admin'], ['/login', 'login'], ['/oauth', 'oauth'],
+  ['/admin', 'admin'], ['/login', 'login'], ['/oauth', 'oauth'], ['/guide', 'guide'],
 ].map(([pattern, page]) => ({ page, keys: [...pattern.matchAll(/:(\w+)/g)].map(m => m[1]), re: new RegExp('^' + pattern.replace(/:\w+/g, '([^/]+)') + '/?$') }));
 
 // 하단 탭바(모바일)·상단 링크(데스크톱)에 같은 목록을 쓴다 → 선택 표시가 한 원본(I-042)
@@ -48,6 +48,7 @@ function shell(active, mod = {}) {
     <header class="topbar glass">
       <a class="topbar__brand" href="#/" aria-label="영단마스터 홈">${logoMark()}<span class="topbar__name">영단마스터</span></a>
       ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map(t => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span>${t.label}</span></a>`; })}</nav>
+        <a class="topbar__help${active === 'guide' ? ' is-active' : ''}" href="#/guide" aria-label="가이드" title="가이드">${icon('lightbulb', 20)}</a>
         <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 34)}</a>`
       : active === 'login' ? '' : html`<div class="topbar__guest"><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
     </header>

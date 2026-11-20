@@ -1,6 +1,6 @@
-// 게임 요소 규칙(04, 2026-11-20 사용자 요청: 공부가 지치지 않게 게임처럼 성취감을).
-// 서버 판정 원칙(R5): 경험치·레벨·업적은 저장하지 않고 서버의 시험 결과(Result)에서 매번 계산한다.
-// → 클라이언트가 점수를 꾸밀 수 없고, 규칙을 바꿔도 옛 기록에 그대로 다시 적용된다. 규칙은 이 파일 한 곳.
+// 게임 요소 규칙(04·05, 2026-11-20 사용자 요청: 게임처럼 성취감 · 활동마다 퀘스트 · 하/중/상 업적).
+// 서버 판정 원칙(R5): 경험치·레벨·업적은 저장하지 않고 서버 기록(Result·Test·ItemStat 등)에서 매번 계산한다.
+// 퀘스트 보상만 QuestClaim 으로 한 번 기록(사용자·키 고유 → 같은 보상 두 번 불가). 규칙은 이 파일 한 곳.
 
 export const XP = { perCorrect: 10, perFinish: 20, perfectBonus: 50, perfectMin: 5 };
 
@@ -24,16 +24,93 @@ export function levelOf(xp) {
 const TITLES = [[1, '새싹'], [3, '단어 탐험가'], [5, '문장 사냥꾼'], [8, '어휘 기사'], [12, '내신 마법사'], [17, '영단 마스터']];
 export const titleOf = n => TITLES.filter(([k]) => n >= k).pop()[1];
 
-// 업적: m = { attempts, perfects, streakDays, learned, sets, xp, bestCombo? }
+// ── 업적: tier 1 하 · 2 중 · 3 상 ──
+// m = { attempts, perfects, streakDays, learned, sets, publicSets, xp, modesUsed, passageTests, cleared, wrongReviews, friends, questsDone }
+// id 는 한 번 정하면 바꾸지 않는다(브라우저가 '이미 본 업적' 을 id 로 기억).
+const A = (id, tier, icon, title, desc, test) => ({ id, tier, icon, title, desc, test });
 export const ACHIEVEMENTS = [
-  { id: 'first', icon: 'play', title: '첫걸음', desc: '시험을 처음 끝까지 풀었어요', test: m => m.attempts >= 1 },
-  { id: 'perfect', icon: 'star', title: '퍼펙트', desc: '5문항 이상 시험에서 만점', test: m => m.perfects >= 1 },
-  { id: 'perfect5', icon: 'trophy', title: '만점 수집가', desc: '만점 5번', test: m => m.perfects >= 5 },
-  { id: 'streak3', icon: 'flame', title: '사흘 연속', desc: '3일 연속 학습', test: m => m.streakDays >= 3 },
-  { id: 'streak7', icon: 'flame', title: '일주일 불꽃', desc: '7일 연속 학습', test: m => m.streakDays >= 7 },
-  { id: 'learned100', icon: 'book', title: '백 문항 정복', desc: '서로 다른 문항 100개를 맞힘', test: m => m.learned >= 100 },
-  { id: 'attempts10', icon: 'target', title: '열 번의 도전', desc: '시험 10번 완주', test: m => m.attempts >= 10 },
-  { id: 'maker', icon: 'edit', title: '세트 장인', desc: '내 세트 3개 만들기', test: m => m.sets >= 3 },
-  { id: 'level5', icon: 'trophy', title: '레벨 5', desc: '레벨 5 달성', test: m => levelOf(m.xp).level >= 5 },
+  // 시험 완주
+  A('first', 1, 'play', '첫걸음', '시험을 처음 끝까지 풀었어요', m => m.attempts >= 1),
+  A('attempts10', 1, 'target', '열 번의 도전', '시험 10번 완주', m => m.attempts >= 10),
+  A('attempts50', 2, 'target', '쉰 번의 도전', '시험 50번 완주', m => m.attempts >= 50),
+  A('attempts200', 3, 'target', '불굴의 수험생', '시험 200번 완주', m => m.attempts >= 200),
+  // 만점
+  A('perfect', 1, 'star', '퍼펙트', '5문항 이상 시험에서 만점', m => m.perfects >= 1),
+  A('perfect5', 2, 'star', '만점 수집가', '만점 5번', m => m.perfects >= 5),
+  A('perfect20', 3, 'star', '만점 제조기', '만점 20번', m => m.perfects >= 20),
+  // 연속 학습
+  A('streak3', 1, 'flame', '사흘 연속', '3일 연속 학습', m => m.streakDays >= 3),
+  A('streak7', 2, 'flame', '일주일 불꽃', '7일 연속 학습', m => m.streakDays >= 7),
+  A('streak30', 3, 'flame', '한 달의 불꽃', '30일 연속 학습', m => m.streakDays >= 30),
+  // 외운 문항(서로 다른 문항을 맞힌 수)
+  A('learned30', 1, 'book', '서른 단어', '서로 다른 문항 30개를 맞힘', m => m.learned >= 30),
+  A('learned100', 2, 'book', '백 문항 정복', '서로 다른 문항 100개를 맞힘', m => m.learned >= 100),
+  A('learned300', 2, 'book', '삼백 문항', '서로 다른 문항 300개를 맞힘', m => m.learned >= 300),
+  A('learned1000', 3, 'book', '천 문항의 벽', '서로 다른 문항 1,000개를 맞힘', m => m.learned >= 1000),
+  // 시험 방식 다양성(전체 11가지)
+  A('modes3', 1, 'layers', '이것저것', '서로 다른 시험 방식 3가지', m => m.modesUsed >= 3),
+  A('modes6', 2, 'layers', '만능 수험생', '서로 다른 시험 방식 6가지', m => m.modesUsed >= 6),
+  A('modes11', 3, 'layers', '모든 방식 정복', '11가지 시험 방식 모두', m => m.modesUsed >= 11),
+  // 본문
+  A('passage1', 1, 'text', '본문 입문', '본문 시험 첫 완주', m => m.passageTests >= 1),
+  A('passage10', 2, 'text', '본문 단골', '본문 시험 10번 완주', m => m.passageTests >= 10),
+  A('passage30', 3, 'text', '내신 본문 장인', '본문 시험 30번 완주', m => m.passageTests >= 30),
+  // 오답 졸업(틀렸던 문항을 2번 연속 맞혀 오답에서 뺌)
+  A('cleared10', 1, 'check', '오답 정리', '오답 10개 졸업', m => m.cleared >= 10),
+  A('cleared50', 2, 'check', '오답 사냥꾼', '오답 50개 졸업', m => m.cleared >= 50),
+  A('cleared200', 3, 'check', '오답 박멸', '오답 200개 졸업', m => m.cleared >= 200),
+  A('review5', 2, 'refresh', '복습의 힘', '오답 복습 시험 5번 완주', m => m.wrongReviews >= 5),
+  // 세트 만들기·나누기
+  A('maker1', 1, 'edit', '첫 세트', '내 세트 1개 만들기', m => m.sets >= 1),
+  A('maker', 2, 'edit', '세트 장인', '내 세트 3개 만들기', m => m.sets >= 3),
+  A('maker10', 3, 'edit', '세트 공방', '내 세트 10개 만들기', m => m.sets >= 10),
+  A('public1', 1, 'link', '나눔의 시작', '공개 세트 1개', m => m.publicSets >= 1),
+  // 친구
+  A('friend1', 1, 'users', '함께 공부', '친구 1명', m => m.friends >= 1),
+  A('friend5', 2, 'users', '스터디 모임', '친구 5명', m => m.friends >= 5),
+  // 레벨·퀘스트
+  A('level5', 2, 'trophy', '레벨 5', '레벨 5 달성', m => levelOf(m.xp).level >= 5),
+  A('level10', 3, 'trophy', '레벨 10', '레벨 10 달성', m => levelOf(m.xp).level >= 10),
+  A('level17', 3, 'trophy', '영단 마스터', '레벨 17 — 최고 칭호', m => levelOf(m.xp).level >= 17),
+  A('quests5', 1, 'check', '퀘스트 입문', '퀘스트 보상 5번 받기', m => m.questsDone >= 5),
+  A('quests20', 2, 'check', '퀘스트 수집가', '퀘스트 보상 20번 받기', m => m.questsDone >= 20),
 ];
 export const achievementsOf = m => ACHIEVEMENTS.map(({ test, ...a }) => ({ ...a, got: !!test(m) }));
+
+// ── 퀘스트: 활동마다 소소한 보상 ──
+// kind: 'check' = 서버 기록으로 판정 · 'event' = 서버가 볼 수 없는 활동(가이드 읽기·학습 카드)이라 보고만으로 인정(보상은 작게, 한 번만)
+// daily: true 면 하루(KST)에 한 번씩 다시 받을 수 있다.
+const Q = (id, group, title, desc, xp, opt = {}) => ({ id, group, title, desc, xp, kind: opt.check ? 'check' : 'event', ...opt });
+export const GUIDE_CHAPTERS = ['start', 'vocab', 'passage', 'test', 'wrong', 'cards', 'game', 'social'];
+export const QUESTS = [
+  // 오늘의 퀘스트
+  Q('daily_test', 'daily', '오늘 시험 1번 완주', '어떤 시험이든 끝까지', 10, { daily: true, check: m => m.todayAttempts >= 1, goal: m => [m.todayAttempts, 1], go: '#/explore' }),
+  Q('daily_correct20', 'daily', '오늘 20문항 맞히기', '여러 시험에 걸쳐도 돼요', 15, { daily: true, check: m => m.todayCorrect >= 20, goal: m => [m.todayCorrect, 20], go: '#/explore' }),
+  Q('daily_cards', 'daily', '오늘 학습 카드 한 묶음 끝내기', '알아요로 카드 더미를 비우기', 10, { daily: true, go: '#/explore' }),
+  // 첫걸음
+  Q('first_set', 'start', '첫 세트 만들기', '단어나 본문 세트를 하나 만들어요', 20, { check: m => m.sets >= 1, goal: m => [m.sets, 1], go: '#/new/vocab' }),
+  Q('first_test', 'start', '첫 시험 완주', '세트에서 시험 보기 → 끝까지', 20, { check: m => m.attempts >= 1, goal: m => [m.attempts, 1], go: '#/explore' }),
+  Q('first_passage', 'start', '본문 시험 완주', '본문 세트로 시험 한 번', 20, { check: m => m.passageTests >= 1, goal: m => [m.passageTests, 1], go: '#/new/passage' }),
+  Q('first_review', 'start', '오답 복습 시험', '오답 화면의 복습 시험 완주', 20, { check: m => m.wrongReviews >= 1, goal: m => [m.wrongReviews, 1], go: '#/wrong' }),
+  Q('first_cards', 'start', '학습 카드 끝내기', '세트의 학습 카드에서 모두 알아요', 15, { go: '#/explore' }),
+  Q('modes3', 'start', '시험 방식 3가지 써 보기', '뜻 고르기 말고도 여러 방식으로', 25, { check: m => m.modesUsed >= 3, goal: m => [m.modesUsed, 3], go: '#/explore' }),
+  Q('first_public', 'start', '공개 세트 만들기', '세트 공개 범위를 공개로', 15, { check: m => m.publicSets >= 1, goal: m => [m.publicSets, 1], go: '#/explore?scope=mine' }),
+  Q('first_friend', 'start', '친구 맺기', '친구 화면에서 사용자 찾기 → 요청', 15, { check: m => m.friends >= 1, goal: m => [m.friends, 1], go: '#/friends' }),
+  Q('avatar', 'start', '프로필 사진 등록', '내 정보에서 사진 바꾸기', 10, { check: m => m.hasAvatar, goal: m => [m.hasAvatar ? 1 : 0, 1], go: '#/me' }),
+  // 가이드(장마다 읽으면)
+  ...GUIDE_CHAPTERS.map(c => Q(`guide_${c}`, 'guide', '가이드 읽기', c, 5, { go: `#/guide?ch=${c}` })),
+];
+export const QUEST_BY_ID = Object.fromEntries(QUESTS.map(q => [q.id, q]));
+export const questKey = (q, day) => (q.daily ? `${q.id}:${day}` : q.id);
+// 상태: claimed(받음) · ready(조건 충족, 받을 수 있음) · todo(아직). event 퀘스트는 보고 = 받기라 todo 로 둔다.
+export function questsOf(m, claimedKeys, day) {
+  const got = new Set(claimedKeys);
+  return QUESTS.map(({ check, goal, ...q }) => {
+    const claimed = got.has(questKey(q, day));
+    const ready = !claimed && !!check && !!check(m);
+    const g = goal ? goal(m) : null;
+    return { ...q, status: claimed ? 'claimed' : ready ? 'ready' : 'todo', progress: g ? [Math.min(Number(g[0]) || 0, g[1]), g[1]] : null };
+  });
+}
+// 받기 판정: check 퀘스트는 조건 충족이어야, event 퀘스트는 보고로 인정
+export const canClaim = (q, m) => (q.kind === 'event' ? true : !!q.check(m));
