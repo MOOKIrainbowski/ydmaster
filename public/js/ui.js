@@ -1,6 +1,8 @@
 // 화면 공용 도구 — 계약 §4. 모든 페이지는 이것으로 마크업을 만들고 이벤트를 단다.
 // 핵심 규칙: 사용자 문자열은 html`` 이 자동 이스케이프한다(옛 앱의 innerHTML XSS 경로 I-045 차단).
 
+import { getPref, VOICE_RATE } from './prefs.js';
+
 class Safe { constructor(s) { this.s = s; } toString() { return this.s; } }
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ESC[c]);
@@ -188,11 +190,12 @@ export const avatar = (u, size = 40) => u?.avatarUrl
 export const logoMark = () => raw('<img class="logo-mark" src="/brand/logo.svg" alt="" width="64" height="64" decoding="async">');
 
 // 영어 발음(브라우저 TTS). 없는 환경은 조용히 무시.
-export function speak(text, lang = 'en-US') {
+// 속도·억양은 설정(prefs.js, 06)을 따른다
+export function speak(text, lang) {
   if (!('speechSynthesis' in window)) return false;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang; u.rate = 0.9;
+  u.lang = lang || getPref('voiceLang'); u.rate = VOICE_RATE[getPref('voiceRate')] || 0.9;
   speechSynthesis.speak(u);
   return true;
 }

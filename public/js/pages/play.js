@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { html, render, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
 import { burstAt, shake, pop } from '../motion.js';
 import { sfx, sfxOn, setSfx, floatText, banner, COMBO_LINES } from '../game.js';
+import { getPref } from '../prefs.js';
 
 export default {
   title: '시험',
@@ -51,6 +52,7 @@ export default {
           <footer class="play__foot" data-foot>${actions(q)}</footer>
         </div>`);
       if (q.speak) speak(q.speak);
+      else if (getPref('autoSpeak') && q.prompt?.lang === 'en') speak(q.prompt.text); // 설정: 영어 문제 자동 읽기(06)
       if (!halfCheered && s.total >= 6 && i === Math.ceil(s.total / 2)) { halfCheered = true; banner('절반 왔어요!', `남은 문항 ${s.total - i}개 — 조금만 더`, 'half'); }
       ($('.blank, .play__input', root) || $('.choice', root))?.focus();
       // 진행바는 이전 위치에서 새 위치로 스프링처럼 차오른다(02 §3.4)

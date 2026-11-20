@@ -4,15 +4,18 @@ import { api, ApiError } from './api.js';
 import { html, render, icon, on, toast, closeAllModals, errorBox, empty, avatar, logoMark } from './ui.js';
 import { initMotion, viewTransition } from './motion.js';
 import { initUpdateCheck } from './update.js';
+import { applyPrefs } from './prefs.js';
 
 const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
   ['/play/:id', 'play'], ['/result/:id', 'result'], ['/wrong', 'wrong'], ['/history', 'history'], ['/ranking', 'ranking'],
   ['/friends', 'friends'], ['/me', 'me'], ['/u/:username', 'user'], ['/notice', 'notice'], ['/inquiry', 'inquiry'],
-  ['/admin', 'admin'], ['/login', 'login'], ['/oauth', 'oauth'], ['/guide', 'guide'],
+  ['/admin', 'admin'], ['/login', 'login'], ['/oauth', 'oauth'], ['/guide', 'guide'], ['/settings', 'settings'],
 ].map(([pattern, page]) => ({ page, keys: [...pattern.matchAll(/:(\w+)/g)].map(m => m[1]), re: new RegExp('^' + pattern.replace(/:\w+/g, '([^/]+)') + '/?$') }));
 
 // 하단 탭바(모바일)·상단 링크(데스크톱)에 같은 목록을 쓴다 → 선택 표시가 한 원본(I-042)
+// 06: 메뉴 글자·아이콘에도 각자 view-transition-name 을 준다. 화면 전환 중 이름 붙은 알약(pill)만 따로 떠서
+//     글자를 덮던 문제 — 글자도 따로 떠야 알약 위(그리는 순서상 뒤)에 그려진다.
 const TABS = [
   { href: '#/', label: '홈', icon: 'home', match: ['home'] },
   { href: '#/explore', label: '둘러보기', icon: 'compass', match: ['explore'] },
@@ -47,13 +50,14 @@ function shell(active, mod = {}) {
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
     <header class="topbar glass">
       <a class="topbar__brand" href="#/" aria-label="영단마스터 홈">${logoMark()}<span class="topbar__name">영단마스터</span></a>
-      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map(t => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span>${t.label}</span></a>`; })}</nav>
+      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map((t, i) => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span style="view-transition-name:top-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>
         <a class="topbar__help${active === 'guide' ? ' is-active' : ''}" href="#/guide" aria-label="가이드" title="가이드">${icon('lightbulb', 20)}</a>
+        <a class="topbar__help topbar__settings${active === 'settings' ? ' is-active' : ''}" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a>
         <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 34)}</a>`
-      : active === 'login' ? '' : html`<div class="topbar__guest"><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
+      : active === 'login' ? '' : html`<div class="topbar__guest"><a class="topbar__help topbar__settings" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
     </header>
     <main class="main" id="main" tabindex="-1"></main>
-    ${u ? html`<nav class="tabbar glass" aria-label="주요 메뉴">${TABS.map(t => { const on = t.match.includes(active); return html`<a class="tabbar__item${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('tabbar__pill') : ''}${icon(t.icon, 22)}<span>${t.label}</span></a>`; })}</nav>` : ''}`);
+    ${u ? html`<nav class="tabbar glass" aria-label="주요 메뉴">${TABS.map((t, i) => { const on = t.match.includes(active); return html`<a class="tabbar__item${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('tabbar__pill') : ''}<span class="tabbar__ic" style="view-transition-name:tab-ic-${i};view-transition-class:navlabel">${icon(t.icon, 22)}</span><span style="view-transition-name:tab-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>` : ''}`);
   app.classList.toggle('app--focus', !!mod.focus);
   app.classList.toggle('app--guest', !u);
   app.classList.toggle('app--landing', active === 'landing');
@@ -144,6 +148,7 @@ export const reload = () => navigate();
 
 async function boot() {
   setTheme(getTheme());
+  applyPrefs();
   // 옛 앱 해시 주소 호환: #/profile/이름 → #/u/이름, #/tests → #/explore
   const h = location.hash;
   if (/^#\/profile\/.+/.test(h)) location.replace('#/u/' + h.slice(10));

@@ -5,7 +5,8 @@
 // 직접 호출: burst(x, y), shake(el), pop(el), viewTransition(fn)
 // 모두 prefers-reduced-motion 을 존중한다.
 
-export const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+// 기기의 '동작 줄이기' 또는 설정 페이지의 '애니메이션 줄이기'(06, html[data-motion=reduce])
+export const reduced = () => document.documentElement.dataset.motion === 'reduce' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ── 등장·카운트업: #app 아래 새로 생긴 요소를 자동 처리 ──
 let io;

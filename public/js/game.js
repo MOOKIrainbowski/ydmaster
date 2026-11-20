@@ -108,7 +108,7 @@ export function newAchievements(userId, list) {
 export const GUIDE_TITLES = { start: '영단마스터 둘러보기', vocab: '단어 세트 만들기', passage: '본문 세트 만들기', test: '시험 보기', wrong: '오답 복습', cards: '학습 카드', game: '경험치·레벨·업적·퀘스트', social: '랭킹·친구·공유' };
 const GROUP = { daily: '오늘의 퀘스트', start: '첫걸음 퀘스트', guide: '가이드 퀘스트' };
 const questTitle = q => (q.group === 'guide' ? `가이드 읽기: ${GUIDE_TITLES[q.desc] || q.desc}` : q.title);
-export const questRow = q => html`<li class="quest quest--${q.status}">
+export const questRow = (q, more = false) => html`<li class="quest quest--${q.status}"${more ? html` hidden data-more-item` : ''}>
   <span class="quest__icon" aria-hidden="true">${icon(q.status === 'claimed' ? 'check' : q.group === 'daily' ? 'clock' : q.group === 'guide' ? 'lightbulb' : 'flame', 18)}</span>
   <div class="quest__main"><p class="quest__title">${questTitle(q)}</p>
     ${q.group !== 'guide' ? html`<p class="quest__desc">${q.desc}</p>` : ''}
@@ -117,11 +117,14 @@ export const questRow = q => html`<li class="quest quest--${q.status}">
   ${q.status === 'ready' ? html`<button class="btn btn--primary btn--sm" data-claim="${q.id}">보상 받기</button>`
     : q.status === 'claimed' ? html`<span class="quest__done">받음</span>` : html`<a class="btn btn--ghost btn--sm" href="${q.go}">하러 가기</a>`}
 </li>`;
+const QUEST_PAGE = 5;
 // 그룹별 목록. groups 로 보여줄 묶음을 고름(가이드 퀘스트는 가이드 화면에서)
 export function questBoard(quests, groups = ['daily', 'start']) {
   return html`<div class="quest-board">${groups.map(gr => { const list = quests.filter(q => q.group === gr); if (!list.length) return '';
     const left = list.filter(q => q.status !== 'claimed').length;
-    return html`<section class="quest-group"><h3 class="quest-group__title">${GROUP[gr]} <small>${list.length - left} / ${list.length}</small></h3><ul class="quest-list">${list.sort((a, b) => ({ ready: 0, todo: 1, claimed: 2 }[a.status] - { ready: 0, todo: 1, claimed: 2 }[b.status])).map(questRow)}</ul></section>`; })}</div>`;
+    const sorted = list.sort((a, b) => ({ ready: 0, todo: 1, claimed: 2 }[a.status] - { ready: 0, todo: 1, claimed: 2 }[b.status]));
+    // 06: 한 묶음에 5개 넘게 있으면 5개만 보이고 맨 아래 '더보기'(누를 때마다 5개씩)
+    return html`<section class="quest-group"><h3 class="quest-group__title">${GROUP[gr]} <small>${list.length - left} / ${list.length}</small></h3><ul class="quest-list">${sorted.map((q, k) => questRow(q, k >= QUEST_PAGE))}</ul>${sorted.length > QUEST_PAGE ? html`<button class="quest-more" type="button" data-quest-more>${icon('chevronDown', 16)}<span>더보기 (${sorted.length - QUEST_PAGE}개 더)</span></button>` : ''}</section>`; })}</div>`;
 }
 // 보상 받기(서버가 조건·중복 판정). 성공하면 +XP 연출, 레벨이 오르면 배너. 결과를 돌려줌
 export async function claimQuest(id, from) {
@@ -139,3 +142,23 @@ export async function reportQuest(id, from) {
   try { const r = await api.post(`/quests/${id}/claim`); if (!r.already) { floatText(from, `퀘스트 완료 +${r.xp} XP`, 'good'); if (r.levelUp) banner(`레벨 업! Lv.${r.level.level}`, r.level.title, 'level'); } return r; } catch { return null; }
 }
 
+
+// 퀘스트 '더보기': 숨긴 항목을 5개씩 펼치고, 다 펼치면 '접기'
+export function bindQuestMore(root) {
+  const fn = e => {
+    const b = e.target.closest?.('[data-quest-more]');
+    if (!b) return;
+    const group = b.closest('.quest-group');
+    const hidden = [...group.querySelectorAll('[data-more-item][hidden]')];
+    if (hidden.length) {
+      hidden.slice(0, QUEST_PAGE).forEach(x => { x.hidden = false; x.classList.add('is-new'); });
+    } else {
+      group.querySelectorAll('[data-more-item]').forEach(x => { x.hidden = true; });
+      group.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    const left = group.querySelectorAll('[data-more-item][hidden]').length;
+    b.innerHTML = String(left ? html`${icon('chevronDown', 16)}<span>더보기 (${left}개 더)</span>` : html`${icon('chevronUp', 16)}<span>접기</span>`);
+  };
+  root.addEventListener('click', fn);
+  return () => root.removeEventListener('click', fn);
+}

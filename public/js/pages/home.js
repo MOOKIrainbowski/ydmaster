@@ -2,7 +2,7 @@ import { api } from '../api.js';
 import { state } from '../state.js';
 import { startTest } from '../start.js';
 import { html, render, icon, skeleton, empty, errorBox, on, fmtDate } from '../ui.js';
-import { levelBar, achBoard, bindAchBoard, questBoard, claimQuest } from '../game.js';
+import { levelBar, achBoard, bindAchBoard, questBoard, claimQuest, bindQuestMore } from '../game.js';
 
 export default {
   title: '홈', async render(root, _p, _q, ctx) {
@@ -24,15 +24,15 @@ export default {
             </div>
           </section>
           ${qs ? html`<section class="section"><div class="section__head"><h2 class="section__title">퀘스트</h2><a href="#/guide">가이드 보기</a></div><div data-quests>${questBoard(qs.quests)}</div></section>` : ''}
-          ${stats.game ? html`<section class="section"><div class="section__head"><h2 class="section__title">업적</h2><span class="muted">${stats.game.achievements.filter(a => a.got).length} / ${stats.game.achievements.length}</span></div>
-            ${achBoard(stats.game.achievements)}</section>` : ''}
           <section class="section"><div class="section__head"><h2 class="section__title">내 세트</h2><a href="#/explore?scope=mine">모두 보기</a></div>
             ${sets.items.length ? html`<div class="set-grid">${sets.items.slice(0, 6).map((s, i) => html`<a class="set-card reveal spotlight" style="--i:${i}" href="#/sets/${s._id}"><span class="kind-tile kind-tile--${s.kind === 'passage' ? 'passage' : 'vocab'}">${icon(s.kind === 'passage' ? 'text' : 'book', 24)}</span><div class="set-card__head"><h3 class="set-card__title">${s.title}</h3><span class="badge badge--${s.kind === 'passage' ? 'passage' : 'vocab'}">${s.kind === 'passage' ? '본문' : '단어'}</span></div><div class="set-card__meta"><span>${s.count}개</span><span>${fmtDate(s.updatedAt)}</span></div></a>`)}</div>` : empty({ icon: 'book', title: '아직 만든 세트가 없어요', desc: '단어 또는 내신 본문을 추가해 학습을 시작하세요.', action: html`<div class="btn-row"><a class="btn btn--primary" href="#/new/vocab">단어 세트</a><a class="btn btn--ghost" href="#/new/passage">본문 세트</a></div>` })}
-          </section></div>`);
+          </section>
+          ${stats.game ? html`<section class="section"><div class="section__head"><h2 class="section__title">업적</h2><span class="muted">${stats.game.achievements.filter(a => a.got).length} / ${stats.game.achievements.length}</span></div>
+            ${achBoard(stats.game.achievements)}</section>` : ''}</div>`);
       } catch (e) { if (ctx.isCurrent()) render(root, html`<div class="page">${errorBox(e.message, 'data-retry-home')}</div>`); }
     };
     await load();
-    const offs = [bindAchBoard(root, () => achList),
+    const offs = [bindAchBoard(root, () => achList), bindQuestMore(root),
       on(root, 'click', '[data-claim]', async (_e, b) => {
         b.disabled = true;
         const r = await claimQuest(b.dataset.claim, b);
