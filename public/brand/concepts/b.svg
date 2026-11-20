@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="책갈피 요정 북키 시안">
+  <defs>
+    <linearGradient id="ydm-b-left" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FB7185"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
+    <linearGradient id="ydm-b-right" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E879F9"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+    <linearGradient id="ydm-b-tab" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFF1F2"/><stop offset="1" stop-color="#F9A8D4"/></linearGradient>
+  </defs>
+  <ellipse class="mascot__shadow" cx="100" cy="187" rx="57" ry="7" fill="#32113D" opacity=".18"/>
+  <g class="mascot__body">
+    <path d="M100 60C80 40 52 39 31 48v111c24-10 48-7 69 13V60z" fill="url(#ydm-b-left)" stroke="#8B1D74" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M100 60c20-20 48-21 69-12v111c-24-10-48-7-69 13V60z" fill="url(#ydm-b-right)" stroke="#6D28A8" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M100 61v109" fill="none" stroke="#FFE4E8" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+    <path d="M55 70c14-4 25-2 34 4m-34 13c13-3 23-1 34 5m-34 12c12-2 23 0 34 6m56-40c-14-4-25-2-34 4m34 13c-13-3-23-1-34 5m34 12c-12-2-23 0-34 6" fill="none" stroke="#FFF1F2" stroke-width="3" stroke-linecap="round" opacity=".46"/>
+    <path d="M116 55V22q0-8 8-8h25q8 0 8 8v52l-20-13-21 13z" fill="url(#ydm-b-tab)" stroke="#9D174D" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M126 25h20" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+    <g class="mascot__eyes">
+      <g class="mascot__eye"><ellipse cx="72" cy="99" rx="16" ry="19" fill="#fff"/><circle class="mascot__pupil" cx="72" cy="101" r="7.5" fill="#32113D"/><circle class="mascot__glint" cx="75" cy="97" r="2.6" fill="#fff"/></g>
+      <g class="mascot__eye"><ellipse cx="128" cy="99" rx="16" ry="19" fill="#fff"/><circle class="mascot__pupil" cx="128" cy="101" r="7.5" fill="#32113D"/><circle class="mascot__glint" cx="131" cy="97" r="2.6" fill="#fff"/></g>
+    </g>
+    <path class="mascot__lid" d="M56 101q16 10 32 0m24 0q16 10 32 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="53" cy="123" rx="9" ry="5" fill="#FFE4E8" opacity=".8"/><ellipse cx="147" cy="123" rx="9" ry="5" fill="#FFE4E8" opacity=".8"/>
+    <path class="mascot__mouth" d="M90 128q10 10 20 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round"/>
+    <ellipse class="mascot__hand mascot__hand--l" cx="58" cy="153" rx="19" ry="14" fill="#FB7185" stroke="#FFE4E8" stroke-width="2"/>
+    <ellipse class="mascot__hand mascot__hand--r" cx="142" cy="153" rx="19" ry="14" fill="#A78BFA" stroke="#FFE4E8" stroke-width="2"/>
+  </g>
+  <g class="mascot__zzz" fill="none" stroke="#7C3AED" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="m151 47 15 0-15 15 15 0m-4-31 13 0-13 13 13 0"/></g>
+</svg>

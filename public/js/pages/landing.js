@@ -1,6 +1,6 @@
 // 랜딩 — 02 디자인 리프레시의 첫인상(02 §3.5, D8: Claude 소유).
 // 장식(데모 카드·흐르는 단어·벤토 미니 화면)은 aria-hidden, 읽을 내용은 실제 텍스트로 둔다.
-import { html, render, icon, on } from '../ui.js';
+import { html, render, icon, on, logoMark } from '../ui.js';
 import { reduced } from '../motion.js';
 
 const WORDS = [
@@ -229,7 +229,7 @@ export default {
         </section>
 
         <footer class="lp-footer">
-          <span class="lp-footer__brand"><span class="logo-mark" aria-hidden="true">영</span> 영단마스터</span>
+          <span class="lp-footer__brand">${logoMark()} 영단마스터</span>
           <a href="/privacy.html">개인정보처리방침</a>
           <span class="lp-footer__copy">© ${new Date().getFullYear()} 영단마스터</span>
         </footer>

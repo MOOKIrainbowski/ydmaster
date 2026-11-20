@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="영단마스터 콩방울 영이 로고">
+  <defs>
+    <linearGradient id="ydm-logo-body" x1=".12" y1="0" x2=".9" y2="1"><stop stop-color="#FB7185"/><stop offset=".55" stop-color="#D946EF"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+    <linearGradient id="ydm-logo-leaf" x1=".2" y1="0" x2=".8" y2="1"><stop stop-color="#FFE4E8"/><stop offset="1" stop-color="#FFF"/></linearGradient>
+  </defs>
+  <path d="M32 15C15 15 2 28 2 44c0 11 11 17 30 17s30-6 30-17c0-16-13-29-30-29z" fill="url(#ydm-logo-body)"/>
+  <path d="M31 18C23 16 17 10 16 4c8 2 14 7 17 14z" fill="url(#ydm-logo-leaf)" stroke="#BE185D" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M33 18c3-7 9-12 17-14-1 6-7 12-16 14z" fill="url(#ydm-logo-leaf)" stroke="#BE185D" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M31 17 19 7m14 10L46 7" fill="none" stroke="#BE185D" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="22" cy="40" rx="7.5" ry="9" fill="#fff"/><circle cx="22" cy="41" r="4" fill="#32113D"/>
+  <ellipse cx="42" cy="40" rx="7.5" ry="9" fill="#fff"/><circle cx="42" cy="41" r="4" fill="#32113D"/>
+</svg>

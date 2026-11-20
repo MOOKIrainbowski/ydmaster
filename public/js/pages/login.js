@@ -8,7 +8,7 @@
 // 로그인↔가입 등 단계 전환은 카드 높이·내용·탭 표시가 부드럽게 미끄러지도록.
 import { api } from '../api.js';
 import { state, setUser } from '../state.js';
-import { html, render, on, toast, confirmDialog, busy, icon, $ } from '../ui.js';
+import { html, render, on, toast, confirmDialog, busy, icon, $, logoMark } from '../ui.js';
 import { reduced } from '../motion.js';
 import { mountMascot } from '../mascot.js';
 
@@ -99,7 +99,7 @@ export default {
     let shownTab = tab;
     const tabIndex = t => (t === 'register' ? 1 : 0);
     const draw = () => render(card, html`
-        <div class="auth-brand"><span class="logo-mark" aria-hidden="true">영</span>${GREET[tab] ? html`<p class="muted">${GREET[tab]}</p>` : ''}</div>
+        <div class="auth-brand">${logoMark()}${GREET[tab] ? html`<p class="muted">${GREET[tab]}</p>` : ''}</div>
         <h1 class="section__title">${TITLES[tab]}</h1>
         ${oauthError ? html`<div class="auth-alert" role="alert">${icon('alert', 20)}<div><strong>소셜 로그인에 실패했어요</strong><span>${oauthError}</span><span class="muted">잠시 후 다시 시도하거나 이메일로 로그인해주세요. 계속되면 문의하기로 알려주세요.</span></div></div>` : ''}
         ${tab === 'login' || tab === 'register' ? html`<div class="tabs tabs--slide" role="tablist" style="--at:${tabIndex(shownTab)}"><button class="tabs__tab${tab === 'login' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'login'}" type="button" data-tab="login">로그인</button><button class="tabs__tab${tab === 'register' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'register'}" type="button" data-tab="register">가입</button></div>` : ''}

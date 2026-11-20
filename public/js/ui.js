@@ -183,6 +183,9 @@ export const avatar = (u, size = 40) => u?.avatarUrl
   ? html`<img class="avatar" src="${u.avatarUrl}" alt="" width="${size}" height="${size}" loading="lazy">`
   : html`<span class="avatar avatar--letter" style="--size:${size}px" aria-hidden="true">${(u?.username || '?')[0].toUpperCase()}</span>`;
 
+// 로고 마크 = 마스코트 '영이' 머리(03 결정 M1, 에셋은 public/brand/logo.svg 한 곳)
+export const logoMark = () => raw('<img class="logo-mark" src="/brand/logo.svg" alt="" width="64" height="64" decoding="async">');
+
 // 영어 발음(브라우저 TTS). 없는 환경은 조용히 무시.
 export function speak(text, lang = 'en-US') {
   if (!('speechSynthesis' in window)) return false;

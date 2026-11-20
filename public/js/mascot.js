@@ -1,4 +1,5 @@
 // 로그인 화면 오른쪽의 마스코트 '영이'와 장난감들(2026-11-20 사용자 요청: 로그인할 때 소소한 웃음을 주는 이스터에그·기믹).
+// 캐릭터 그림은 public/brand/mascot.svg 한 곳(03 Codex 와 공동 창작, 결정 M1)을 불러와 넣는다 — 로고·파비콘과 같은 원본.
 // 화면에 붙이면 스스로 움직이고, 로그인 결과는 react('happy'|'sad') 로 알려준다. 해제 함수 반환.
 //  - 눈동자가 포인터를, 입력 중에는 입력칸을 따라본다
 //  - 비밀번호 칸에 들어가면 두 손으로 눈을 가린다(안 봤어요)
@@ -35,25 +36,7 @@ export function mountMascot(host) {
       <div class="fun__stage">
         <p class="fun__bubble" data-bubble role="status" aria-live="polite"></p>
         <button class="mascot" type="button" data-mascot aria-label="마스코트 영이 쓰다듬기">
-          <svg viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-            <defs>
-              <linearGradient id="mascot-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FB7185"/><stop offset=".55" stop-color="#D946EF"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
-            </defs>
-            <ellipse class="mascot__shadow" cx="100" cy="186" rx="52" ry="8"/>
-            <g class="mascot__body">
-              <path d="M100 22c46 0 74 34 74 82 0 46-30 74-74 74s-74-28-74-74c0-48 28-82 74-82z" fill="url(#mascot-body)"/>
-              <path class="mascot__shine" d="M62 52c10-12 24-17 36-17" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".45"/>
-              <g class="mascot__eyes">
-                <g class="mascot__eye"><ellipse cx="74" cy="98" rx="17" ry="19" fill="#fff"/><circle class="mascot__pupil" cx="74" cy="100" r="8" fill="#2A1033"/><circle class="mascot__glint" cx="77" cy="96" r="2.6" fill="#fff"/></g>
-                <g class="mascot__eye"><ellipse cx="126" cy="98" rx="17" ry="19" fill="#fff"/><circle class="mascot__pupil" cx="126" cy="100" r="8" fill="#2A1033"/><circle class="mascot__glint" cx="129" cy="96" r="2.6" fill="#fff"/></g>
-              </g>
-              <path class="mascot__lid" d="M57 99q17 10 34 0M109 99q17 10 34 0" fill="none" stroke="#2A1033" stroke-width="4" stroke-linecap="round"/>
-              <ellipse cx="58" cy="124" rx="10" ry="6" fill="#FFE4E8" opacity=".55"/><ellipse cx="142" cy="124" rx="10" ry="6" fill="#FFE4E8" opacity=".55"/>
-              <path class="mascot__mouth" d="M88 128q12 12 24 0" fill="none" stroke="#2A1033" stroke-width="4" stroke-linecap="round"/>
-              <g class="mascot__hands"><ellipse class="mascot__hand mascot__hand--l" cx="74" cy="166" rx="20" ry="15" fill="#F472B6"/><ellipse class="mascot__hand mascot__hand--r" cx="126" cy="166" rx="20" ry="15" fill="#A78BFA"/></g>
-            </g>
-            <g class="mascot__zzz" fill="#8B5CF6" font-weight="800"><text x="150" y="44" font-size="18">z</text><text x="164" y="28" font-size="24">Z</text></g>
-          </svg>
+          <img class="mascot__fallback" src="/brand/logo.svg" alt="" width="200" height="200">
         </button>
         <p class="fun__caption">영이 · 영단마스터 마스코트</p>
       </div>
@@ -62,7 +45,15 @@ export function mountMascot(host) {
   const fun = host.querySelector('[data-fun]');
   const mascot = host.querySelector('[data-mascot]');
   const bubble = host.querySelector('[data-bubble]');
-  const pupils = [...host.querySelectorAll('.mascot__pupil')];
+  let pupils = [];
+  // 캐릭터 SVG 를 인라인으로 넣어야 눈·손 애니메이션이 붙는다(<img> 로는 내부 요소를 못 움직임)
+  fetch('/brand/mascot.svg').then(r => (r.ok ? r.text() : Promise.reject(r.status))).then(svg => {
+    if (!mascot.isConnected) return;
+    mascot.innerHTML = svg.replace(/<\?xml[^>]*\?>/, ''); // XML 선언만 제거(svg 태그 속성은 건드리지 않게)
+    const el = mascot.querySelector('svg');
+    el.removeAttribute('role'); el.setAttribute('aria-hidden', 'true'); el.setAttribute('focusable', 'false');
+    pupils = [...mascot.querySelectorAll('.mascot__pupil')];
+  }).catch(() => { /* 못 불러오면 로고 그림으로 대신 */ });
   const timers = new Set();
   const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); fn(); }, ms); timers.add(t); return t; };
   let pets = 0, sleepT = 0, sayT = 0, joke = Math.floor(Math.random() * JOKES.length);

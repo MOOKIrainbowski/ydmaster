@@ -450,3 +450,33 @@ ul.stack, ol.stack { margin: 0; padding: 0; list-style: none; }
 .flash-card__face { border-radius: var(--r-xl); }
 /* 팝업 스크롤바의 원인: 유리 테두리 장식(::after)이 inset:-1px 로 1px 삐져나와 늘 1px 스크롤이 생겼음 */
 .modal::after { inset: 0 !important; }
+
+/* ── 03 간격 정리(2026-11-20, 화면 측정 스크립트로 찾은 불일치) ── */
+/* 쌓기(stack)·머리줄 안에서는 간격을 gap 하나로만: 제목·문단의 브라우저 기본 아래 여백이 더해져
+   16px 사이에 28·32px 이 섞이던 문제(단어 카드 제목, 세트 수정 폼, 위험 구역 등) */
+:where(.stack, .section__head, .btn-row) > :where(h1, h2, h3, p, ul, ol, dl) { margin-bottom: 0; }
+/* 페이지 섹션의 세로 리듬: 제목 → 탭 → 조작부 → 목록 사이 20px 로 통일
+   (탐색 20/20/24/16, 랭킹 20/16/24/24, 오답 16/32, 친구 탭과 목록 0px 이던 것) */
+.section:not(.stack) > * { margin-top: 0; margin-bottom: 0; }
+.section:not(.stack) > * + * { margin-top: var(--space-5); }
+.section:not(.stack) > .section__title + .muted { margin-top: 6px; } /* 제목 바로 아래 부제는 붙여서 한 덩어리로 */
+.section:not(.stack) > .section { margin-top: var(--space-8); }
+/* 로그인 카드: 16·36·36·40 으로 들쭉날쭉하던 것을 20 하나로 */
+.auth-card { gap: var(--space-5); }
+.auth-card > .section__title, .auth-card > .tabs, .auth-card > .stack, .login-card > .tabs, .login-card > .stack { margin-bottom: 0; }
+/* 시험 하단 버튼 줄: 긴 문항에서 내용 위에 겹쳐 떠 있어도 읽히도록 유리 받침(둥근 독),
+   모바일에서 화면 여백 밖으로 16px 삐져나가던 음수 여백 제거. 피드백 카드가 들어오면 받침은 숨김 */
+.play__foot { bottom: max(12px, env(safe-area-inset-bottom)); margin: 0 0 12px; padding: 12px; border: 1px solid var(--glass-border); border-radius: var(--r-xl); background: var(--glass-bg-strong); box-shadow: var(--shadow-2); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.play__foot:has(.feedback) { padding: 0; border-color: transparent; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+@media (max-width: 768px) { .play__foot { margin-inline: 0; padding-inline: 12px; } }
+
+/* 로고 마크 = 마스코트 머리 이미지(03 M1). 예전 글자 '영' 상자의 배경·글자 스타일을 끔(landing.css 의 같은 규칙도 덮음) */
+img.logo-mark, .lp img.logo-mark { display: block; flex: none; width: 34px; height: 34px; padding: 0; border-radius: 0; background: none; box-shadow: none; object-fit: contain; filter: drop-shadow(0 3px 6px rgb(192 38 211 / 28%)); }
+.auth-brand img.logo-mark { width: 52px; height: 52px; } /* 계약 크기 52px(Codex 리뷰 3-2) */
+.lp-footer__brand img.logo-mark { display: inline-block; width: 26px; height: 26px; vertical-align: middle; }
+.mascot__fallback { display: block; width: 100%; height: auto; }
+.mascot__lid, .mascot__zzz { opacity: 0; } /* 원본 SVG 기본값과 같게(CSS 우선) */
+/* 원본 mascot.svg 에는 width/height 가 없어 인라인으로 넣으면 브라우저 기본 높이 150px 이 되어
+   비율이 깨지고 아래 설명·카드와 겹쳤음 → 정사각 비율 고정 */
+.mascot svg { aspect-ratio: 1 / 1; height: auto; }
+@media (max-width: 900px) { .auth-brand img.logo-mark { display: none; } } /* 좁은 화면엔 카드 위 마스코트가 있어 로고 중복 */

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>영단마스터 마스코트 시안</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px; color: #27152f; background: #fff7fa; font: 15px/1.5 system-ui, sans-serif; }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 36px); }
+    .intro { margin: 0 0 28px; color: #634e68; }
+    .concepts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    article { min-width: 0; padding: 18px; border: 1px solid #ead8ef; border-radius: 22px; background: #fff; box-shadow: 0 12px 32px #5b246114; }
+    h2 { margin: 0 0 4px; font-size: 20px; }
+    article p { min-height: 3em; margin: 0; color: #634e68; }
+    .sizes { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .sample { display: grid; justify-items: center; gap: 5px; color: #786a7c; font-size: 11px; }
+    .tile { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 16px; background: #fff1f2; }
+    .sample--large .tile { width: 200px; height: 200px; }
+    .tile img { max-width: 100%; max-height: 100%; }
+    .tile img { width: var(--size); height: var(--size); }
+    .dark { background: #24152e; }
+    .dark img { filter: drop-shadow(0 1px 1px #fff8); }
+    @media (max-width: 850px) { body { padding: 20px; } .concepts { grid-template-columns: 1fr; } article p { min-height: 0; } }
+  </style>
+</head>
+<body>
+  <h1>영단마스터 마스코트 시안</h1>
+  <p class="intro">라이트·다크 바탕에서 200, 64, 32, 16px 축소 형태를 비교합니다.</p>
+  <main class="concepts">
+    <article>
+      <h2>A · 콩방울 영이</h2><p>단어를 품고 싹을 틔우는 보송한 물방울 친구.</p>
+      <div class="sizes">
+        <div class="sample sample--large"><span class="tile"><img src="a.svg" width="200" height="200" alt=""></span>200px 밝은 배경</div>
+        <div class="sample sample--large"><span class="tile dark"><img src="a.svg" width="200" height="200" alt=""></span>200px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="a.svg" style="--size:64px" alt=""></span>64px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="a.svg" style="--size:64px" alt=""></span>64px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="a.svg" style="--size:32px" alt=""></span>32px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="a.svg" style="--size:32px" alt=""></span>32px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="a.svg" style="--size:16px" alt=""></span>16px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="a.svg" style="--size:16px" alt=""></span>16px 어두운 배경</div>
+      </div>
+    </article>
+    <article>
+      <h2>B · 책갈피 요정 북키</h2><p>페이지 사이에서 오늘 외울 문장을 찾아주는 작은 책 요정.</p>
+      <div class="sizes">
+        <div class="sample sample--large"><span class="tile"><img src="b.svg" width="200" height="200" alt=""></span>200px 밝은 배경</div>
+        <div class="sample sample--large"><span class="tile dark"><img src="b.svg" width="200" height="200" alt=""></span>200px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="b.svg" style="--size:64px" alt=""></span>64px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="b.svg" style="--size:64px" alt=""></span>64px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="b.svg" style="--size:32px" alt=""></span>32px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="b.svg" style="--size:32px" alt=""></span>32px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="b.svg" style="--size:16px" alt=""></span>16px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="b.svg" style="--size:16px" alt=""></span>16px 어두운 배경</div>
+      </div>
+    </article>
+    <article>
+      <h2>C · 형광펜 요정 하이라잇</h2><p>중요한 표현을 반짝 표시해 기억을 돕는 장난꾸러기.</p>
+      <div class="sizes">
+        <div class="sample sample--large"><span class="tile"><img src="c.svg" width="200" height="200" alt=""></span>200px 밝은 배경</div>
+        <div class="sample sample--large"><span class="tile dark"><img src="c.svg" width="200" height="200" alt=""></span>200px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="c.svg" style="--size:64px" alt=""></span>64px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="c.svg" style="--size:64px" alt=""></span>64px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="c.svg" style="--size:32px" alt=""></span>32px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="c.svg" style="--size:32px" alt=""></span>32px 어두운 배경</div>
+        <div class="sample"><span class="tile"><img src="c.svg" style="--size:16px" alt=""></span>16px 밝은 배경</div>
+        <div class="sample"><span class="tile dark"><img src="c.svg" style="--size:16px" alt=""></span>16px 어두운 배경</div>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

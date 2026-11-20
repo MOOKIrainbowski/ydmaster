@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="형광펜 요정 하이라잇 시안">
+  <defs>
+    <linearGradient id="ydm-c-barrel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FB7185"/><stop offset=".48" stop-color="#D946EF"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+    <linearGradient id="ydm-c-cap" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#FCE7F3"/><stop offset="1" stop-color="#C4B5FD"/></linearGradient>
+  </defs>
+  <ellipse class="mascot__shadow" cx="100" cy="187" rx="51" ry="7" fill="#32113D" opacity=".18"/>
+  <g class="mascot__body">
+    <path d="M71 38q0-12 12-12h34q12 0 12 12v12h10q12 0 12 12v91q0 15-15 15H64q-15 0-15-15V62q0-12 12-12h10z" fill="url(#ydm-c-barrel)" stroke="#8125A5" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M71 50h58v20H71z" fill="url(#ydm-c-cap)" stroke="#8125A5" stroke-width="3"/>
+    <path d="M83 39V27q0-8 8-8h20q8 0 8 8v12" fill="none" stroke="#FFF1F2" stroke-width="6" stroke-linecap="round"/>
+    <path d="M62 79h76v17H62z" fill="#FFE4E8" opacity=".85"/>
+    <path d="M70 87h60" stroke="#C026D3" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+    <path d="M77 108c8-8 16-8 23 0s15 8 23 0" fill="none" stroke="#FBCFE8" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+    <g class="mascot__eyes">
+      <g class="mascot__eye"><ellipse cx="81" cy="104" rx="14" ry="17" fill="#fff"/><circle class="mascot__pupil" cx="81" cy="106" r="7" fill="#32113D"/><circle class="mascot__glint" cx="84" cy="102" r="2.5" fill="#fff"/></g>
+      <g class="mascot__eye"><ellipse cx="119" cy="104" rx="14" ry="17" fill="#fff"/><circle class="mascot__pupil" cx="119" cy="106" r="7" fill="#32113D"/><circle class="mascot__glint" cx="122" cy="102" r="2.5" fill="#fff"/></g>
+    </g>
+    <path class="mascot__lid" d="M67 106q14 9 28 0m10 0q14 9 28 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round"/>
+    <path class="mascot__mouth" d="M91 142q9 8 18 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round"/>
+    <ellipse class="mascot__hand mascot__hand--l" cx="54" cy="168" rx="19" ry="14" fill="#FB7185" stroke="#FFE4E8" stroke-width="2"/>
+    <ellipse class="mascot__hand mascot__hand--r" cx="146" cy="168" rx="19" ry="14" fill="#A78BFA" stroke="#FFE4E8" stroke-width="2"/>
+  </g>
+  <g class="mascot__zzz" fill="none" stroke="#7C3AED" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="m151 47 15 0-15 15 15 0m-4-31 13 0-13 13 13 0"/></g>
+</svg>

@@ -1,7 +1,7 @@
 // 앱 셸 + 해시 라우터 — 계약 §4. 페이지 모듈은 필요할 때만 불러온다(첫 로드 최소화, R4).
 import { state, setUser, onUser, getTheme, setTheme } from './state.js';
 import { api, ApiError } from './api.js';
-import { html, render, icon, on, toast, closeAllModals, errorBox, empty, avatar } from './ui.js';
+import { html, render, icon, on, toast, closeAllModals, errorBox, empty, avatar, logoMark } from './ui.js';
 import { initMotion, viewTransition } from './motion.js';
 import { initUpdateCheck } from './update.js';
 
@@ -46,7 +46,7 @@ function shell(active, mod = {}) {
   render(app, html`
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
     <header class="topbar glass">
-      <a class="topbar__brand" href="#/" aria-label="영단마스터 홈"><span class="logo-mark" aria-hidden="true">영</span><span class="topbar__name">영단마스터</span></a>
+      <a class="topbar__brand" href="#/" aria-label="영단마스터 홈">${logoMark()}<span class="topbar__name">영단마스터</span></a>
       ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map(t => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span>${t.label}</span></a>`; })}</nav>
         <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 34)}</a>`
       : active === 'login' ? '' : html`<div class="topbar__guest"><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}

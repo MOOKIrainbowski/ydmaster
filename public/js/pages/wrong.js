@@ -26,7 +26,7 @@ export default {
         })}</div>` : empty({ icon: 'check', title: '복습할 오답이 없어요', desc: '시험을 풀면 다시 확인할 문항이 여기에 모여요.' });
       render(root, html`<div class="page"><section class="section"><div class="section__head"><h1 class="section__title">오답 복습</h1><div class="btn-row"><button class="btn btn--primary btn--sm" data-review="vocab">단어 복습</button><button class="btn btn--ghost btn--sm" data-review="passage">본문 복습</button></div></div>
         <div class="tabs" role="tablist"><button class="tabs__tab${tab === 'vocab' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'vocab'}" data-tab="vocab">단어</button><button class="tabs__tab${tab === 'passage' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'passage'}" data-tab="passage">본문</button><button class="tabs__tab${tab === 'legacy' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'legacy'}" data-tab="legacy">이전 노트</button></div>
-        <div class="section">${content}</div></section></div>`);
+        <div>${content}</div></section></div>`);
     };
     await load();
     const offs = [on(root, 'click', '[data-tab]', (_e, el) => { tab = el.dataset.tab; draw(); }),

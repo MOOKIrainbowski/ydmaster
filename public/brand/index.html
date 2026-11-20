@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>영단마스터 브랜드 에셋 확인</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; color: #27152f; background: #fff7fa; font: 15px/1.5 system-ui, sans-serif; }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 36px); }
+    .intro { margin: 0 0 24px; color: #634e68; }
+    section { margin: 0 0 30px; }
+    h2 { margin: 0 0 12px; font-size: 21px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .sample { min-width: 0; padding: 12px; border: 1px solid #ead8ef; border-radius: 16px; background: white; }
+    .sample--large { grid-column: span 2; }
+    .label { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 8px; color: #634e68; font-size: 12px; }
+    .stage { display: grid; place-items: center; width: 100%; min-height: 76px; overflow: auto; border-radius: 12px; background: #fff1f4; }
+    .stage--dark { background: #21152a; }
+    .stage img { display: block; flex: none; max-width: none; }
+    .transparent { background-image: linear-gradient(45deg,#eee 25%,transparent 25%),linear-gradient(-45deg,#eee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eee 75%),linear-gradient(-45deg,transparent 75%,#eee 75%); background-size: 16px 16px; background-position: 0 0,0 8px,8px -8px,-8px 0; }
+    @media (max-width: 560px) { body { padding: 18px; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  </style>
+</head>
+<body>
+  <h1>영단마스터 브랜드 에셋</h1>
+  <p class="intro">파일의 실제 픽셀 크기를 밝은 배경과 어두운 배경에서 확인합니다. 큰 샘플은 카드 안에서 스크롤할 수 있습니다.</p>
+  <main id="preview"></main>
+  <script>
+    const sets = [
+      ['전신 마스코트 SVG', 'mascot.svg', [16, 26, 32, 34, 52, 64, 200], false],
+      ['캐릭터 로고 SVG', 'logo.svg', [26, 34, 52, 64], false],
+      ['파비콘 SVG', '../favicon.svg', [16, 32, 64], false],
+      ['PNG 아이콘', '../icons/favicon-32.png', [32]],
+      ['PNG 아이콘', '../icons/apple-touch-icon.png', [180]],
+      ['PNG 아이콘', '../icons/icon-192.png', [192]],
+      ['PNG 아이콘', '../icons/icon-512.png', [512], true],
+      ['PNG 아이콘', '../icons/icon-maskable-512.png', [512], false],
+    ];
+    const root = document.querySelector('#preview');
+    for (const [title, src, sizes, transparent] of sets) {
+      const section = document.createElement('section');
+      const heading = document.createElement('h2'); heading.textContent = title; section.append(heading);
+      const grid = document.createElement('div'); grid.className = 'grid';
+      for (const size of sizes) for (const mode of ['light', 'dark']) {
+        const card = document.createElement('article'); card.className = `sample${size === 200 ? ' sample--large' : ''}`;
+        const label = document.createElement('p'); label.className = 'label'; label.textContent = `${size} × ${size}px · ${mode === 'light' ? '밝은 배경' : '어두운 배경'}`;
+        const stage = document.createElement('div'); stage.className = `stage${mode === 'dark' ? ' stage--dark' : ''}${transparent ? ' transparent' : ''}`;
+        const img = document.createElement('img'); img.src = src; img.width = size; img.height = size; img.alt = '';
+        stage.append(img); card.append(label, stage); grid.append(card);
+      }
+      section.append(grid); root.append(section);
+    }
+  </script>
+</body>
+</html>
