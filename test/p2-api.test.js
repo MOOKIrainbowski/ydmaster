@@ -90,6 +90,12 @@ test('세션: 서버 채점·중복 답 멱등·종료 멱등·결과·오답·�
   assert.equal(stats.data.weekLearned, 1);
   assert.equal(stats.data.wrongCount, 1);
   assert.equal(stats.data.streakDays, 1);
+  // 게임(04): 결과 경험치 = 맞힘 1×10 + 완주 20, /stats 집계가 game.js 규칙과 같음
+  assert.equal(f1.data.xp, 30);
+  assert.equal(stats.data.game.xp, 30);
+  assert.equal(stats.data.game.level, 1);
+  assert.equal(stats.data.game.achievements.find(x => x.id === 'first').got, true);
+  assert.equal(stats.data.game.achievements.find(x => x.id === 'perfect').got, false);
 
   // 오답 복습 세션 → 2번 연속 맞히면 오답에서 빠짐
   for (let k = 0; k < 2; k++) {

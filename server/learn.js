@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 import { buildQuestions, grade, expectedOf, MODES, MODE_BY_ID, GenError } from './generators.js';
 import { plainText } from '../public/js/shared/passage.js';
+import { xpOf, levelOf, achievementsOf, XP } from './game.js';
 
 const { ObjectId } = mongoose.Types;
 const LIMITS = { items: 500, sentences: 80, term: 200, meaning: 200, example: 300, en: 600, ko: 600, tags: 10, tag: 20 };
@@ -406,6 +407,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       _id: r._id, title: r.testTitle, mode: r.mode || 'legacy', modeLabel: MODE_BY_ID[r.mode]?.label || '이전 방식 시험',
       kind: r.kind || 'vocab', total: r.totalQuestions, correct: r.correctAnswers, percentage: r.percentage,
       timeTaken: r.timeTaken, createdAt: r.createdAt, session: r.session, setIds: s?.source?.ids || (r.test ? [r.test] : []),
+      xp: xpOf(r),
     };
     if (!s) return base;
     const byI = new Map(s.answers.map(a => [a.i, a]));
@@ -432,7 +434,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
 
   app.get('/api/stats', auth, wrap(async (req, res) => {
     const since = weekStartKST();
-    const [sets, attempts, wrongCount, weekLearned, days] = await Promise.all([
+    const [sets, attempts, wrongCount, weekLearned, days, xpAgg, learned] = await Promise.all([
       Test.countDocuments({ author: req.user._id }),
       Result.countDocuments({ user: req.user._id }),
       ItemStat.countDocuments({ user: req.user._id, wrong: { $gt: 0 }, streak: { $lt: 2 } }),
@@ -441,6 +443,13 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
         { $match: { user: req.user._id, createdAt: { $gte: new Date(Date.now() - 400 * 864e5) } } },
         { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } } } },
       ]),
+      // 경험치는 결과에서 매번 계산(game.js 규칙과 같은 식 — golden 테스트로 일치 확인)
+      Result.aggregate([
+        { $match: { user: req.user._id } },
+        { $group: { _id: null, correct: { $sum: { $ifNull: ['$correctAnswers', 0] } }, n: { $sum: 1 },
+          perfects: { $sum: { $cond: [{ $and: [{ $gte: ['$totalQuestions', XP.perfectMin] }, { $eq: ['$correctAnswers', '$totalQuestions'] }] }, 1, 0] } } } },
+      ]),
+      learnedCount(req.user._id, null),
     ]);
     // 연속 학습일: 오늘(또는 어제)부터 거꾸로 이어진 날 수
     const set = new Set(days.map(d => d._id));
@@ -448,7 +457,10 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     let streakDays = 0, t = Date.now();
     if (!set.has(kst(t))) t -= 864e5;
     while (set.has(kst(t))) { streakDays++; t -= 864e5; }
-    res.json({ sets, attempts, wrongCount, weekLearned, streakDays });
+    const g = xpAgg[0] || { correct: 0, n: 0, perfects: 0 };
+    const xp = g.correct * XP.perCorrect + g.n * XP.perFinish + g.perfects * XP.perfectBonus;
+    res.json({ sets, attempts, wrongCount, weekLearned, streakDays, learned, perfects: g.perfects,
+      game: { ...levelOf(xp), achievements: achievementsOf({ attempts, perfects: g.perfects, streakDays, learned, sets, xp }) } });
   }));
 
   // ── 오답(학습 기록) ──

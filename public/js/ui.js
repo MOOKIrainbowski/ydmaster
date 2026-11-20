@@ -132,6 +132,7 @@ const ICONS = {
   copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
   play: 'M7 4v16l13-8z',
   volume: 'M11 5 6 9H3v6h3l5 4zm4.5 3.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13',
+  volumeOff: 'M11 5 6 9H3v6h3l5 4zm5 4.5 5 5m0-5-5 5',
   chevronLeft: 'm15 18-6-6 6-6',
   chevronRight: 'm9 18 6-6-6-6',
   chevronUp: 'm18 15-6-6-6 6',

@@ -2,7 +2,9 @@
 import { api } from '../api.js';
 import { html, render, icon, on, $$, fmtDuration, fmtDate } from '../ui.js';
 import { startTest } from '../start.js';
-import { burst, reduced } from '../motion.js';
+import { burst, reduced, countUp } from '../motion.js';
+import { state } from '../state.js';
+import { sfx, banner, starsOf, starRow, levelBar, badge, newAchievements } from '../game.js';
 
 // 점수 링: 원둘레 2πr(r=78) 중 점수 비율만큼 그라데이션 획을 그린다(02 §3.5)
 const RING_C = 2 * Math.PI * 78;
@@ -21,6 +23,10 @@ export default {
   async render(root, { id }, query, ctx) {
     const r = await api.get(`/results/${id}`);
     if (!ctx.isCurrent()) return;
+    // fresh: 방금 끝낸 시험(play.js 가 붙임). 주소에서 지워 새로고침해도 축하가 반복되지 않게(hashchange 없이)
+    const fresh = query.fresh === '1';
+    if (fresh) history.replaceState(null, '', `#/result/${id}`);
+    const stars = starsOf(r.percentage);
     const qs = r.questions || [];
     const wrongCount = qs.filter(x => !x.correct).length;
     const grade = r.percentage >= 90 ? '훌륭해요' : r.percentage >= 70 ? '잘했어요' : r.percentage >= 40 ? '조금만 더' : '다시 도전해요';
@@ -31,6 +37,11 @@ export default {
           <p class="result-summary__mode">${r.modeLabel} · ${r.title}</p>
           ${scoreRing(r.percentage)}
           <p class="result-summary__grade">${grade}</p>
+          ${starRow(fresh ? 0 : stars)}
+          <div class="result-xp">
+            <p class="result-xp__gain">+<span data-xpgain>${fresh ? 0 : r.xp}</span> XP</p>
+            <div data-level></div>
+          </div>
           <dl class="stat-row">
             <div><dt>맞힘</dt><dd>${r.correct} / ${r.total}</dd></div>
             <div><dt>걸린 시간</dt><dd>${fmtDuration(r.timeTaken)}</dd></div>
@@ -43,6 +54,7 @@ export default {
           </div>
         </section>
 
+        <section class="section" data-ach hidden></section>
         ${qs.length ? html`
           <section class="section">
             <div class="section__head">
@@ -71,15 +83,48 @@ export default {
       }, 700);
     }
 
+    // 04 게임 연출: 별이 하나씩 → 경험치 카운트업 → 레벨 막대가 이번 경험치만큼 차오름(레벨 업이면 축하) → 새 업적
+    const timers = [];
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    if (fresh) {
+      for (let k = 0; k < stars; k++) later(() => { const st = root.querySelectorAll('.star')[k]; st?.classList.add('is-on', 'is-pop'); sfx.star(k); }, 900 + k * 260);
+      later(() => { const el = root.querySelector('[data-xpgain]'); if (el) countUp(el, r.xp, 800); }, 900 + stars * 260);
+    }
+    api.get('/stats').then(st => {
+      if (!ctx.isCurrent() || !st.game) return;
+      const g = st.game, slot = root.querySelector('[data-level]');
+      if (!slot) return;
+      // 이번 결과를 빼면 어디서 출발했는지 → 막대를 거기서부터 채움
+      const before = Math.max(0, g.xp - (fresh ? r.xp : 0));
+      const lvUp = fresh && levelFrom(before) < g.level;
+      slot.innerHTML = String(levelBar(fresh ? { ...g, ...levelInfo(before, g) } : g));
+      if (fresh) later(() => {
+        const fill = slot.querySelector('[data-lvfill]');
+        if (lvUp) {
+          fill.style.setProperty('--p', 1);
+          later(() => { slot.innerHTML = String(levelBar(g)); sfx.levelUp(); banner(`레벨 업! Lv.${g.level}`, g.title, 'level'); }, 700);
+        } else fill.style.setProperty('--p', g.need ? g.into / g.need : 0);
+        slot.querySelector('[data-lvnum]').textContent = `${g.into} / ${g.need} XP`;
+      }, 1500 + stars * 260);
+      const fresh_ = newAchievements(state.user?.id || state.user?._id, g.achievements);
+      if (fresh && fresh_.length) later(() => {
+        const box = root.querySelector('[data-ach]');
+        box.hidden = false;
+        box.innerHTML = String(html`<div class="section__head"><h2 class="section__title">새 업적 달성!</h2></div><div class="ach-grid">${fresh_.map(badge)}</div>`);
+        box.querySelectorAll('.ach').forEach((a, k) => setTimeout(() => a.classList.add('is-pop'), k * 160));
+        sfx.combo();
+      }, lvUp ? 3300 : 2200);
+    }).catch(() => { /* 레벨 정보 없이도 결과는 보임 */ });
+
     const offs = [
-      on(root, 'click', '[data-again]', () => startTest({ setIds: r.setIds, kind: r.kind, defaultMode: r.mode })),
+      on(root, 'click', '[data-again]', () => startTest({ setIds: r.setIds, kind: r.kind, defaultMode: r.mode, info: { title: r.title } })),
       on(root, 'click', '[data-review]', () => startTest({ source: 'wrong', kind: r.kind, defaultMode: r.mode })),
       on(root, 'click', '[data-filter]', (e, b) => {
         $$('[data-filter]', root).forEach(t => { t.classList.toggle('is-active', t === b); t.setAttribute('aria-selected', String(t === b)); });
         $$('.review-item', root).forEach(li => { li.hidden = b.dataset.filter === 'wrong' && li.classList.contains('is-ok'); });
       }),
     ];
-    return () => { clearTimeout(party); offs.forEach(f => f()); };
+    return () => { clearTimeout(party); timers.forEach(clearTimeout); offs.forEach(f => f()); };
   },
 };
 
@@ -114,4 +159,12 @@ function reviewItem(x, k) {
         ${x.detail?.diff ? html`<div><dt>비교</dt><dd class="diff">${x.detail.diff.map(d => html`<span class="diff__${d.op}">${d.t}</span> `)}</dd></div>` : ''}
       </dl>`}
     </li>`;
+}
+
+// 레벨 계산(서버 game.js 와 같은 식: 레벨 n 시작 = 50·n·(n−1)) — 출발점 막대를 그리는 데만 씀
+const xpFor = n => 50 * n * (n - 1);
+function levelFrom(xp) { let n = 1; while (xpFor(n + 1) <= xp) n++; return n; }
+function levelInfo(xp, g) {
+  const n = levelFrom(xp);
+  return { level: n, into: xp - xpFor(n), need: xpFor(n + 1) - xpFor(n), title: g.title };
 }

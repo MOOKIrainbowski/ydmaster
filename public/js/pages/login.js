@@ -5,7 +5,9 @@
 //  - 로그인 직후 사용자 정보가 일부만 채워짐 → /auth/me 로 다시 채움, 이미 로그인 상태면 바로 이동
 //  - 소셜 로그인 오류를 토스트로만 잠깐 보여줌 → 화면에 원인·해결 안내를 남김
 // 2026-11-20 사용자 요청: 입력 카드는 왼쪽, 오른쪽엔 마스코트 장난감(mascot.js),
-// 로그인↔가입 등 단계 전환은 카드 높이·내용·탭 표시가 부드럽게 미끄러지도록.
+// 로그인↔가입 등 단계 전환은 카드 높이·내용이 부드럽게 미끄러지도록.
+// 04(2026-11-20 사용자 요청): 스크롤 없이 한 화면에, 입력칸마다 지우기(x), 아이디 저장·로그인 유지 체크,
+// '비밀번호를 잊으셨나요? · 회원가입' 은 작은 글자 링크(탭 대신).
 import { api } from '../api.js';
 import { state, setUser } from '../state.js';
 import { html, render, on, toast, confirmDialog, busy, icon, $, logoMark } from '../ui.js';
@@ -21,8 +23,16 @@ const pending = {
 let mem = null; // sessionStorage 를 못 쓰는 환경 대비
 const current = () => pending.get() || mem;
 
-const field = (label, name, type = 'text', attrs = '') =>
-  html`<label class="field"><span class="field__label">${label}</span><input class="input" name="${name}" type="${type}" ${attrs} required></label>`;
+// 입력칸 + 한 번에 지우기 버튼(값이 있을 때만 보임)
+const field = (label, name, type = 'text', attrs = '', value = '') =>
+  html`<label class="field"><span class="field__label">${label}</span><span class="input-wrap"><input class="input" name="${name}" type="${type}" value="${value}" ${attrs} required><button class="input-clear" type="button" tabindex="-1" data-clear aria-label="${label} 지우기"${value ? '' : ' hidden'}>${icon('x', 14)}</button></span></label>`;
+
+// 아이디 저장·로그인 유지(이 브라우저에만 저장)
+const PREF = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* 사생활 모드 */ } },
+};
+const SAVED_ID = 'ydm_saved_login', KEEP = 'ydm_keep_login';
 
 const TITLES = { login: '로그인', register: '계정 만들기', verify: '이메일 인증', forgot: '비밀번호 찾기', reset: '비밀번호 재설정' };
 const GREET = { login: '다시 만나서 반가워요', register: '함께 공부를 시작해요' };
@@ -30,9 +40,9 @@ const ORDER = ['login', 'register', 'verify', 'forgot', 'reset'];
 const EASE = 'cubic-bezier(.22, 1, .36, 1)';
 
 // 로그인 성공 공통 처리: 목적지로 먼저 이동 예약 → 토큰 저장 → 전체 사용자 정보로 갱신
-async function signIn(user, token, next) {
+async function signIn(user, token, next, persist = true) {
   location.replace('#' + (next && next.startsWith('/') && !next.startsWith('/login') ? next : '/'));
-  setUser(user, token);
+  setUser(user, token, persist);
   try { const me = await api.get('/auth/me'); setUser(me.user); } catch { /* 기본 정보로도 동작 */ }
 }
 
@@ -61,17 +71,25 @@ export default {
 
     const body = () => {
       const c = current();
-      if (tab === 'login') return html`<form class="stack" data-form="login" novalidate>
-        ${field('이메일 또는 전화번호', 'email', 'text', 'inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false"')}
+      if (tab === 'login') {
+        const saved = PREF.get(SAVED_ID) || '';
+        return html`<form class="stack" data-form="login" novalidate>
+        ${field('이메일 또는 전화번호', 'email', 'text', 'inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false"', saved)}
         ${field('비밀번호', 'password', 'password', 'autocomplete="current-password"')}
         <button class="btn btn--primary btn--block">로그인</button>
-        <button class="btn btn--ghost" type="button" data-tab="forgot">비밀번호를 잊으셨나요?</button></form>`;
+        <div class="auth-checks">
+          <label class="check check--sm"><input type="checkbox" name="remember" ${saved ? 'checked' : ''}> 아이디 저장</label>
+          <label class="check check--sm"><input type="checkbox" name="keep" ${PREF.get(KEEP) === '0' ? '' : 'checked'}> 로그인 유지</label>
+        </div>
+        <p class="auth-links"><button class="link-btn" type="button" data-tab="forgot">비밀번호를 잊으셨나요?</button><span aria-hidden="true">·</span><button class="link-btn link-btn--strong" type="button" data-tab="register">회원가입</button></p></form>`;
+      }
       if (tab === 'register') return html`<form class="stack" data-form="register">
         ${field('사용자명 (2~20자 영문·한글·숫자·_)', 'username', 'text', 'minlength="2" maxlength="20" pattern="[A-Za-z0-9가-힣_]{2,20}" autocomplete="nickname"')}
         ${field('이메일', 'email', 'email', 'autocomplete="email" autocapitalize="off"')}
         ${field('비밀번호 (영문·숫자 포함 8자 이상)', 'password', 'password', 'minlength="8" autocomplete="new-password"')}
         <label class="check"><input type="checkbox" name="agreedToTerms" required> 개인정보 수집·이용에 동의합니다. <a href="/privacy.html" target="_blank" rel="noopener">내용 보기</a></label>
-        <button class="btn btn--primary btn--block">인증 코드 받기</button></form>`;
+        <button class="btn btn--primary btn--block">인증 코드 받기</button>
+        <p class="auth-links"><span>이미 계정이 있나요?</span><button class="link-btn link-btn--strong" type="button" data-tab="login">로그인</button></p></form>`;
       if (tab === 'verify') return html`<form class="stack" data-form="verify">
         <p class="muted"><b>${c?.email || '입력한 이메일'}</b>로 보낸 6자리 인증 코드를 입력하세요. 메일이 안 보이면 스팸함도 확인해주세요. 코드는 10분 동안 유효해요.</p>
         ${field('인증 코드', 'code', 'text', 'inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"')}
@@ -95,16 +113,12 @@ export default {
     const card = $('[data-auth-card]', root);
     const fun = mountMascot($('[data-auth-fun]', root));
 
-    // 탭 표시(알약)는 이전 위치에서 그린 뒤 다음 프레임에 새 위치로 옮겨야 미끄러진다
-    let shownTab = tab;
-    const tabIndex = t => (t === 'register' ? 1 : 0);
+    // 머리줄: 로고 옆에 제목·인사를 한 줄로(세로 공간 절약)
     const draw = () => render(card, html`
-        <div class="auth-brand">${logoMark()}${GREET[tab] ? html`<p class="muted">${GREET[tab]}</p>` : ''}</div>
-        <h1 class="section__title">${TITLES[tab]}</h1>
+        <div class="auth-brand">${logoMark()}<div><h1 class="section__title">${TITLES[tab]}</h1>${GREET[tab] ? html`<p class="muted">${GREET[tab]}</p>` : ''}</div></div>
         ${oauthError ? html`<div class="auth-alert" role="alert">${icon('alert', 20)}<div><strong>소셜 로그인에 실패했어요</strong><span>${oauthError}</span><span class="muted">잠시 후 다시 시도하거나 이메일로 로그인해주세요. 계속되면 문의하기로 알려주세요.</span></div></div>` : ''}
-        ${tab === 'login' || tab === 'register' ? html`<div class="tabs tabs--slide" role="tablist" style="--at:${tabIndex(shownTab)}"><button class="tabs__tab${tab === 'login' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'login'}" type="button" data-tab="login">로그인</button><button class="tabs__tab${tab === 'register' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'register'}" type="button" data-tab="register">가입</button></div>` : ''}
         ${body()}
-        ${tab === 'login' || tab === 'register' ? social() : html`<button class="btn btn--ghost" type="button" data-tab="login">로그인으로 돌아가기</button>`}
+        ${tab === 'login' || tab === 'register' ? social() : html`<p class="auth-links"><button class="link-btn" type="button" data-tab="login">${icon('chevronLeft', 14)}로그인으로 돌아가기</button></p>`}
       `);
     draw();
 
@@ -114,14 +128,12 @@ export default {
       const dir = ORDER.indexOf(next) > ORDER.indexOf(tab) ? 1 : -1;
       const from = card.offsetHeight;
       const keepHead = (tab === 'login' || tab === 'register') && (next === 'login' || next === 'register');
-      shownTab = tab; tab = next; draw();
-      const tabs = $('.tabs--slide', card);
-      requestAnimationFrame(() => { tabs?.style.setProperty('--at', tabIndex(tab)); shownTab = tab; });
+      tab = next; draw();
       if (reduced()) return;
       const to = card.offsetHeight;
       card.style.overflow = 'hidden'; // 높이가 변하는 동안 내용이 넘치지 않게
       card.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 460, easing: EASE }).finished.catch(() => {}).then(() => { card.style.overflow = ''; });
-      const moving = (keepHead ? [$('.section__title', card), $('form', card)] : [$('.auth-brand', card), $('.section__title', card), $('form', card)]).filter(Boolean);
+      const moving = (keepHead ? [$('.auth-brand > div', card), $('form', card)] : [$('.auth-brand', card), $('form', card)]).filter(Boolean);
       moving.forEach((el, k) => el.animate(
         [{ opacity: 0, transform: `translateX(${dir * 28}px)`, filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }],
         { duration: 420, delay: k * 40, easing: EASE, fill: 'backwards' }));
@@ -129,6 +141,13 @@ export default {
     };
 
     const offs = [
+      on(root, 'input', '.input-wrap .input', (_e, el) => { el.parentElement.querySelector('[data-clear]').hidden = !el.value; }),
+      on(root, 'click', '[data-clear]', (e, b) => {
+        e.preventDefault();
+        const input = b.parentElement.querySelector('input');
+        input.value = ''; b.hidden = true; input.focus();
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }),
       on(root, 'click', '[data-tab]', (_e, el) => { oauthError = ''; go(el.dataset.tab); }),
       on(root, 'click', '[data-restart]', (_e, el) => { pending.clear(); go(el.dataset.restart); }),
       on(root, 'click', '[data-resend]', (_e, el) => busy(el, async () => {
@@ -152,7 +171,9 @@ export default {
             if (kind === 'login') {
               const r = await api.post('/auth/login', { email: String(data.email).trim(), password: data.password });
               fun.react('happy');
-              await signIn(r.user, r.token, query.next);
+              PREF.set(SAVED_ID, data.remember === 'on' ? String(data.email).trim() : null);
+              PREF.set(KEEP, data.keep === 'on' ? null : '0');
+              await signIn(r.user, r.token, query.next, data.keep === 'on');
               toast(`${r.user.username}님, 반가워요!`, 'ok');
             } else if (kind === 'register') {
               const r = await api.post('/auth/register', { ...data, agreedToTerms: data.agreedToTerms === 'on' });

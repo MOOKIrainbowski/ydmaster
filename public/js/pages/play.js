@@ -3,6 +3,7 @@
 import { api } from '../api.js';
 import { html, render, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
 import { burstAt, shake, pop } from '../motion.js';
+import { sfx, sfxOn, setSfx, floatText, banner, COMBO_LINES } from '../game.js';
 
 export default {
   title: '시험',
@@ -23,6 +24,10 @@ export default {
     let combo = 0;
     for (const q of s.questions) { const a = answers.get(q.i); if (!a) break; combo = a.correct ? combo + 1 : 0; }
     let shownProgress = Math.max(0, i - 1) / s.total;
+    // 04 게임 연출: 이번 시험에서 쌓는 경험치(표시용 — 실제 경험치는 서버가 결과에서 계산), 절반 응원은 한 번만
+    let runXp = s.answers.filter(a => a.correct).length * 10;
+    let halfCheered = i >= Math.ceil(s.total / 2);
+    const sfxBtn = () => html`<button class="btn btn--icon btn--ghost play__sfx" data-sfx aria-pressed="${sfxOn()}" aria-label="효과음 ${sfxOn() ? '끄기' : '켜기'}">${icon(sfxOn() ? 'volume' : 'volumeOff', 20)}</button>`;
     const comboBadge = () => combo >= 2 ? html`<span class="combo" data-combo>${icon('flame', 16)}<b>${combo}</b>연속</span>` : '';
 
     const view = () => {
@@ -38,12 +43,15 @@ export default {
               <div class="progress__bar" style="width:${shownProgress * 100}%"></div>
             </div>
             <span class="play__combo" data-combo-slot>${comboBadge()}</span>
+            <span class="play__xp" data-xp aria-label="이번 시험 경험치">${icon('star', 14)}<b>${runXp}</b> XP</span>
+            ${sfxBtn()}
             <span class="play__count">${i + 1} / ${s.total}</span>
           </header>
           <section class="play__body" aria-live="polite"><div class="play__card reveal" data-qcard>${question(q)}</div></section>
           <footer class="play__foot" data-foot>${actions(q)}</footer>
         </div>`);
       if (q.speak) speak(q.speak);
+      if (!halfCheered && s.total >= 6 && i === Math.ceil(s.total / 2)) { halfCheered = true; banner('절반 왔어요!', `남은 문항 ${s.total - i}개 — 조금만 더`, 'half'); }
       ($('.blank, .play__input', root) || $('.choice', root))?.focus();
       // 진행바는 이전 위치에서 새 위치로 스프링처럼 차오른다(02 §3.4)
       shownProgress = i / s.total;
@@ -181,10 +189,16 @@ export default {
       $('[data-next]', root).focus();
       // 정답 위치(객관식은 정답 보기, 그 외엔 피드백 아이콘)에서 파티클, 오답은 문항 카드 흔들림
       if (r.correct) {
+        runXp += 10;
+        const xpEl = $('[data-xp] b', root);
+        if (xpEl) { xpEl.textContent = runXp; pop(xpEl.parentElement); }
+        floatText($('.choice.is-ok', root) || $('[data-qcard]', root), '+10 XP');
+        sfx.correct(combo);
+        if (COMBO_LINES[combo]) { banner(...COMBO_LINES[combo]); setTimeout(sfx.combo, 120); }
         const target = $('.choice.is-ok', root) || $('.feedback__head .icon', root);
         pop($('.choice.is-ok', root) || $('.feedback', root));
         if (target) burstAt(target, combo >= 3 ? 26 : 16);
-      } else shake($('[data-qcard]', root));
+      } else { shake($('[data-qcard]', root)); sfx.wrong(); }
     }
 
     async function finish() {
@@ -193,7 +207,8 @@ export default {
       render(root, html`<div class="play"><p class="muted">채점 결과를 정리하는 중…</p></div>`);
       try {
         const r = await api.post(`/sessions/${s._id}/finish`);
-        if (ctx.isCurrent()) location.replace(`#/result/${r._id}`);
+        sfx.finish();
+        if (ctx.isCurrent()) location.replace(`#/result/${r._id}?fresh=1`); // fresh: 결과 화면이 레벨 업·업적 축하를 한 번만
       } catch (e) {
         phase = 'answer';
         render(root, html`<div class="play">${errorBox(e.message, 'data-finish')}</div>`);
@@ -207,6 +222,7 @@ export default {
       on(root, 'click', '[data-skip]', (e, b) => submit(skipResponse(s.questions[i]), b)),
       on(root, 'click', '[data-next]', () => { i++; view(); }),
       on(root, 'click', '[data-finish]', () => finish()),
+      on(root, 'click', '[data-sfx]', (e, b) => { setSfx(!sfxOn()); b.outerHTML = String(sfxBtn()); if (sfxOn()) sfx.flip(); }),
       on(root, 'click', '[data-speak]', (e, b) => { if (!speak(b.dataset.speak)) toast('이 브라우저는 발음 듣기를 지원하지 않아요.', 'info'); }),
       on(root, 'click', '[data-quit]', async () => {
         if (await confirmDialog('지금 끝내면 안 푼 문항은 틀린 것으로 채점돼요.', { title: '시험을 끝낼까요?', ok: '끝내고 결과 보기' })) finish();
