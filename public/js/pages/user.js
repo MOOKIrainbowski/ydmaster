@@ -10,8 +10,9 @@ export default {
       const data = await api.get(`/p/${encodeURIComponent(username)}`);
       if (!ctx.isCurrent()) return;
       const { user, stats, recentTests } = data;
-      let friendship = 'none';
-      if (state.user && String(state.user.id || state.user._id) !== String(user._id)) {
+      const self = state.user && String(state.user.id || state.user._id) === String(user._id);
+      let friendship = self ? 'self' : 'none';
+      if (state.user && !self) {
         try { const friends = await api.get('/friends'); friendship = friends.some(f => String(f._id) === String(user._id)) ? 'friend' : 'none'; } catch { /* 비공개 액션은 숨김 */ }
       }
       if (!ctx.isCurrent()) return;
@@ -22,7 +23,7 @@ export default {
       </article><section class="section"><div class="section__head"><h2 class="section__title">최근 공개 세트</h2></div>
         ${recentTests.length ? html`<div class="set-grid">${recentTests.map((s, i) => html`<a class="set-card reveal spotlight" style="--i:${i}" href="#/sets/${s._id}"><span class="kind-tile kind-tile--${s.kind === 'passage' ? 'passage' : 'vocab'}">${icon(s.kind === 'passage' ? 'text' : 'book', 24)}</span><div class="set-card__head"><h3 class="set-card__title">${s.title}</h3><span class="badge badge--${s.kind === 'passage' ? 'passage' : 'vocab'}">${s.kind === 'passage' ? '본문' : '단어'}</span></div><div class="set-card__meta"><span>${s.count}개</span><span>${fmtDate(s.updatedAt)}</span></div></a>`)}</div>` : empty({ icon: 'book', title: '공개 세트가 없어요' })}
       </section></section></div>`);
-      const off = on(root, 'click', '[data-friend]', async () => { try { await api.post('/friends/request', { toUserId: user._id }); friendship = 'sent'; toast('친구 요청을 보냈어요.', 'ok'); draw(); } catch (e) { toast(e.message, 'bad'); } });
+      const off = on(root, 'click', '[data-friend]', async (_e, btn) => { try { await api.post('/friends/request', { toUserId: user._id }); btn.outerHTML = '<span class="muted">요청 보냄</span>'; toast('친구 요청을 보냈어요.', 'ok'); } catch (e) { toast(e.message, 'bad'); } });
       return off;
     } catch (e) { if (ctx.isCurrent()) render(root, html`<div class="page">${errorBox(e.message)}</div>`); }
   },

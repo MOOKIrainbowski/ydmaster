@@ -1,7 +1,7 @@
 // 앱 셸 + 해시 라우터 — 계약 §4. 페이지 모듈은 필요할 때만 불러온다(첫 로드 최소화, R4).
 import { state, setUser, onUser, getTheme, setTheme } from './state.js';
 import { api, ApiError } from './api.js';
-import { html, render, icon, on, toast, closeAllModals, errorBox, avatar } from './ui.js';
+import { html, render, icon, on, toast, closeAllModals, errorBox, empty, avatar } from './ui.js';
 import { initMotion, viewTransition } from './motion.js';
 import { initUpdateCheck } from './update.js';
 
@@ -79,16 +79,19 @@ async function navigate() {
   closeAllModals();
   let { page, params, query } = parse();
   if (page === 'home' && !state.user) page = 'landing';
+  // 없는 주소: 모듈을 불러보지 않고 바로 안내(예전엔 notfound.js 를 받으려다 404·콘솔 오류가 났음)
+  if (page === 'notfound') {
+    render(shell(page), html`<div class="page">${empty({ icon: 'compass', title: '없는 페이지예요', desc: '주소가 바뀌었거나 삭제된 화면이에요.', action: html`<button class="btn btn--primary" data-home>${icon('home', 18)}홈으로</button>` })}</div>`);
+    document.title = '없는 페이지 · 영단마스터';
+    return;
+  }
   let mod;
   try {
     mod = (await import(`./pages/${page}.js`)).default;
   } catch (e) {
     console.error(e);
     if (seq !== navSeq) return;
-    const main = shell(page);
-    render(main, page === 'notfound'
-      ? html`<div class="page">${errorBox('없는 페이지예요.', 'data-home')}</div>`
-      : html`<div class="page">${errorBox('화면을 불러오지 못했어요. 새로고침해 주세요.')}</div>`);
+    render(shell(page), html`<div class="page">${errorBox('화면을 불러오지 못했어요. 새로고침해 주세요.')}</div>`);
     return;
   }
   if (seq !== navSeq) return; // 그 사이 다른 곳으로 이동함
@@ -124,6 +127,15 @@ on(app, 'click', '[data-home]', () => { location.hash = '#/'; });
 function refreshShellUser() {
   const me = app.querySelector('.topbar__me');
   if (me && state.user) render(me, avatar(state.user, 34));
+}
+
+// textarea 는 쓰는 만큼 자란다(2026-11-20 사용자 요청). CSS field-sizing 을 모르는 브라우저(Firefox·Safari)만 높이를 직접 맞춤.
+if (!CSS.supports?.('field-sizing', 'content')) {
+  const fit = t => { t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight + 2, 420)}px`; };
+  document.addEventListener('input', e => { if (e.target.matches?.('textarea.input')) fit(e.target); });
+  // 저장된 내용으로 다시 그린 textarea 도 처음부터 내용 높이로
+  new MutationObserver(() => app.querySelectorAll('textarea.input').forEach(t => { if (t.value && !t.style.height) fit(t); }))
+    .observe(app, { childList: true, subtree: true });
 }
 
 export const go = path => { if (location.hash === '#' + path) navigate(); else location.hash = '#' + path; };

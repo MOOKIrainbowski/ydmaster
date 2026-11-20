@@ -1,6 +1,6 @@
 import { api } from '../api.js';
 import { state, setUser, getTheme, setTheme } from '../state.js';
-import { html, render, on, $, skeleton, errorBox, toast, modal, avatar, icon } from '../ui.js';
+import { html, render, on, $, errorBox, toast, modal, avatar, icon } from '../ui.js';
 
 async function imageData(file, maxBytes = 2 * 1024 * 1024) {
   if (!file.type.startsWith('image/')) throw new Error('이미지 파일을 선택해주세요.');

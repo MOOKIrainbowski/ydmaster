@@ -1,6 +1,6 @@
 import { api } from '../api.js';
 import { state } from '../state.js';
-import { html, render, on, skeleton, empty, errorBox, toast, fmtDate, avatar } from '../ui.js';
+import { html, render, on, skeleton, empty, errorBox, toast, fmtDate } from '../ui.js';
 
 export default {
   title: '문의하기', async render(root, _p, _q, ctx) {

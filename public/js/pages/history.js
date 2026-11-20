@@ -1,5 +1,5 @@
 import { api } from '../api.js';
-import { html, render, on, skeleton, empty, errorBox, icon, fmtDate } from '../ui.js';
+import { html, render, on, skeleton, empty, errorBox, fmtDate } from '../ui.js';
 
 export default {
   title: '학습 기록', async render(root, _p, _q, ctx) {

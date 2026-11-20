@@ -4,9 +4,13 @@
 //  - 가입 인증·비밀번호 재설정 토큰을 메모리에만 두어 새로고침(재배포 알림 등)하면 진행이 끊김 → sessionStorage
 //  - 로그인 직후 사용자 정보가 일부만 채워짐 → /auth/me 로 다시 채움, 이미 로그인 상태면 바로 이동
 //  - 소셜 로그인 오류를 토스트로만 잠깐 보여줌 → 화면에 원인·해결 안내를 남김
+// 2026-11-20 사용자 요청: 입력 카드는 왼쪽, 오른쪽엔 마스코트 장난감(mascot.js),
+// 로그인↔가입 등 단계 전환은 카드 높이·내용·탭 표시가 부드럽게 미끄러지도록.
 import { api } from '../api.js';
 import { state, setUser } from '../state.js';
-import { html, render, on, toast, confirmDialog, busy, icon } from '../ui.js';
+import { html, render, on, toast, confirmDialog, busy, icon, $ } from '../ui.js';
+import { reduced } from '../motion.js';
+import { mountMascot } from '../mascot.js';
 
 const PENDING = 'ydm_auth_pending'; // { kind: 'register'|'reset', token, email, at }
 const pending = {
@@ -22,6 +26,8 @@ const field = (label, name, type = 'text', attrs = '') =>
 
 const TITLES = { login: '로그인', register: '계정 만들기', verify: '이메일 인증', forgot: '비밀번호 찾기', reset: '비밀번호 재설정' };
 const GREET = { login: '다시 만나서 반가워요', register: '함께 공부를 시작해요' };
+const ORDER = ['login', 'register', 'verify', 'forgot', 'reset'];
+const EASE = 'cubic-bezier(.22, 1, .36, 1)';
 
 // 로그인 성공 공통 처리: 목적지로 먼저 이동 예약 → 토큰 저장 → 전체 사용자 정보로 갱신
 async function signIn(user, token, next) {
@@ -83,20 +89,48 @@ export default {
         <button class="btn btn--ghost btn--sm" type="button" data-restart="forgot">이메일 다시 입력</button></form>`;
     };
 
-    const draw = () => render(root, html`<section class="page page--narrow">
-      <section class="card auth-card glass stack">
+    render(root, html`<section class="page auth-layout">
+      <section class="card auth-card glass stack" data-auth-card></section>
+      <aside class="auth-fun" data-auth-fun></aside></section>`);
+    const card = $('[data-auth-card]', root);
+    const fun = mountMascot($('[data-auth-fun]', root));
+
+    // 탭 표시(알약)는 이전 위치에서 그린 뒤 다음 프레임에 새 위치로 옮겨야 미끄러진다
+    let shownTab = tab;
+    const tabIndex = t => (t === 'register' ? 1 : 0);
+    const draw = () => render(card, html`
         <div class="auth-brand"><span class="logo-mark" aria-hidden="true">영</span>${GREET[tab] ? html`<p class="muted">${GREET[tab]}</p>` : ''}</div>
         <h1 class="section__title">${TITLES[tab]}</h1>
         ${oauthError ? html`<div class="auth-alert" role="alert">${icon('alert', 20)}<div><strong>소셜 로그인에 실패했어요</strong><span>${oauthError}</span><span class="muted">잠시 후 다시 시도하거나 이메일로 로그인해주세요. 계속되면 문의하기로 알려주세요.</span></div></div>` : ''}
-        ${tab === 'login' || tab === 'register' ? html`<div class="tabs" role="tablist"><button class="tabs__tab${tab === 'login' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'login'}" type="button" data-tab="login">로그인</button><button class="tabs__tab${tab === 'register' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'register'}" type="button" data-tab="register">가입</button></div>` : ''}
+        ${tab === 'login' || tab === 'register' ? html`<div class="tabs tabs--slide" role="tablist" style="--at:${tabIndex(shownTab)}"><button class="tabs__tab${tab === 'login' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'login'}" type="button" data-tab="login">로그인</button><button class="tabs__tab${tab === 'register' ? ' is-active' : ''}" role="tab" aria-selected="${tab === 'register'}" type="button" data-tab="register">가입</button></div>` : ''}
         ${body()}
         ${tab === 'login' || tab === 'register' ? social() : html`<button class="btn btn--ghost" type="button" data-tab="login">로그인으로 돌아가기</button>`}
-      </section></section>`);
+      `);
     draw();
 
+    // 단계 전환: 높이는 이전→새 높이로, 바뀐 부분은 진행 방향에서 미끄러져 들어옴
+    const go = next => {
+      if (next === tab) { draw(); return; }
+      const dir = ORDER.indexOf(next) > ORDER.indexOf(tab) ? 1 : -1;
+      const from = card.offsetHeight;
+      const keepHead = (tab === 'login' || tab === 'register') && (next === 'login' || next === 'register');
+      shownTab = tab; tab = next; draw();
+      const tabs = $('.tabs--slide', card);
+      requestAnimationFrame(() => { tabs?.style.setProperty('--at', tabIndex(tab)); shownTab = tab; });
+      if (reduced()) return;
+      const to = card.offsetHeight;
+      card.style.overflow = 'hidden'; // 높이가 변하는 동안 내용이 넘치지 않게
+      card.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 460, easing: EASE }).finished.catch(() => {}).then(() => { card.style.overflow = ''; });
+      const moving = (keepHead ? [$('.section__title', card), $('form', card)] : [$('.auth-brand', card), $('.section__title', card), $('form', card)]).filter(Boolean);
+      moving.forEach((el, k) => el.animate(
+        [{ opacity: 0, transform: `translateX(${dir * 28}px)`, filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }],
+        { duration: 420, delay: k * 40, easing: EASE, fill: 'backwards' }));
+      $('.social-actions', card)?.animate([{ opacity: .4 }, { opacity: 1 }], { duration: 300, easing: EASE });
+    };
+
     const offs = [
-      on(root, 'click', '[data-tab]', (_e, el) => { tab = el.dataset.tab; oauthError = ''; draw(); }),
-      on(root, 'click', '[data-restart]', (_e, el) => { pending.clear(); tab = el.dataset.restart; draw(); }),
+      on(root, 'click', '[data-tab]', (_e, el) => { oauthError = ''; go(el.dataset.tab); }),
+      on(root, 'click', '[data-restart]', (_e, el) => { pending.clear(); go(el.dataset.restart); }),
       on(root, 'click', '[data-resend]', (_e, el) => busy(el, async () => {
         try { await api.post('/auth/resend-code', { token: current()?.token }); toast('인증 코드를 다시 보냈어요.', 'ok'); }
         catch (e) { toast(e.message, 'bad'); }
@@ -117,11 +151,12 @@ export default {
           try {
             if (kind === 'login') {
               const r = await api.post('/auth/login', { email: String(data.email).trim(), password: data.password });
+              fun.react('happy');
               await signIn(r.user, r.token, query.next);
               toast(`${r.user.username}님, 반가워요!`, 'ok');
             } else if (kind === 'register') {
               const r = await api.post('/auth/register', { ...data, agreedToTerms: data.agreedToTerms === 'on' });
-              pending.set('register', r.token, data.email); tab = 'verify'; draw(); toast('이메일로 인증 코드를 보냈어요.', 'ok');
+              pending.set('register', r.token, data.email); go('verify'); toast('이메일로 인증 코드를 보냈어요.', 'ok');
             } else if (kind === 'verify') {
               const r = await api.post('/auth/verify-code', { token: current()?.token, code: String(data.code).trim() });
               pending.clear();
@@ -129,19 +164,20 @@ export default {
               toast('가입을 환영해요!', 'ok');
             } else if (kind === 'forgot') {
               const r = await api.post('/auth/forgot-password', data);
-              pending.set('reset', r.token, data.email); tab = 'reset'; draw();
+              pending.set('reset', r.token, data.email); go('reset');
             } else {
               await api.post('/auth/reset-password', { token: current()?.token, code: String(data.code).trim(), newPassword: data.newPassword });
-              pending.clear(); tab = 'login'; draw(); toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해주세요.', 'ok');
+              pending.clear(); go('login'); toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해주세요.', 'ok');
             }
           } catch (err) {
             toast(err.message, 'bad');
+            fun.react('sad');
             // 인증 정보가 만료·폐기됐으면 처음 단계로 되돌림
-            if (/찾을 수 없|만료/.test(err.message) && (kind === 'verify' || kind === 'reset')) { pending.clear(); tab = kind === 'verify' ? 'register' : 'forgot'; draw(); }
+            if (/찾을 수 없|만료/.test(err.message) && (kind === 'verify' || kind === 'reset')) { pending.clear(); go(kind === 'verify' ? 'register' : 'forgot'); }
           }
         });
       }),
     ];
-    return () => offs.forEach(fn => fn());
+    return () => { offs.forEach(fn => fn()); fun.destroy(); };
   },
 };
