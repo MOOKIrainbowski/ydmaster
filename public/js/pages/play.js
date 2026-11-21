@@ -4,7 +4,8 @@ import { api } from '../api.js';
 import { html, render, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
 import { burstAt, shake, pop } from '../motion.js';
 import { sfx, sfxOn, setSfx, floatText, banner, COMBO_LINES } from '../game.js';
-import { getPref, isKey } from '../prefs.js';
+import { getPref, isKey, zoomOf } from '../prefs.js';
+import { loaderView } from '../loader.js';
 
 export default {
   title: '시험',
@@ -86,10 +87,8 @@ export default {
       }
       if (q.type === 'cloze') return html`
         <p class="prompt__task">빈칸에 들어갈 표현을 쓰세요</p>
-        ${q.context?.before ? html`<p class="passage passage--dim" lang="en">${q.context.before}</p>` : ''}
         <p class="passage" lang="en">${q.segments.map(seg => typeof seg === 'string' ? seg
           : html`<input class="blank" data-blank="${seg.blank}" style="--w:${Math.max(4, Math.min(20, seg.length + 1))}ch" aria-label="빈칸 ${seg.blank + 1}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="${seg.hint ? seg.hint + '…' : ''}">`)}</p>
-        ${q.context?.after ? html`<p class="passage passage--dim" lang="en">${q.context.after}</p>` : ''}
         ${q.ko ? html`<p class="passage-ko">${q.ko}</p>` : ''}`;
       if (q.type === 'inline_choice') return html`
         <p class="prompt__task">괄호 안에서 어법·어휘상 알맞은 것을 고르세요</p>
@@ -102,7 +101,7 @@ export default {
 
     function orderView(q) {
       if (q.layout === 'stack') return html`<ol class="order-list">${draft.map((k, pos) => html`
-        <li class="order-card"><span class="order-card__num">${pos + 1}</span><span class="order-card__text" lang="en">${q.pieces[k]}</span>
+        <li class="order-card" data-k="${k}"><span class="order-card__grip" title="끌어서 옮기기">${icon('grip', 20)}</span><span class="order-card__num">${pos + 1}</span><span class="order-card__text" lang="en">${q.pieces[k]}</span>
           <span class="order-card__move">
             <button class="btn btn--icon btn--ghost" data-move="${pos}" data-dir="-1" ${pos === 0 ? 'disabled' : ''} aria-label="위로">${icon('chevronUp', 20)}</button>
             <button class="btn btn--icon btn--ghost" data-move="${pos}" data-dir="1" ${pos === draft.length - 1 ? 'disabled' : ''} aria-label="아래로">${icon('chevronDown', 20)}</button>
@@ -206,7 +205,7 @@ export default {
     async function finish() {
       if (phase === 'finishing') return;
       phase = 'finishing';
-      render(root, html`<div class="play"><p class="muted">채점 결과를 정리하는 중…</p></div>`);
+      render(root, html`<div class="play">${loaderView('영이가 채점하는 중…')}</div>`);
       try {
         const r = await api.post(`/sessions/${s._id}/finish`);
         sfx.finish();
@@ -221,7 +220,7 @@ export default {
     const offs = [
       on(root, 'click', '[data-choice]', (e, b) => submit(Number(b.dataset.choice))),
       on(root, 'click', '[data-submit]', (e, b) => submit(collect(s.questions[i]), b)),
-      on(root, 'click', '[data-skip]', (e, b) => submit(skipResponse(s.questions[i]), b)),
+      on(root, 'click', '[data-skip]', (e, b) => { sfx.skip(); submit(skipResponse(s.questions[i]), b); }),
       on(root, 'click', '[data-next]', () => { i++; view(); }),
       on(root, 'click', '[data-finish]', () => finish()),
       on(root, 'click', '[data-sfx]', (e, b) => { setSfx(!sfxOn()); b.outerHTML = String(sfxBtn()); if (sfxOn()) sfx.flip(); }),
@@ -235,16 +234,52 @@ export default {
         draft[k] = Number(b.dataset.opt);
         $$(`[data-ic="${k}"]`, root).forEach(x => x.setAttribute('aria-checked', String(x === b)));
       }),
-      on(root, 'click', '[data-place]', (e, b) => { draft.push(Number(b.dataset.place)); refreshOrder(); }),
-      on(root, 'click', '[data-unplace]', (e, b) => { draft.splice(Number(b.dataset.unplace), 1); refreshOrder(); }),
+      on(root, 'click', '[data-place]', (e, b) => { draft.push(Number(b.dataset.place)); sfx.place(); refreshOrder(); }),
+      on(root, 'click', '[data-unplace]', (e, b) => { draft.splice(Number(b.dataset.unplace), 1); sfx.unplace(); refreshOrder(); }),
       on(root, 'click', '[data-move]', (e, b) => {
         const p = Number(b.dataset.move), t = p + Number(b.dataset.dir);
-        [draft[p], draft[t]] = [draft[t], draft[p]];
+        [draft[p], draft[t]] = [draft[t], draft[p]]; sfx.tick();
         refreshOrder();
         $$('[data-move]', root).find(x => Number(x.dataset.move) === t && x.dataset.dir === b.dataset.dir && !x.disabled)?.focus();
       }),
     ];
     function refreshOrder() { render($('[data-order]', root), orderView(s.questions[i])); }
+
+    // 15: 문장 순서 카드를 끌어서 옮기기(사용자 요청). 마우스는 카드 어디든, 터치는 손잡이(⋮⋮)만 —
+    // 카드 전체를 터치 드래그로 잡으면 긴 본문에서 화면을 스크롤할 수 없어서. 위/아래 버튼은 키보드·보조기기용으로 남김.
+    let drag = null;
+    const onDown = e => {
+      const card = e.target.closest('.order-card');
+      if (!card || phase !== 'answer' || e.button > 0 || e.target.closest('button')) return;
+      if (e.pointerType !== 'mouse' && !e.target.closest('.order-card__grip')) return;
+      e.preventDefault();
+      drag = { card, list: card.parentElement, y0: e.clientY, moved: false };
+      card.setPointerCapture(e.pointerId);
+      card.classList.add('is-drag');
+    };
+    const onMove = e => {
+      if (!drag) return;
+      const { card, list } = drag;
+      drag.moved = true;
+      // 포인터가 이웃 카드의 가운데를 넘으면 자리를 바꾸고, DOM 이 움직인 만큼 기준점을 옮겨 카드가 포인터 밑에 붙어 있게
+      const top = card.getBoundingClientRect().top;
+      const half = el => { const b = el.getBoundingClientRect(); return b.top + b.height / 2; };
+      const prev = card.previousElementSibling, next = card.nextElementSibling;
+      let moved = false;
+      if (prev && e.clientY < half(prev)) { list.insertBefore(card, prev); moved = true; }
+      else if (next && e.clientY > half(next)) { list.insertBefore(next, card); moved = true; }
+      if (moved) { drag.y0 += card.getBoundingClientRect().top - top; sfx.tick(); }
+      card.style.translate = `0 ${(e.clientY - drag.y0) / zoomOf()}px`; // 14: 화면 px → CSS px
+    };
+    const onUp = () => {
+      if (!drag) return;
+      const { list, moved } = drag;
+      drag = null;
+      if (moved) { draft = [...list.children].map(li => Number(li.dataset.k)); sfx.drop(); }
+      refreshOrder();
+    };
+    const ptr = [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onUp]];
+    ptr.forEach(([t, f]) => root.addEventListener(t, f));
 
     // 키보드(11: 설정의 단축키를 따름) — 숫자 1~5 보기, 확인/다음, 모르겠어요, 발음, 그만두기
     // 글자 키 단축키는 답을 쓰는 중에는 쓰지 않는다(타자와 겹치지 않게). 쓰는 칸의 Enter 는 항상 확인.
@@ -276,6 +311,6 @@ export default {
     document.addEventListener('keydown', onKey);
 
     view();
-    return () => { offs.forEach(f => f()); document.removeEventListener('keydown', onKey); if ('speechSynthesis' in window) speechSynthesis.cancel(); };
+    return () => { offs.forEach(f => f()); ptr.forEach(([t, f]) => root.removeEventListener(t, f)); document.removeEventListener('keydown', onKey); if ('speechSynthesis' in window) speechSynthesis.cancel(); };
   },
 };

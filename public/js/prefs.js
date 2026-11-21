@@ -5,7 +5,7 @@ import { getTheme, setTheme } from './state.js';
 
 const KEY = 'ydm_prefs_v1';
 export const DEFAULTS = {
-  font: 'md',          // sm | md | lg | xl  글자·화면 크기
+  font: 'md',          // sm | md | lg | xl  글자·화면 크기(15: md = 예전 sm 크기)
   spacing: 'normal',   // normal | wide       줄 간격
   contrast: false,     // 고대비(테두리·글자 진하게)
   underline: false,    // 링크 밑줄 항상
@@ -60,7 +60,8 @@ export function resetPrefs() {
 // 기준은 1920×1050(풀HD 브라우저 창, 지금 디자인을 맞춘 크기). 그보다 넓고 높으면 같은 비율로 키우고(최대 1.5배),
 // 낮은 노트북 화면(높이 800 미만)은 살짝 줄인다. 휴대폰·태블릿(<1024)은 이미 반응형 배치라 1배.
 // 글자 크기 설정과 곱해 <html> zoom 하나로 적용. vh·vw 와 좌표 계산은 --z 로 나눠 보정한다(app.css · zoomOf).
-const FONT_Z = { sm: 0.92, md: 1, lg: 1.1, xl: 1.22 };
+// 15(사용자 요청): 예전 '작게'(0.92)를 '보통'(기본값)으로, 그보다 작은 '작게'를 새로. 크게·아주 크게도 한 칸씩 당겨 간격을 고르게.
+const FONT_Z = { sm: 0.84, md: 0.92, lg: 1.04, xl: 1.16 };
 export function screenInfo() {
   const w = innerWidth, h = innerHeight;
   const kind = w < 600 ? 'phone' : w < 1024 ? 'tablet' : w < 1600 ? 'laptop' : w < 2400 ? 'desktop' : 'wide';

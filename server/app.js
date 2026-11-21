@@ -197,7 +197,7 @@ const UserSchema = new mongoose.Schema({
   // 10 알림: 이미 알린 업적·레벨(없으면 첫 계산 때 조용히 채움)
   achSeen: { type: [String], default: undefined }, levelSeen: { type: Number, default: 1 },
   recentSet: { type: mongoose.Schema.Types.ObjectId, default: undefined }, // 14: 가장 최근에 공부한 세트(홈 '오늘의 학습')
-  cosmetics: { color: { type: String, default: 'rose' }, frame: { type: String, default: 'none' }, border: { type: String, default: 'none' }, title: { type: String, default: '' } },
+  cosmetics: { color: { type: String, default: 'rose' }, frame: { type: String, default: 'none' }, border: { type: String, default: 'none' }, effect: { type: String, default: 'none' }, title: { type: String, default: '' } },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -994,7 +994,7 @@ app.delete('/api/wrongnote/:groupId', auth, async (req, res) => {
 function cosmeticsView(c) {
   const v = { ...DEFAULT_COSMETICS, ...(c?.toObject ? c.toObject() : c || {}) };
   const t = TITLE_ITEMS.find(x => x.id === v.title);
-  return { color: v.color, frame: v.frame, border: v.border, title: t ? { id: t.id, name: t.name, tier: t.tier } : null };
+  return { color: v.color, frame: v.frame, border: v.border, effect: v.effect, title: t ? { id: t.id, name: t.name, tier: t.tier } : null };
 }
 let learnApi; // mountLearn 이 돌려주는 gameOf(아래에서 채움 — 요청 시점엔 이미 준비됨)
 app.get('/api/p/:username', async (req, res) => {

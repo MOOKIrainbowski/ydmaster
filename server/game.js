@@ -158,20 +158,31 @@ const C = (id, name, unlock = null) => ({ id, name, unlock });
 export const COSMETICS = {
   color: [C('rose', '로즈(기본)'), C('lavender', '라벤더'), C('mint', '민트', 'first'), C('ocean', '오션', 'streak7'), C('sunset', '선셋', 'perfect5'),
     C('forest', '포레스트', 'learned300'), C('midnight', '미드나잇', 'attempts50'), C('gold', '황금', 'level10'), C('galaxy', '은하수', 'learned2000'),
-    C('aurora', '오로라', 'streak60'), C('legend', '전설의 빛', 'level30')],
+    C('aurora', '오로라', 'streak60'), C('legend', '전설의 빛', 'level30'),
+    // 15(사용자 요청: 꾸미기 아이템 더 많고 다양하게)
+    C('peach', '피치'), C('cherry', '벚꽃', 'streak3'), C('lemon', '레몬', 'learned30'), C('sky', '하늘', 'modes3'), C('grape', '포도', 'passage1'),
+    C('coral', '코랄', 'friend1'), C('matcha', '말차', 'maker1'), C('candy', '솜사탕', 'perfect'), C('ruby', '루비', 'perfect20'), C('glacier', '빙하', 'learned1000'),
+    C('sunrise', '해돋이', 'streak30'), C('neonpop', '네온 팝', 'cleared200'), C('cosmos', '코스모스', 'level20'), C('prism', '프리즘', 'perfect100')],
   frame: [C('none', '없음'), C('simple', '하양 테두리'), C('rose', '로즈 링', 'first'), C('double', '이중 링', 'attempts10'), C('gold', '황금 링', 'perfect20'),
-    C('spin', '회전 점선', 'modes11'), C('flame', '불꽃', 'streak30'), C('gem', '보석', 'perfect50'), C('orbit', '궤도', 'level20'), C('rainbow', '무지개', 'streak100')],
+    C('spin', '회전 점선', 'modes11'), C('flame', '불꽃', 'streak30'), C('gem', '보석', 'perfect50'), C('orbit', '궤도', 'level20'), C('rainbow', '무지개', 'streak100'),
+    C('leaf', '새싹', 'learned30'), C('heart', '하트', 'friend1'), C('dots', '물방울', 'quests5'), C('pulse', '두근두근', 'streak7'), C('neon', '네온 링', 'cleared50'),
+    C('ice', '얼음 결정', 'learned2000'), C('halo', '후광', 'public10'), C('crown', '왕관', 'level17'), C('stars', '별 궤도', 'attempts500')],
   border: [C('none', '없음'), C('soft', '은은한 선'), C('brand', '브랜드', 'maker1'), C('dotted', '점선', 'friend5'), C('gold', '황금', 'attempts200'),
-    C('shine', '빛 흐름', 'cleared500'), C('neon', '네온', 'quests50'), C('legend', '전설', 'collector')],
+    C('shine', '빛 흐름', 'cleared500'), C('neon', '네온', 'quests50'), C('legend', '전설', 'collector'),
+    C('glow', '은은한 빛', 'streak3'), C('stripe', '사선 줄무늬', 'cleared10'), C('double', '이중 선', 'attempts50'), C('wave', '무지갯빛 물결', 'modes6'),
+    C('frost', '서리', 'learned2000'), C('fire', '불꽃', 'streak60'), C('holo', '홀로그램', 'level30')],
+  // 15 새 종류: 프로필 카드 위로 떠다니는 효과(입자 모양·움직임은 app.css '15 카드 효과')
+  effect: [C('none', '없음'), C('sparkle', '반짝이', 'perfect'), C('bubbles', '물방울', 'learned100'), C('snow', '눈송이', 'streak7'), C('hearts', '하트', 'friend5'),
+    C('petals', '꽃잎', 'passage10'), C('notes', '음표', 'modes6'), C('confetti', '색종이', 'quests20'), C('stars', '별똥별', 'level10'), C('fireflies', '반딧불', 'streak30')],
 };
-export const COSMETIC_KINDS = ['color', 'frame', 'border', 'title'];
-export const DEFAULT_COSMETICS = { color: 'rose', frame: 'none', border: 'none', title: '' };
+export const COSMETIC_KINDS = ['color', 'frame', 'border', 'effect', 'title'];
+export const DEFAULT_COSMETICS = { color: 'rose', frame: 'none', border: 'none', effect: 'none', title: '' };
 // 해금 목록: gotIds = 달성한 업적 id 들
 export function cosmeticsCatalog(gotIds) {
   const got = new Set(gotIds), A_ = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
   const info = id => (id ? { id, title: A_[id]?.title, tier: A_[id]?.tier } : null);
   const out = {};
-  for (const k of ['color', 'frame', 'border']) out[k] = COSMETICS[k].map(c => ({ id: c.id, name: c.name, unlock: info(c.unlock), got: !c.unlock || got.has(c.unlock) }));
+  for (const k of ['color', 'frame', 'border', 'effect']) out[k] = COSMETICS[k].map(c => ({ id: c.id, name: c.name, unlock: info(c.unlock), got: !c.unlock || got.has(c.unlock) }));
   out.title = TITLE_ITEMS.map(t => ({ id: t.id, name: t.name, tier: t.tier, unlock: info(t.ach), got: got.has(t.ach) }));
   return out;
 }

@@ -6,40 +6,122 @@ import { reduced, burst } from './motion.js';
 import { getPref, zoomOf } from './prefs.js';
 
 // ── 효과음: 파일 없이 Web Audio 로 합성(용량 0). 끄기 설정은 이 브라우저에 저장 ──
+// 15(사용자 요청: 더 다양하고 음색이 풍성하게): 한 음 = 살짝 어긋난 오실레이터 + 배음 + 필터 엔벨로프,
+// 모든 소리는 공용 버스(잔향 · 컴프레서)를 거쳐 공간감 있게. 효과마다 악기(벨 · 플럭 · 패드 · 마림바 · 신스 · 노이즈)를 달리해 겹치지 않게.
 const SFX_KEY = 'ydm_sfx';
-let ctx;
+let ctx, bus, verb;
 export const sfxOn = () => { try { return localStorage.getItem(SFX_KEY) !== 'off'; } catch { return true; } };
 export function setSfx(on) { try { localStorage.setItem(SFX_KEY, on ? 'on' : 'off'); } catch { /* 무시 */ } }
-function tone(freq, start, dur, type = 'sine', gain = 0.12) {
-  gain *= Math.max(0, Math.min(100, Number(getPref('sfxVolume') ?? 70))) / 70; // 설정의 효과음 크기(07), 70 = 원래 크기
-  if (gain <= 0) return;
-  const t = ctx.currentTime + start;
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, t);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(gain, t + 0.015);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ctx.destination);
-  o.start(t); o.stop(t + dur + 0.02);
+const vol = () => Math.max(0, Math.min(100, Number(getPref('sfxVolume') ?? 70))) / 70; // 설정의 효과음 크기(07), 70 = 원래 크기
+
+// 공용 출력: 마른 소리 + 잔향(노이즈로 만든 1.4초 임펄스) → 컴프레서(여러 소리가 겹쳐도 찢어지지 않게)
+function setup() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
+  comp.connect(ctx.destination);
+  bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(comp);
+  const len = Math.round(ctx.sampleRate * 1.4), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let n = 0; n < len; n++) d[n] = (Math.random() * 2 - 1) * (1 - n / len) ** 3.2; }
+  const conv = ctx.createConvolver(); conv.buffer = ir;
+  verb = ctx.createGain(); verb.gain.value = 0.28;
+  verb.connect(conv).connect(comp);
 }
-function play(notes) {
+// 엔벨로프: 빠르게 올라갔다가 dur 동안 지수로 줄어듦
+function env(g, t, peak, dur, attack = 0.008) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+function out(node, wet) { node.connect(bus); if (wet) { const s = ctx.createGain(); s.gain.value = wet; node.connect(s).connect(verb); } }
+// 한 음. o: { type, gain, detune(센트, 좌우 두 개), harm(배음 비율), cutoff(저역 필터 시작→끝), q, glide(끝 주파수), wet(잔향), attack }
+function voice(freq, at, dur, o = {}) {
+  const gain = (o.gain ?? 0.1) * vol();
+  if (gain <= 0) return;
+  const t = ctx.currentTime + at;
+  const g = ctx.createGain(); env(g, t, gain, dur, o.attack);
+  let head = g;
+  if (o.cutoff) {
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = o.q ?? 1;
+    f.frequency.setValueAtTime(o.cutoff[0], t); f.frequency.exponentialRampToValueAtTime(o.cutoff[1], t + dur);
+    g.connect(f); head = f;
+  }
+  out(head, o.wet ?? 0.5);
+  const parts = [[1, 1], ...(o.harm || []).map((r, k) => [r, 0.5 / (k + 2)])];
+  for (const [ratio, amp] of parts) for (const det of o.detune ? [-o.detune, o.detune] : [0]) {
+    const osc = ctx.createOscillator(), a = ctx.createGain();
+    osc.type = o.type || 'sine'; osc.detune.value = det;
+    osc.frequency.setValueAtTime(freq * ratio, t);
+    if (o.glide) osc.frequency.exponentialRampToValueAtTime(o.glide * ratio, t + dur * 0.9);
+    a.gain.value = amp / (o.detune ? 2 : 1);
+    osc.connect(a).connect(g); osc.start(t); osc.stop(t + dur + 0.05);
+  }
+}
+// 노이즈 한 번(바람 · 종이 · 펑): band = [시작, 끝] 띠 필터 주파수가 미끄러짐
+function noise(at, dur, band, gain = 0.08, wet = 0.3) {
+  gain *= vol();
+  if (gain <= 0) return;
+  const t = ctx.currentTime + at, len = Math.round(ctx.sampleRate * dur);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let n = 0; n < len; n++) d[n] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+  f.frequency.setValueAtTime(band[0], t); f.frequency.exponentialRampToValueAtTime(band[1], t + dur);
+  const g = ctx.createGain(); env(g, t, gain, dur, 0.01);
+  src.connect(f).connect(g); out(g, wet); src.start(t);
+}
+// 악기 프리셋
+const INST = {
+  bell: { type: 'sine', harm: [2.76, 5.4], gain: 0.09, wet: 0.7 },          // 맑은 유리종
+  pluck: { type: 'triangle', detune: 6, cutoff: [5200, 700], gain: 0.11, wet: 0.35 }, // 짧게 튕김
+  pad: { type: 'sawtooth', detune: 12, cutoff: [1600, 900], gain: 0.035, attack: 0.08, wet: 0.8 }, // 부드럽게 퍼짐
+  marimba: { type: 'sine', harm: [4, 10], gain: 0.12, wet: 0.3, attack: 0.003 }, // 나무
+  synth: { type: 'square', detune: 8, cutoff: [3800, 1200], q: 4, gain: 0.04, wet: 0.45 }, // 밝은 게임 신스
+  bass: { type: 'triangle', cutoff: [900, 200], gain: 0.13, wet: 0.15 },     // 낮게 둥
+};
+const N = s => 440 * 2 ** (s / 12); // A4 기준 반음 수 → 주파수. C5=3, E5=7, G5=10, C6=15
+// 음 목록 재생: [악기, 반음, 시작(초), 길이(초), 덮어쓸 옵션], extra = 노이즈 등 추가 소리
+function play(notes, extra) {
   if (!sfxOn()) return;
   try {
-    ctx ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (!ctx) setup();
     if (ctx.state === 'suspended') ctx.resume();
-    notes.forEach(n => tone(...n));
+    notes.forEach(([inst, semi, at, dur, o]) => voice(N(semi), at, dur, { ...INST[inst], ...o }));
+    extra?.();
   } catch { /* 오디오를 못 쓰는 환경 */ }
 }
-const C = 523.25, E = 659.25, G = 783.99, C6 = 1046.5;
 export const sfx = {
-  // 연속 정답일수록 음이 한 칸씩 올라감(최대 1옥타브)
-  correct: (combo = 0) => { const up = 2 ** (Math.min(combo, 12) / 12); play([[E * up, 0, 0.12, 'triangle'], [G * up, 0.07, 0.2, 'triangle']]); },
-  wrong: () => play([[220, 0, 0.18, 'sawtooth', 0.05], [174.6, 0.09, 0.22, 'sawtooth', 0.05]]),
-  combo: () => play([[C, 0, 0.1, 'square', 0.05], [E, 0.07, 0.1, 'square', 0.05], [G, 0.14, 0.1, 'square', 0.05], [C6, 0.21, 0.25, 'square', 0.06]]),
-  flip: () => play([[880, 0, 0.06, 'sine', 0.05], [1320, 0.03, 0.06, 'sine', 0.04]]),
-  finish: () => play([[G, 0, 0.12, 'triangle'], [C6, 0.1, 0.3, 'triangle']]),
-  levelUp: () => play([[C, 0, 0.14, 'triangle'], [E, 0.12, 0.14, 'triangle'], [G, 0.24, 0.14, 'triangle'], [C6, 0.36, 0.5, 'triangle', 0.16]]),
-  star: k => play([[E * 2 ** (k / 4), 0, 0.18, 'sine', 0.1]]),
+  // 정답: 맑은 벨 두 음 + 위로 반짝. 연속 정답일수록 반음씩 올라감(최대 1옥타브)
+  correct: (combo = 0) => { const u = Math.min(combo, 12); play([['bell', 7 + u, 0, 0.5], ['bell', 10 + u, 0.07, 0.6], ['pluck', 15 + u, 0.07, 0.25, { gain: 0.05 }]]); },
+  // 오답: 낮게 둥 하고 내려가는 두 음(거슬리는 톱니 대신 둥근 소리)
+  wrong: () => play([['bass', -9, 0, 0.32, { glide: N(-11) }], ['pluck', -2, 0.02, 0.22, { cutoff: [1400, 300], gain: 0.07 }], ['pluck', -6, 0.12, 0.3, { cutoff: [1200, 250], gain: 0.07 }]]),
+  // 콤보: 신스 아르페지오가 휙 올라가며 마지막에 반짝
+  combo: () => play([3, 7, 10, 15, 19].map((s, k) => ['synth', s, k * 0.055, 0.18]).concat([['bell', 22, 0.28, 0.8, { gain: 0.06 }]]), () => noise(0, 0.3, [800, 6000], 0.03)),
+  // 카드 넘김: 종이 스치는 소리 + 작은 톡
+  flip: () => play([['marimba', 15, 0.02, 0.12, { gain: 0.05 }]], () => noise(0, 0.12, [2500, 6000], 0.06, 0.1)),
+  // 시험 끝: 플럭 셋이 올라가고 패드가 받쳐 줌
+  finish: () => play([['pluck', 3, 0, 0.3], ['pluck', 7, 0.1, 0.3], ['pluck', 10, 0.2, 0.3], ['bell', 15, 0.3, 1.1], ['pad', 3, 0.28, 1.2], ['pad', 10, 0.28, 1.2]]),
+  // 레벨 업: 팡파르(신스 + 벨) → 화음 패드 → 반짝이 꼬리
+  levelUp: () => play([
+    ['synth', 3, 0, 0.14], ['synth', 7, 0.11, 0.14], ['synth', 10, 0.22, 0.14], ['synth', 15, 0.33, 0.5, { gain: 0.05 }],
+    ['bell', 15, 0.33, 1.4], ['bell', 19, 0.45, 1.2, { gain: 0.06 }], ['bell', 22, 0.57, 1.2, { gain: 0.05 }],
+    ['pad', 3, 0.33, 1.6], ['pad', 7, 0.33, 1.6], ['pad', 10, 0.33, 1.6], ['bass', -9, 0.33, 0.8],
+  ], () => noise(0.3, 0.9, [3000, 9000], 0.025, 0.8)),
+  // 별: 하나씩 높아지는 유리종
+  star: k => play([['bell', 15 + [0, 4, 7][k % 3], 0, 0.9, { gain: 0.08 }], ['marimba', 27 + [0, 4, 7][k % 3], 0.01, 0.2, { gain: 0.03 }]]),
+  // ── 15 새로 만든 소리 ──
+  tick: () => play([['marimba', 22, 0, 0.06, { gain: 0.05, wet: 0.1 }]]),                       // 끄는 카드가 자리를 바꿀 때
+  drop: () => play([['marimba', 10, 0, 0.18], ['marimba', 3, 0.05, 0.22, { gain: 0.08 }]]),     // 카드 내려놓기
+  place: () => play([['marimba', 7 + Math.floor(Math.random() * 3) * 2, 0, 0.14, { gain: 0.08 }]]), // 어순 조각 놓기(높이가 조금씩 다름)
+  unplace: () => play([['marimba', 3, 0, 0.12, { gain: 0.06 }]]),
+  skip: () => play([['pluck', 3, 0, 0.18, { gain: 0.06 }], ['pluck', -2, 0.08, 0.25, { gain: 0.05 }]]), // 모르겠어요: 어깨 으쓱
+  pop: () => play([['bell', 19, 0.02, 0.3, { gain: 0.05 }]], () => noise(0, 0.08, [600, 2400], 0.12, 0.2)), // 마스코트 펑
+  boing: () => play([['bass', 3, 0, 0.35, { glide: N(15), gain: 0.1 }]]),                       // 마스코트 튕겨 돌아옴
+  chirp: () => play([['bell', 22, 0, 0.12, { glide: N(27), gain: 0.05 }], ['bell', 27, 0.1, 0.16, { glide: N(31), gain: 0.05 }]]), // 마스코트 대답
+  sparkle: () => play([27, 31, 34, 39].map((s, k) => ['bell', s, k * 0.06, 0.6, { gain: 0.04 }])), // 무지개 · 비밀
+  achieve: () => play([['bell', 10, 0, 1], ['bell', 15, 0.12, 1.2], ['bell', 19, 0.24, 1.4], ['pad', 3, 0.1, 1.4], ['pad', 10, 0.1, 1.4]], () => noise(0.2, 0.8, [4000, 10000], 0.02, 0.9)),
+  coin: () => play([['bell', 14, 0, 0.12, { gain: 0.07 }], ['bell', 19, 0.08, 0.7, { gain: 0.08 }], ['marimba', 31, 0.08, 0.2, { gain: 0.03 }]]), // 퀘스트 보상(동전)
+  whoosh: () => play([], () => noise(0, 0.35, [400, 3000], 0.05, 0.4)),                          // 화면 넘어감
 };
 
 // ── 떠오르는 글자(+10 XP 등): 요소 위에서 위로 떠오르며 사라짐 ──
@@ -152,7 +234,7 @@ export async function claimQuest(id, from) {
   try {
     const r = await api.post(`/quests/${id}/claim`);
     if (!r.already) {
-      floatText(from, `+${r.xp} XP`); sfx.correct(4);
+      floatText(from, `+${r.xp} XP`); sfx.coin();
       if (r.levelUp) { sfx.levelUp(); banner(`레벨 업! Lv.${r.level.level}`, r.level.title, 'level'); }
     }
     return r;

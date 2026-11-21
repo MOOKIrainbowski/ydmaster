@@ -52,3 +52,11 @@ export function titleTag(t, { small = false } = {}) {
 // 프로필 카드에 붙일 클래스(색·카드 테두리) / 아바타 감싸개 클래스(사진 테두리)
 export const cardClass = c => `pf-color--${c?.color || 'rose'} pf-border--${c?.border || 'none'}`;
 export const frameClass = c => `pf-frame--${c?.frame || 'none'}`;
+
+// 15 카드 효과: 카드 위를 떠다니는 입자 14개. 위치·속도·크기는 번호로 정해(같은 프로필은 늘 같은 모양) 렌더마다 흔들리지 않게.
+const FX_N = 14;
+export function fxLayer(c) {
+  const id = c?.effect;
+  if (!id || id === 'none') return '';
+  return html`<span class="pf-fx pf-fx--${id}" aria-hidden="true">${Array.from({ length: FX_N }, (_, k) => html`<i style="--k:${k};--x:${(k * 37 + 11) % 100}%;--y:${(k * 53 + 29) % 90}%;--d:${5 + ((k * 7) % 6)}s;--s:${0.7 + ((k * 5) % 7) / 10}"></i>`)}</span>`;
+}

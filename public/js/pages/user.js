@@ -6,7 +6,7 @@ import { api } from '../api.js';
 import { state, setUser } from '../state.js';
 import { html, render, on, skeleton, empty, errorBox, avatar, icon, fmtDate, toast } from '../ui.js';
 import { levelBar, badge } from '../game.js';
-import { titleTag, cardClass, frameClass } from '../cosmetics.js';
+import { titleTag, cardClass, frameClass, fxLayer } from '../cosmetics.js';
 
 const ACH_ROW = 4;
 
@@ -28,7 +28,7 @@ export async function renderProfile(root, username, ctx, { self = false } = {}) 
       : state.user ? html`<button class="btn btn--primary btn--sm" data-friend>${icon('plus', 16)}친구 요청</button>` : '';
     const ach = (game?.achievements || []).sort((a, b) => b.tier - a.tier);
     render(root, html`<div class="page page--narrow"><section class="section stack">
-      <article class="card profile-card ${cardClass(cos)}">
+      <article class="card profile-card ${cardClass(cos)}">${fxLayer(cos)}
         ${user.bannerUrl ? html`<img class="profile-banner" src="${user.bannerUrl}" alt="">` : html`<div class="profile-banner profile-banner--empty" aria-hidden="true"></div>`}
         <div class="profile-id">
           <span class="profile-id__avatar ${frameClass(cos)}">${avatar(user, 88)}</span>

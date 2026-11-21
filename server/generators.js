@@ -74,8 +74,8 @@ export function buildQuestions(mode, src, count, options = {}, rnd = Math.random
     for (const g of order(groups).slice(0, n)) out.push(sentenceOrderQuestion(g, rnd));
   } else {
     const cands = [];
-    for (const s of src.sets || []) s.sentences.forEach((sent, idx) => {
-      const q = passageQuestion(mode, sent, s.sentences, idx, options, rnd);
+    for (const s of src.sets || []) s.sentences.forEach(sent => {
+      const q = passageQuestion(mode, sent, s.sentences, options, rnd);
       if (q) cands.push({ ...q, ref: { set: s.set, item: sent._id } });
     });
     if (!cands.length) throw new GenError(EMPTY_REASON[mode] || '시험을 만들 수 있는 문장이 없습니다.');
@@ -136,15 +136,12 @@ function shuffleBlocks(pool, set, rnd) {
   return [...shuffle(same, rnd), ...shuffle(other, rnd)];
 }
 
-function context(all, idx) {
-  return { before: idx > 0 ? plainText(all[idx - 1].en) : '', after: idx + 1 < all.length ? plainText(all[idx + 1].en) : '' };
-}
-
 // 어휘 오답 후보는 세트(문장 배열)마다 한 번만 계산
 const POOLS = new WeakMap();
 const poolOf = all => { if (!POOLS.has(all)) POOLS.set(all, vocabPool(all.map(x => plainText(x.en)))); return POOLS.get(all); };
 
-function passageQuestion(mode, sent, all, idx, options, rnd) {
+// 15: 빈칸 문항에 앞뒤 문장(context)을 붙이지 않는다 — 다음 문장은 곧 나올 빈칸 문항의 정답을 그대로 보여 줬음(사용자 신고)
+function passageQuestion(mode, sent, all, options, rnd) {
   let { tokens, plain } = parseSentence(sent.en);
   if (!plain.trim()) return null;
   const ko = sent.ko || undefined;
@@ -181,7 +178,7 @@ function passageQuestion(mode, sent, all, idx, options, rnd) {
       } else cur += tokens[i].text;
     }
     if (cur) segments.push(cur);
-    return { q: { type: 'cloze', segments, ko, context: context(all, idx), ...(auto ? { auto: true } : {}) }, key: { kind: 'cloze', answers } };
+    return { q: { type: 'cloze', segments, ko, ...(auto ? { auto: true } : {}) }, key: { kind: 'cloze', answers } };
   }
 
   if (mode === 'choice') {

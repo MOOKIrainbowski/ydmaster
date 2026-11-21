@@ -2,8 +2,8 @@
 // 꾸미기는 업적으로 해금된 것만 고를 수 있고(서버가 다시 확인), 고르면 위 미리보기 카드에 바로 보인다.
 import { api } from '../api.js';
 import { state, setUser } from '../state.js';
-import { html, render, on, $, errorBox, toast, modal, avatar, icon, busy as busyBtn } from '../ui.js';
-import { titleTag, cardClass, frameClass, TIER_NAME } from '../cosmetics.js';
+import { html, render, on, $, errorBox, toast, modal, avatar, icon, busy as busyBtn, confirmDialog } from '../ui.js';
+import { titleTag, cardClass, frameClass, fxLayer, TIER_NAME } from '../cosmetics.js';
 
 async function imageData(file, maxBytes = 2 * 1024 * 1024) {
   if (!file.type.startsWith('image/')) throw new Error('이미지 파일을 선택해주세요.');
@@ -17,7 +17,7 @@ async function imageData(file, maxBytes = 2 * 1024 * 1024) {
   return await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.')); reader.readAsDataURL(blob); });
 }
 
-const KINDS = [['color', '프로필 색'], ['frame', '사진 테두리'], ['border', '카드 테두리'], ['title', '칭호']];
+const KINDS = [['color', '프로필 색'], ['frame', '사진 테두리'], ['border', '카드 테두리'], ['effect', '카드 효과'], ['title', '칭호']];
 
 export default {
   title: '프로필 수정', async render(root, _p, _q, ctx) {
@@ -34,6 +34,7 @@ export default {
       const sample = k === 'color' ? html`<span class="pf-swatch pf-color--${it.id}"></span>`
         : k === 'frame' ? html`<span class="deco__avatar pf-color--${draft.color} pf-frame--${it.id}">${(user.username || '?')[0]}</span>`
         : k === 'border' ? html`<span class="deco__card profile-card pf-color--${draft.color} pf-border--${it.id}"></span>`
+        : k === 'effect' ? html`<span class="deco__card deco__card--fx profile-card pf-color--${draft.color}">${fxLayer({ effect: it.id })}</span>`
         : titleTag({ id: it.id, name: it.name, tier: it.tier }, { small: true });
       return html`<label class="deco${it.got ? '' : ' is-locked'}" title="${it.got ? it.name : `잠김: '${it.unlock?.title}' 업적 달성 시 해금`}">
         <input type="radio" name="deco-${k}" value="${it.id}" ${draft[k] === it.id ? 'checked' : ''} ${it.got ? '' : 'disabled'}>
@@ -46,7 +47,7 @@ export default {
         <p class="muted">${got} / ${list.length}개 해금 · 잠긴 것은 적힌 업적을 달성하면 열려요.${kind === 'title' ? ' 칭호는 등급 상 이상 업적마다 하나씩, 저마다 색과 효과가 달라요.' : ''}</p>
         <div class="deco-grid">${list.map(it => it.id === '' ? html`<label class="deco"><input type="radio" name="deco-title" value="" ${!draft.title ? 'checked' : ''}><span class="deco__name">칭호 없음</span><span class="deco__lock">기본</span></label>` : item(kind, it))}</div>`;
     };
-    const preview = () => html`<article class="card profile-card ${cardClass(draft)}">
+    const preview = () => html`<article class="card profile-card ${cardClass(draft)}">${fxLayer(draft)}
       ${user.bannerUrl ? html`<img class="profile-banner" src="${user.bannerUrl}" alt="">` : html`<div class="profile-banner profile-banner--empty" aria-hidden="true"></div>`}
       <div class="profile-id"><span class="profile-id__avatar ${frameClass(draft)}">${avatar(user, 88)}</span>
         <div class="profile-id__text"><div class="profile-id__nameline"><h2 class="profile-id__name">${user.username}</h2>${draft.title ? titleTag(titleOf(draft.title), { small: true }) : ''}</div><p class="muted">미리보기 · 저장하면 프로필에 보여요</p></div></div></article>`;
@@ -56,7 +57,7 @@ export default {
 
       <article class="card stack"><h2 class="set-group__title">${icon('user', 20)}사진·기본 정보</h2>
         <div class="profile-edit-media">
-          <div class="profile-banner-wrap">${user.bannerUrl ? html`<img class="profile-banner" src="${user.bannerUrl}" alt="내 배너">` : html`<div class="profile-banner profile-banner--empty pf-color--${draft.color}" aria-hidden="true"></div>`}<input class="sr-only" id="banner-upload" type="file" accept="image/*" data-image="bannerImage"><label class="btn btn--ghost btn--sm profile-banner__action" for="banner-upload">배너 사진 바꾸기</label></div>
+          <div class="profile-banner-wrap">${user.bannerUrl ? html`<img class="profile-banner" src="${user.bannerUrl}" alt="내 배너">` : html`<div class="profile-banner profile-banner--empty pf-color--${draft.color}" aria-hidden="true"></div>`}<input class="sr-only" id="banner-upload" type="file" accept="image/*" data-image="bannerImage"><div class="profile-banner__actions">${user.bannerUrl ? html`<button class="btn btn--ghost btn--sm btn--icon profile-banner__del" type="button" data-banner-del aria-label="배너 사진 삭제" title="배너 사진 삭제">${icon('trash', 18)}</button>` : ''}<label class="btn btn--ghost btn--sm profile-banner__action" for="banner-upload">${icon('upload', 16)}배너 사진 바꾸기</label></div></div>
           <div class="profile-heading"><label class="profile-avatar-control" for="avatar-upload">${avatar(user, 72)}<span class="profile-camera" aria-hidden="true">+</span><span class="sr-only">프로필 사진 변경</span></label><input class="sr-only" id="avatar-upload" type="file" accept="image/*" data-image="avatarImage"><div><p class="muted">사진을 누르면 바꿀 수 있어요. 배너 사진이 없으면 프로필 색이 배너가 돼요.</p></div></div>
         </div>
         <form class="stack" data-profile><div class="field-row"><label class="field"><span class="field__label">사용자명</span><input class="input" name="username" value="${user.username}" minlength="2" maxlength="20" required></label><label class="field"><span class="field__label">이메일</span><input class="input" type="email" name="email" value="${user.email || ''}"></label></div>
@@ -85,6 +86,13 @@ export default {
         catch (e) { toast(e.message, 'bad'); }
       })),
       on(root, 'change', '[data-image]', async (_e, input) => { const file = input.files[0]; if (!file || busy) return; busy = true; try { const data = await imageData(file); const r = await api.put('/auth/profile', { [input.dataset.image]: data }); user = { ...user, ...r.user }; setUser(user); toast('사진을 업데이트했어요.', 'ok'); draw(); } catch (e) { toast(e.message, 'bad'); } finally { busy = false; } }),
+      // 15: 배너 사진 삭제(사용자 요청) — 서버는 빈 값이면 사진을 지우고, 배너는 프로필 색으로 돌아간다
+      on(root, 'click', '[data-banner-del]', async (_e, b) => {
+        if (busy || !(await confirmDialog('배너 사진을 지우면 프로필 색이 배너가 돼요.', { title: '배너 사진을 삭제할까요?', ok: '삭제', danger: true }))) return;
+        busy = true;
+        try { const r = await api.put('/auth/profile', { bannerImage: '' }); user = { ...user, ...r.user }; setUser(user); toast('배너 사진을 삭제했어요.', 'ok'); draw(); }
+        catch (e) { toast(e.message, 'bad'); b.focus(); } finally { busy = false; }
+      }),
       on(root, 'submit', '[data-profile]', async (e, form) => { e.preventDefault(); if (busy) return; busy = true; const f = new FormData(form);
         try { const r = await api.put('/auth/profile', { username: f.get('username').trim(), email: f.get('email').trim() }); user = { ...user, ...r.user }; setUser(user); toast('프로필을 저장했어요.', 'ok'); draw(); } catch (err) { toast(err.message, 'bad'); } finally { busy = false; }
       }),

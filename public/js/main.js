@@ -5,6 +5,7 @@ import { html, render, icon, on, toast, closeAllModals, errorBox, empty, avatar,
 import { initMotion, viewTransition } from './motion.js';
 import { initUpdateCheck } from './update.js';
 import { applyPrefs } from './prefs.js';
+import { showLoader, hideLoader } from './loader.js';
 import { initNotifications, notifBadge } from './notify.js';
 
 const ROUTES = [
@@ -82,7 +83,13 @@ document.body.prepend(aurora);
 function onScroll() { app.querySelector('.topbar')?.classList.toggle('is-scrolled', window.scrollY > 6); }
 window.addEventListener('scroll', onScroll, { passive: true });
 
+// 15: 화면 준비가 늦으면(350ms+) 마스코트 로딩 화면. 그 사이 다른 곳으로 이동했으면 새 이동이 닫는다.
 async function navigate() {
+  const mine = navSeq + 1;
+  showLoader();
+  try { await route(); } finally { if (mine === navSeq) hideLoader(); }
+}
+async function route() {
   const seq = ++navSeq;
   if (typeof cleanup === 'function') { try { cleanup(); } catch { /* 페이지 정리 실패가 이동을 막지 않게 */ } }
   cleanup = null;

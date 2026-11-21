@@ -14,6 +14,7 @@
 import { html, render, speak } from './ui.js';
 import { burstAt, reduced } from './motion.js';
 import { zoomOf } from './prefs.js';
+import { sfx } from './game.js'; // 15: 기믹마다 효과음
 
 const JOKES = [
   '오늘도 단어 하나 주우러 오셨군요!',
@@ -157,9 +158,9 @@ export function mountMascot(host) {
     if (drag.moved) {
       const far = Math.hypot(drag.dx, drag.dy) > 60;
       mascot.classList.remove('is-drag'); mascot.style.translate = ''; mascot.style.scale = '';
-      say(far ? '으아아— 날아갈 뻔했어요!' : '어딜 데려가요~', 2000);
+      say(far ? '으아아— 날아갈 뻔했어요!' : '어딜 데려가요~', 2000); sfx.boing();
     }
-    if (mascot.classList.contains('is-puff')) { mascot.classList.remove('is-puff'); play('is-pop', 520); burstAt(mascot, 16); say('펑! 바람 빠졌어요.', 1800); }
+    if (mascot.classList.contains('is-puff')) { mascot.classList.remove('is-puff'); play('is-pop', 520); burstAt(mascot, 16); say('펑! 바람 빠졌어요.', 1800); sfx.pop(); }
     drag = null;
   };
 
@@ -170,15 +171,15 @@ export function mountMascot(host) {
     pets++;
     // 빠르게 5번(1.6초 안) → 어지러움
     const now = Date.now(); taps = taps.filter(t => now - t < 1600); taps.push(now);
-    if (taps.length >= 5) { taps = []; play('is-dizzy', 1600); say('@_@ 어지러워요… 천천히요…', 2200); return; }
+    if (taps.length >= 5) { taps = []; play('is-dizzy', 1600); say('@_@ 어지러워요… 천천히요…', 2200); sfx.wrong(); return; }
     if (pets % 7 === 0) {
       const [w, ko] = SECRETS[(pets / 7 - 1) % SECRETS.length];
       play('is-spin');
       say(`숨은 단어 발견! ${w} = ${ko}`, 4200);
-      burstAt(mascot, 30);
+      burstAt(mascot, 30); sfx.sparkle();
       return;
     }
-    play('is-pop');
+    play('is-pop'); sfx.chirp();
     joke = (joke + 1) % JOKES.length;
     say(pets >= 4 ? `${JOKES[joke]} (${7 - (pets % 7)}번 더…?)` : JOKES[joke]);
   };
@@ -193,7 +194,7 @@ export function mountMascot(host) {
     const dir = Math.sign(e.movementX), now = Date.now();
     if (now - tickle.t > 1200) tickle = { n: 0, dir, t: now };
     if (dir !== tickle.dir) { tickle.n++; tickle.dir = dir; }
-    if (tickle.n >= 10) { tickle = { n: 0, dir: 0, t: 0 }; play('is-giggle', 1000); say('히히히 간지러워요! 그만~', 1800); }
+    if (tickle.n >= 10) { tickle = { n: 0, dir: 0, t: 0 }; play('is-giggle', 1000); say('히히히 간지러워요! 그만~', 1800); sfx.chirp(); }
   };
   // 키보드: Caps Lock 안내, 숨은 코드, 입력칸 밖에서 친 단어
   const onKey = e => {
@@ -204,13 +205,13 @@ export function mountMascot(host) {
     kon = k === KONAMI[kon] ? kon + 1 : k === KONAMI[0] ? 1 : 0;
     if (kon === KONAMI.length) {
       kon = 0; fun.classList.add('is-rainbow'); later(() => fun.classList.remove('is-rainbow'), 8000);
-      play('is-spin'); burstAt(mascot, 40); say('비밀 코드 발견! 무지개 영이 모드 8초!', 3200);
+      play('is-spin'); burstAt(mascot, 40); say('비밀 코드 발견! 무지개 영이 모드 8초!', 3200); sfx.achieve();
       return;
     }
     if (k.length !== 1) return;
     typed = (typed + k).slice(-8);
     const hit = Object.keys(TYPED).find(w => typed.endsWith(w));
-    if (hit) { typed = ''; wake(); play('is-jump', 800); say(TYPED[hit], 2600); }
+    if (hit) { typed = ''; wake(); play('is-jump', 800); say(TYPED[hit], 2600); sfx.chirp(); }
   };
 
   mascot.addEventListener('click', onPet);

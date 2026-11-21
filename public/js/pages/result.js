@@ -114,7 +114,7 @@ export default {
         box.hidden = false;
         box.innerHTML = String(html`<div class="section__head"><h2 class="section__title">새 업적 달성!</h2></div><div class="ach-grid">${fresh_.map(badge)}</div>`);
         box.querySelectorAll('.ach').forEach((a, k) => setTimeout(() => a.classList.add('is-pop'), k * 160));
-        sfx.combo();
+        sfx.achieve();
       }, lvUp ? 3300 : 2200);
     }).catch(() => { /* 레벨 정보 없이도 결과는 보임 */ });
 
@@ -149,7 +149,7 @@ function reviewItem(x, k) {
     answer = exp.join(' / ');
   } else if (q.type === 'order') {
     const sep = q.layout === 'stack' ? '\n' : ' ';
-    prompt = q.prompt.text; mine = Array.isArray(res) ? res.map(i => q.pieces[i]).join(sep) : none; answer = exp.join(sep);
+    prompt = q.prompt.text; mine = Array.isArray(res) ? res.map(i => q.pieces[i]).join(sep) : none; answer = Array.isArray(exp) ? exp.join(sep) : exp; // 어순 배열은 정답이 문장 하나(문자열)
   }
   return html`
     <li class="review-item ${x.correct ? 'is-ok' : 'is-bad'} reveal" style="--i:${Math.min(k, 12)}">
