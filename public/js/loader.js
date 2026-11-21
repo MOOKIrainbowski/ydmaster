@@ -1,5 +1,5 @@
 // 15 로딩 화면(사용자 요청: 기다리는 동안 지겹지 않게, 마스코트 영이가 움직이는 느낌).
-// 화면 전환이 늦을 때(350ms 넘게) 영이가 통통 뛰며 글자를 모으는 덮개를 띄우고, 1.8초마다 단어·공부 팁이 바뀐다.
+// 화면 전환이 늦을 때(16: 100ms 넘게, 사용자 요청) 영이가 통통 뛰며 글자를 모으는 덮개를 띄우고, 1.8초마다 단어·공부 팁이 바뀐다.
 // 첫 접속 때는 index.html 에 같은 모양이 정적으로 들어 있다(JS 를 받기 전에도 보이게) — 모양을 바꾸면 그쪽도 함께.
 import { html } from './ui.js';
 
@@ -24,7 +24,7 @@ export const loaderView = (text = LINES[0]) => html`
 
 let el = null, showT = 0, lineT = 0;
 // 늦을 때만 보이기: 빠른 화면 전환에서 깜빡이지 않게
-export function showLoader(delay = 350) {
+export function showLoader(delay = 100) { // 16(사용자 요청): 0.1초 넘게 걸리면
   clearTimeout(showT);
   showT = setTimeout(() => {
     if (el) return;

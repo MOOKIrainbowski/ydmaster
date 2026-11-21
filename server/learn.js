@@ -77,7 +77,8 @@ export function toSet(doc) {
   }
   return {
     _id: d._id, title: d.title, description: d.description || '', kind, visibility, tags: d.tags || [],
-    author: d.author, playCount: d.playCount || 0, favoriteCount: d.favoriteCount || 0,
+    author: d.author?.username ? userCard(d.author) : d.author, // 16: 작성자 = { _id, username, avatarUrl }
+    playCount: d.playCount || 0, favoriteCount: d.favoriteCount || 0,
     createdAt: d.createdAt, updatedAt: d.updatedAt || d.createdAt,
     items: kind === 'vocab' ? items : undefined,
     passage: kind === 'passage' ? { source: d.passage?.source || '', sentences: d.passage?.sentences || [] } : undefined,
@@ -103,7 +104,7 @@ function visibleQuery(user) {
 }
 
 function summary(s, user) {
-  const a = s.author && s.author.username ? { _id: s.author._id, username: s.author.username } : { _id: s.author, username: '(알 수 없음)' };
+  const a = s.author && s.author.username ? userCard(s.author) /* 16: 작성자 사진도 */ : { _id: s.author, username: '(알 수 없음)' };
   return {
     _id: s._id, title: s.title, description: s.description, kind: s.kind, visibility: s.visibility, tags: s.tags,
     count: countOf(s), author: a, playCount: s.playCount, favoriteCount: s.favoriteCount,
@@ -161,6 +162,12 @@ export function weekStartKST(now = new Date()) {
 const imgUrl = (u, field) => (u[field] ? (/^https?:/.test(u[field]) ? u[field] : `/api/users/${u._id}/${field === 'avatarImage' ? 'avatar' : 'banner'}?v=${u.imageVersion || 0}`) : '');
 export const avatarUrl = u => imgUrl(u, 'avatarImage');
 export const bannerUrl = u => imgUrl(u, 'bannerImage');
+// 16: 목록(친구·친구 요청·검색·관리자)에서 프로필 사진이 안 보이던 문제 — 그 API 들이 avatarUrl 을 내려주지 않았음.
+// 사진 원본(base64, 최대 2MB)을 사람마다 읽지 않도록 DB 에서 "외부 주소면 그대로, 올린 사진이면 표시용 'x', 없으면 ''"로 줄여 받는다.
+// imgUrl 은 값이 있는지(그리고 http 주소인지)만 보므로 이것으로 충분. 다른 필드와 함께 inclusion 투영으로만 쓸 것.
+export const AVATAR_PICK = { $cond: [{ $regexMatch: { input: { $ifNull: ['$avatarImage', ''] }, regex: '^https?:' } }, '$avatarImage', { $cond: [{ $gt: [{ $ifNull: ['$avatarImage', ''] }, ''] }, 'x', ''] }] };
+export const PUBLIC_USER = { username: 1, imageVersion: 1, avatarImage: AVATAR_PICK };
+export const userCard = u => (u ? { _id: u._id, username: u.username, avatarUrl: u.avatarUrl ?? avatarUrl(u) } : u); // 이미 정리된 것을 다시 넣어도 그대로
 
 export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit }) {
   const wrap = fn => async (req, res) => {
@@ -178,7 +185,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
   const touchRecent = (req, id) => User.updateOne({ _id: req.user._id }, { $set: { recentSet: id } }).catch(() => {});
   async function loadViewable(req, id) {
     if (!idOk(id)) return null;
-    const doc = await Test.findById(id).populate('author', 'username').lean();
+    const doc = await Test.findById(id).populate({ path: 'author', select: PUBLIC_USER }).lean();
     if (!doc || !doc.author) return null;
     const s = toSet(doc);
     return canView(req.user, s) ? s : null;
@@ -199,7 +206,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     if (req.query.kind === 'passage') and.push({ kind: 'passage' });
     if (req.query.kind === 'vocab') and.push({ $or: [{ kind: 'vocab' }, { kind: { $exists: false } }] });
     const sort = scope === 'explore' && req.query.sort !== 'new' ? { playCount: -1, createdAt: -1 } : { updatedAt: -1, createdAt: -1 };
-    const docs = await Test.find({ $and: and }).sort(sort).skip(page * 20).limit(21).populate('author', 'username').lean();
+    const docs = await Test.find({ $and: and }).sort(sort).skip(page * 20).limit(21).populate({ path: 'author', select: PUBLIC_USER }).lean();
     const sets = docs.slice(0, 20).map(toSet).filter(s => scope !== 'fav' || canView(req.user, s));
     res.json({ items: sets.map(s => summary(s, req.user)), hasMore: docs.length > 20 });
   }));
@@ -215,7 +222,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     const input = parseSetInput(req.body);
     if (typeof input === 'string') return res.status(400).json({ message: input });
     const doc = await Test.create({ ...input, author: req.user._id, updatedAt: new Date() });
-    await doc.populate('author', 'username');
+    await doc.populate({ path: 'author', select: PUBLIC_USER });
     res.status(201).json(full(toSet(doc), req.user));
   }));
 
@@ -226,7 +233,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     if (String(doc.author) !== String(req.user._id)) return res.status(403).json({ message: '수정 권한이 없습니다.' });
     const input = parseSetInput(req.body, toSet(doc).kind);
     if (typeof input === 'string') return res.status(400).json({ message: input });
-    const updated = await Test.findByIdAndUpdate(doc._id, { $set: { ...input, updatedAt: new Date() }, $unset: LEGACY_UNSET }, { new: true }).populate('author', 'username');
+    const updated = await Test.findByIdAndUpdate(doc._id, { $set: { ...input, updatedAt: new Date() }, $unset: LEGACY_UNSET }, { new: true }).populate({ path: 'author', select: PUBLIC_USER });
     res.json(full(toSet(updated), req.user));
   }));
 
@@ -267,7 +274,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       items: s.items?.map(({ _id, ...x }) => x), passage: s.passage && { ...s.passage, sentences: s.passage.sentences.map(({ _id, ...x }) => x) } });
     if (typeof input === 'string') return res.status(400).json({ message: '이 세트는 복사할 수 없습니다: ' + input });
     const doc = await Test.create({ ...input, author: req.user._id, updatedAt: new Date() });
-    await doc.populate('author', 'username');
+    await doc.populate({ path: 'author', select: PUBLIC_USER });
     res.status(201).json(full(toSet(doc), req.user));
   }));
 
@@ -660,7 +667,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       { $group: { _id: '$user', n: { $sum: 1 } } },
     ]);
     const att = new Map(attempts.map(a => [String(a._id), a.n]));
-    const users = await User.find({ _id: { $in: rows.map(r => r._id) } }).select('username avatarImage imageVersion').lean();
+    const users = await User.find({ _id: { $in: rows.map(r => r._id) } }).select(PUBLIC_USER).lean(); // 16: 사진 원본은 읽지 않음
     const um = new Map(users.map(u => [String(u._id), u]));
     const list = rows.filter(r => um.has(String(r._id))).map(r => {
       const u = um.get(String(r._id));

@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import crypto from 'node:crypto';
-import { mountLearn, avatarUrl, bannerUrl, toSet, PUBLIC_SET } from './learn.js';
+import { mountLearn, avatarUrl, bannerUrl, toSet, PUBLIC_SET, PUBLIC_USER, AVATAR_PICK, userCard } from './learn.js';
 import { DEFAULT_COSMETICS, TITLE_ITEMS } from './game.js';
 
 const app = express();
@@ -890,7 +890,7 @@ app.get('/api/users/search', auth, async (req, res) => {
     const users = await User.find({
       username: { $regex: escapeRegex(String(q).trim().slice(0, 20)), $options: 'i' },
       _id: { $ne: req.user._id }
-    }).select('username _id').limit(10);
+    }).select(PUBLIC_USER).limit(10).lean(); // 16: 사진 주소도
     const friendIds = req.user.friends.map(f => f.toString());
     const pendingReqs = await FriendRequest.find({
       from: req.user._id, status: 'pending',
@@ -898,7 +898,7 @@ app.get('/api/users/search', auth, async (req, res) => {
     });
     const pendingIds = pendingReqs.map(r => r.to.toString());
     res.json(users.map(u => ({
-      _id: u._id, username: u.username,
+      ...userCard(u),
       isFriend: friendIds.includes(u._id.toString()),
       requestSent: pendingIds.includes(u._id.toString())
     })));
@@ -907,15 +907,15 @@ app.get('/api/users/search', auth, async (req, res) => {
 
 app.get('/api/friends', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('friends', 'username _id');
-    res.json(user.friends || []);
+    const user = await User.findById(req.user._id).select('friends').populate({ path: 'friends', select: PUBLIC_USER }).lean();
+    res.json((user?.friends || []).filter(Boolean).map(userCard)); // 16: 사진 주소 포함
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
 
 app.get('/api/friends/requests', auth, async (req, res) => {
   try {
-    const reqs = await FriendRequest.find({ to: req.user._id, status: 'pending' }).populate('from', 'username _id');
-    res.json(reqs);
+    const reqs = await FriendRequest.find({ to: req.user._id, status: 'pending' }).populate({ path: 'from', select: PUBLIC_USER }).lean();
+    res.json(reqs.map(r => ({ ...r, from: userCard(r.from) }))); // 16: 사진 주소 포함
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
 
@@ -1356,8 +1356,9 @@ app.put('/api/admin/inquiries/:id/answer', adminAuth, async (req, res) => {
 
 app.get('/api/admin/users', adminAuth, async (req, res) => {
   try {
-    const users = await User.find().select('-password -avatarImage -bannerImage -favorites').sort({ createdAt: -1 }).limit(1000);
-    res.json(users);
+    // 16: 목록에 쓰는 필드만 + 사진 주소(원본 이미지는 읽지 않음)
+    const users = await User.find().select({ username: 1, email: 1, isAdmin: 1, createdAt: 1, loginType: 1, imageVersion: 1, avatarImage: AVATAR_PICK }).sort({ createdAt: -1 }).limit(1000).lean();
+    res.json(users.map(({ avatarImage, imageVersion, ...u }) => ({ ...u, avatarUrl: avatarUrl({ _id: u._id, avatarImage, imageVersion }) })));
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
 

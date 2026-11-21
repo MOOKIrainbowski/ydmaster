@@ -83,7 +83,7 @@ document.body.prepend(aurora);
 function onScroll() { app.querySelector('.topbar')?.classList.toggle('is-scrolled', window.scrollY > 6); }
 window.addEventListener('scroll', onScroll, { passive: true });
 
-// 15: 화면 준비가 늦으면(350ms+) 마스코트 로딩 화면. 그 사이 다른 곳으로 이동했으면 새 이동이 닫는다.
+// 15: 화면 준비가 늦으면(100ms+, 16) 마스코트 로딩 화면. 그 사이 다른 곳으로 이동했으면 새 이동이 닫는다.
 async function navigate() {
   const mine = navSeq + 1;
   showLoader();
