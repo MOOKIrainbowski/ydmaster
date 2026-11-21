@@ -25,10 +25,11 @@ const META = {
 const LEVEL = ['', '쉬움', '보통', '어려움'];
 const COUNTS = [10, 20, 30, 50, 100];
 
-const chips = (name, opts, value) => html`<div class="seg" role="radiogroup">${opts.map(([v, label, sub]) => html`
+// 10: 문항 수·진행 방식은 토글 버튼(한 줄 트랙 안에서 고른 칸이 떠오름)
+const chips = (name, opts, value) => html`<div class="seg seg--toggle" role="radiogroup">${opts.map(([v, label, sub]) => html`
   <label class="seg__opt"><input type="radio" name="${name}" value="${v}" ${String(v) === String(value) ? 'checked' : ''}><span>${label}${sub ? html`<small>${sub}</small>` : ''}</span></label>`)}</div>`;
 
-export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', defaultMode, info } = {}) {
+export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', defaultMode, info, setId } = {}) {
   let modes;
   try { modes = (await getModes()).filter(m => m.kind === kind); } catch (e) { toast(e.message, 'bad'); return; }
   let form;
@@ -41,7 +42,7 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
         <form class="start" data-start-form>
           <div class="start__src">
             <span class="kind-tile kind-tile--${kind === 'passage' ? 'passage' : 'vocab'}">${icon(source === 'wrong' ? 'target' : kind === 'passage' ? 'text' : 'book', 22)}</span>
-            <div><p class="start__src-title">${source === 'wrong' ? `틀렸던 ${kind === 'passage' ? '본문' : '단어'}만 모아서` : info?.title || `${setIds.length}개 세트`}</p>
+            <div><p class="start__src-title">${source === 'wrong' ? (setId ? info?.title || '이 세트 오답' : `틀렸던 ${kind === 'passage' ? '본문' : '단어'}만 모아서`) : info?.title || `${setIds.length}개 세트`}</p>
               <p class="muted">${kind === 'passage' ? '본문' : '단어'} 시험${info?.count ? ` · 학습 항목 ${info.count}개` : ''}${source === 'wrong' ? ' · 두 번 연속 맞히면 오답에서 빠져요' : ''}</p></div>
           </div>
 
@@ -50,7 +51,7 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
             <div class="mode-grid">${modes.map((m, i) => { const x = META[m.id] || {}; return html`
               <label class="mode-option">
                 <input type="radio" name="mode" value="${m.id}" ${(defaultMode ? m.id === defaultMode : i === 0) ? 'checked' : ''}>
-                <span class="mode-option__icon" aria-hidden="true">${icon(x.icon || 'play', 20)}</span>
+                <span class="mode-option__radio" aria-hidden="true"></span><span class="mode-option__icon" aria-hidden="true">${icon(x.icon || 'play', 20)}</span>
                 <span class="mode-option__body">
                   <span class="mode-option__label">${m.label}</span>
                   <span class="mode-option__desc">${m.desc}</span>
@@ -82,7 +83,7 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
         const m = modes.find(x => x.id === form.mode.value);
         const o = m?.options || [];
         extra.innerHTML = String(html`
-          ${o.includes('hint') ? html`<label class="check check--card"><input type="checkbox" name="hint"><span><b>첫 글자 힌트</b><small>답의 첫 글자와 글자 수를 보여줘요</small></span></label>` : ''}
+          ${o.includes('hint') ? html`<label class="set-toggle"><span><b>첫 글자 힌트</b><small>답의 첫 글자와 글자 수를 보여줘요</small></span><input type="checkbox" role="switch" name="hint"><i aria-hidden="true"></i></label>` : ''}
           ${o.includes('ratio') ? html`<div><p class="start__sub">빈칸 비율</p>${chips('ratio', [['0.15', '적게', '15%'], ['0.25', '보통', '25%'], ['0.4', '많이', '40%']], '0.25')}</div>` : ''}
           ${o.includes('size') ? html`<div><p class="start__sub">한 문제에 섞을 문장 수</p>${chips('size', [3, 4, 5, 6, 8].map(n => [n, `${n}문장`]), 5)}</div>` : ''}`);
         extra.hidden = !o.length;
@@ -105,7 +106,7 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
   if (choice !== 'start' || !form) return;
   const f = new FormData(form);
   const body = {
-    source: source === 'wrong' ? { type: 'wrong' } : { type: 'sets', ids: setIds },
+    source: source === 'wrong' ? { type: 'wrong', ...(setId ? { set: setId } : {}) } : { type: 'sets', ids: setIds }, // setId: 그 세트 오답만(10)
     mode: f.get('mode'), count: Number(f.get('count')),
     options: { order: f.get('order'), feedback: f.get('feedback'), hint: f.get('hint') === 'on', ratio: f.get('ratio') || undefined, size: f.get('size') || undefined },
   };

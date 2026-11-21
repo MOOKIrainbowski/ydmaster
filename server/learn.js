@@ -39,6 +39,24 @@ const QuestClaimSchema = new mongoose.Schema({
 }, { timestamps: { createdAt: true, updatedAt: false } });
 QuestClaimSchema.index({ user: 1, key: 1 }, { unique: true });
 const QuestClaim = mongoose.model('QuestClaim', QuestClaimSchema);
+// 알림(10, 사용자 요청: 친구 요청·수락 등 시스템 알림). key 로 같은 알림 중복 방지, 90일 지나면 자동 삭제
+const NotificationSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  type: String, title: String, body: String, link: String, key: String,
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now, expires: 90 * 86400 },
+});
+NotificationSchema.index({ user: 1, createdAt: -1 });
+NotificationSchema.index({ user: 1, key: 1 }, { unique: true, partialFilterExpression: { key: { $type: 'string' } } });
+const Notification = mongoose.model('Notification', NotificationSchema);
+// 알림 만들기. key 가 같으면 한 번만(업적·레벨·공지 등)
+async function notify(user, n) {
+  const doc = { user, type: n.type, title: String(n.title || '').slice(0, 80), body: String(n.body || '').slice(0, 200), link: n.link || '' };
+  try {
+    if (n.key) await Notification.updateOne({ user, key: n.key }, { $setOnInsert: { ...doc, key: n.key, read: false, createdAt: new Date() } }, { upsert: true });
+    else await Notification.create(doc);
+  } catch (e) { if (e.code !== 11000) console.error('notify:', e.message); }
+}
 const kstDay = (t = Date.now()) => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
 const kstDayStart = () => new Date(Date.parse(kstDay() + 'T00:00:00+09:00'));
 
@@ -287,12 +305,14 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       ...(o.size ? { size: Math.max(3, Math.min(8, parseInt(o.size) || 5)) } : {}),
     };
     let sets = [], title, refFilter = null;
+    // source.set 이 있으면 그 세트에서 생긴 오답만(10, 사용자 요청: 세트별 오답 복습 시험)
+    const wrongSet = source?.type === 'wrong' && idOk(String(source.set || '')) ? String(source.set) : null;
     if (source?.type === 'wrong') {
-      const stats = await ItemStat.find({ user: req.user._id, wrong: { $gt: 0 }, streak: { $lt: 2 } }).lean();
+      const stats = await ItemStat.find({ user: req.user._id, wrong: { $gt: 0 }, streak: { $lt: 2 }, ...(wrongSet ? { set: wrongSet } : {}) }).lean();
       refFilter = new Set(stats.map(x => `${x.set}:${x.item}`));
       const docs = await Test.find({ _id: { $in: [...new Set(stats.map(x => String(x.set)))] } }).lean();
       sets = docs.map(toSet).filter(s => canView(req.user, s));
-      title = '오답 복습';
+      title = wrongSet && sets[0] ? `${sets[0].title} · 오답 복습` : '오답 복습';
     } else {
       const ids = [...new Set((Array.isArray(source?.ids) ? source.ids : []).map(String))].filter(idOk).slice(0, 10);
       if (!ids.length) return res.status(400).json({ message: '시험 볼 세트를 선택해주세요.' });
@@ -319,7 +339,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     if (!questions.length) return res.status(400).json({ message: '복습할 오답이 없습니다.' });
     questions.forEach((x, i) => { x.q.i = i; });
     const s = await Session.create({
-      user: req.user._id, source: source?.type === 'wrong' ? { type: 'wrong', ids: [] } : { type: 'sets', ids: sets.map(x => x._id) },
+      user: req.user._id, source: source?.type === 'wrong' ? { type: 'wrong', ids: wrongSet ? [wrongSet] : [] } : { type: 'sets', ids: sets.map(x => x._id) },
       mode, kind: m.kind, options, title, questions, expiresAt: new Date(Date.now() + 7 * 864e5),
     });
     res.status(201).json(publicSession(s));
@@ -448,7 +468,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     const uid = new ObjectId(String(userId));
     const today = kstDayStart();
     const [user, sets, publicSets, attempts, wrongCount, days, resAgg, modes, learned, cleared, wrongReviews, claims] = await Promise.all([
-      User.findById(uid).select('friends avatarImage').lean(),
+      User.findById(uid).select('friends avatarImage achSeen levelSeen').lean(),
       Test.countDocuments({ author: uid }),
       Test.countDocuments({ author: uid, ...PUBLIC_SET }),
       Result.countDocuments({ user: uid }),
@@ -488,8 +508,41 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       passageTests: g.passage, cleared, wrongReviews, friends: user?.friends?.length || 0, hasAvatar: !!user?.avatarImage,
       questsDone: claims.length, todayAttempts: g.today, todayCorrect: g.todayCorrect,
     };
-    return { m, wrongCount, claims, level: levelOf(xp), achievements: achievementsOf(m) };
+    const achievements = achievementsOf(m), level = levelOf(xp);
+    await noteProgress(uid, user, achievements, level);
+    return { m, wrongCount, claims, level, achievements };
   }
+
+  // 업적 달성·레벨 업 알림(10): 서버가 계산한 결과와 '이미 알린 것' 을 비교. achSeen 이 없던 사용자는 첫 계산 때 기록만(옛 업적으로 알림 폭탄 방지)
+  async function noteProgress(uid, user, achievements, level) {
+    if (!user) return;
+    const got = achievements.filter(a => a.got);
+    if (!Array.isArray(user.achSeen)) { await User.updateOne({ _id: uid }, { $set: { achSeen: got.map(a => a.id), levelSeen: level.level } }); return; }
+    const fresh = got.filter(a => !user.achSeen.includes(a.id));
+    const TIER = ['', '하', '중', '상', '최상', '전설'];
+    for (const a of fresh) await notify(uid, { type: 'achievement', key: `ach:${a.id}`, title: `업적 달성 · ${TIER[a.tier]}`, body: `'${a.title}' — ${a.desc}${a.tier >= 3 ? ' · 새 칭호가 열렸어요' : ''}`, link: a.tier >= 3 ? '#/me/edit' : '#/me' });
+    if (level.level > (user.levelSeen || 1)) await notify(uid, { type: 'level', key: `lvl:${level.level}`, title: `레벨 업! Lv.${level.level}`, body: `칭호 '${level.title}' · 다음 레벨까지 ${level.need - level.into} XP`, link: '#/me' });
+    if (fresh.length || level.level > (user.levelSeen || 1)) await User.updateOne({ _id: uid }, { $addToSet: { achSeen: { $each: fresh.map(a => a.id) } }, $max: { levelSeen: level.level } });
+  }
+
+  // ── 알림 API(10) ──
+  app.get('/api/notifications', auth, wrap(async (req, res) => {
+    await notify(req.user._id, { type: 'welcome', key: 'welcome', title: '영단마스터에 오신 걸 환영해요', body: '가이드에서 사용법을 보고, 퀘스트로 첫 경험치를 받아 보세요.', link: '#/guide' });
+    const [items, unread] = await Promise.all([
+      Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(40).lean(),
+      Notification.countDocuments({ user: req.user._id, read: false }),
+    ]);
+    res.json({ items: items.map(({ _id, type, title, body, link, read, createdAt }) => ({ _id, type, title, body, link, read, createdAt })), unread });
+  }));
+  app.get('/api/notifications/unread', auth, wrap(async (req, res) => {
+    res.json({ unread: await Notification.countDocuments({ user: req.user._id, read: false }) });
+  }));
+  app.post('/api/notifications/read', auth, wrap(async (req, res) => {
+    const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(idOk).slice(0, 100);
+    const q = req.body?.all ? { user: req.user._id, read: false } : { user: req.user._id, _id: { $in: ids } };
+    await Notification.updateMany(q, { $set: { read: true } });
+    res.json({ unread: await Notification.countDocuments({ user: req.user._id, read: false }) });
+  }));
 
   app.get('/api/stats', auth, wrap(async (req, res) => {
     const [G, weekLearned] = await Promise.all([gameOf(req.user._id), learnedCount(req.user._id, weekStartKST())]);
@@ -631,5 +684,5 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     }));
   }
 
-  return { Session, ItemStat, QuestClaim, gameOf };
+  return { Session, ItemStat, QuestClaim, Notification, gameOf, notify };
 }

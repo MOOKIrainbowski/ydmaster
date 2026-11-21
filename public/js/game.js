@@ -84,17 +84,35 @@ export const TIER = ['', '하', '중', '상', '최상', '전설']; // 08: 최상
 export const badge = a => html`<div class="ach ach--t${a.tier || 1}${a.got ? ' is-got' : ''}" title="${a.desc}"><span class="ach__tier">${TIER[a.tier || 1]}</span><span class="ach__icon">${icon(a.icon, 22)}</span><span class="ach__title">${a.title}</span><span class="ach__desc">${a.desc}</span></div>`;
 
 // 업적 보드: 전체/하/중/상 거르기(홈·프로필 공용)
-export function achBoard(list, { filter = 'all' } = {}) {
-  const n = t => list.filter(a => (t === 'all' || a.tier === t)).length, g = t => list.filter(a => (t === 'all' || a.tier === t) && a.got).length;
+// 10(사용자 요청): 달성하지 못한 업적은 보이지 않게(클리어 조건을 미리 알 수 없게), 기본 3줄만 + 더보기
+export function achBoard(all, { filter = 'all', expanded = false } = {}) {
+  const list = all.filter(a => a.got);
+  const n = t => list.filter(a => (t === 'all' || a.tier === t)).length, g = n;
   return html`<div class="ach-board" data-ach-board>
     <div class="seg seg--sm" role="radiogroup" aria-label="업적 단계">${['all', 1, 2, 3, 4, 5].map(t => html`<label class="seg__opt"><input type="radio" name="ach-tier" value="${t}" ${String(t) === String(filter) ? 'checked' : ''}><span>${t === 'all' ? '전체' : TIER[t]} <small>${g(t)} / ${n(t)}</small></span></label>`)}</div>
-    <div class="ach-grid">${list.filter(a => filter === 'all' || a.tier === Number(filter)).sort((a, b) => (b.got - a.got) || (a.tier - b.tier)).map(badge)}</div></div>`;
+    ${list.length ? html`<div class="ach-grid ach-grid--rows${expanded ? '' : ' is-collapsed'}">${list.filter(a => filter === 'all' || a.tier === Number(filter)).sort((a, b) => b.tier - a.tier).map(badge)}</div>
+      <button class="quest-more" type="button" data-ach-board-more hidden>${icon(expanded ? 'chevronUp' : 'chevronDown', 16)}<span>${expanded ? '접기' : '더보기'}</span></button>`
+    : html`<p class="ach-none">${icon('trophy', 28)}<span>아직 달성한 업적이 없어요. 공부하다 보면 업적이 하나씩 나타나요!</span></p>`}</div>`;
 }
 // 보드의 단계 칩을 누르면 다시 그림
 export function bindAchBoard(root, getList) { // getList: 지금 목록을 돌려주는 함수(화면이 다시 불러와도 최신)
-  const fn = e => { if (e.target.name !== 'ach-tier') return; const box = e.target.closest('[data-ach-board]'); box.outerHTML = String(achBoard(getList(), { filter: e.target.value })); };
-  root.addEventListener('change', fn);
-  return () => root.removeEventListener('change', fn);
+  // 3줄 넘게 있을 때만 더보기(줄 수는 화면 폭에 따라 칸 수가 달라 실제로 숨은 칸이 있는지로 판단)
+  const sync = () => root.querySelectorAll('[data-ach-board]').forEach(b => {
+    const grid = b.querySelector('.ach-grid'), btn = b.querySelector('[data-ach-board-more]');
+    if (!grid || !btn) return;
+    btn.hidden = !grid.classList.contains('is-collapsed') ? false : ![...grid.children].some(x => getComputedStyle(x).display === 'none');
+  });
+  let filter = 'all';
+  const fn = e => { if (e.target.name !== 'ach-tier') return; filter = e.target.value; const box = e.target.closest('[data-ach-board]'); box.outerHTML = String(achBoard(getList(), { filter })); sync(); };
+  const more = e => {
+    const b = e.target.closest?.('[data-ach-board-more]'); if (!b) return;
+    const box = b.closest('[data-ach-board]'), open = box.querySelector('.ach-grid').classList.contains('is-collapsed');
+    box.outerHTML = String(achBoard(getList(), { filter, expanded: open })); sync();
+    if (!open) root.querySelector('[data-ach-board]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  };
+  root.addEventListener('change', fn); root.addEventListener('click', more);
+  requestAnimationFrame(sync); addEventListener('resize', sync);
+  return () => { root.removeEventListener('change', fn); root.removeEventListener('click', more); removeEventListener('resize', sync); };
 }
 
 // 업적: 이미 본 것은 브라우저에 기억해 "새로 달성" 만 축하

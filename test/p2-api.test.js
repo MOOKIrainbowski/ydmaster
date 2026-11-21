@@ -186,3 +186,35 @@ test('즐겨찾기 수는 실제 관계로 다시 맞춰짐(I-057)', async () =>
   const r = await t.call('POST', `/sets/${s._id}/favorite`, {}, b.token);
   assert.equal(r.data.favoriteCount, 1);
 });
+
+test('10 알림: 친구 요청·수락, 안 읽음 수·모두 읽음 · 세트별 오답 복습', async () => {
+  const meA = (await t.call('GET', '/auth/me', undefined, a.token)).data.user;
+  const meB = (await t.call('GET', '/auth/me', undefined, b.token)).data.user;
+  // 이미 친구면 정리 후 다시 요청
+  await t.call('DELETE', `/friends/${meB.id}`, undefined, a.token);
+  const r = await t.call('POST', '/friends/request', { toUserId: meB.id }, a.token);
+  assert.equal(r.status, 201);
+  const nb = await t.call('GET', '/notifications', undefined, b.token);
+  const fr = nb.data.items.find(x => x.type === 'friend_req');
+  assert.ok(fr && fr.body.includes(meA.username) && !fr.read);
+  assert.ok(nb.data.unread >= 1);
+  assert.ok(nb.data.items.some(x => x.type === 'welcome'));
+  const reqs = await t.call('GET', '/friends/requests', undefined, b.token);
+  const reqId = (reqs.data.received || reqs.data)[0]?._id;
+  assert.equal((await t.call('PUT', `/friends/request/${reqId}`, { action: 'accept' }, b.token)).status, 200);
+  const na = await t.call('GET', '/notifications', undefined, a.token);
+  assert.ok(na.data.items.some(x => x.type === 'friend_ok' && x.body.includes(meB.username)));
+  const done = await t.call('POST', '/notifications/read', { all: true }, b.token);
+  assert.equal(done.data.unread, 0);
+  assert.equal((await t.call('GET', '/notifications/unread', undefined, b.token)).data.unread, 0);
+
+  // 세트별 오답 복습: 그 세트의 오답만, 제목에 세트 이름
+  const s = (await t.call('POST', '/sets', { ...vocabSet(), title: '세트별 오답 테스트' }, a.token)).data;
+  const ses = (await t.call('POST', '/sessions', { source: { type: 'sets', ids: [s._id] }, mode: 'write_meaning', count: 3 }, a.token)).data;
+  for (let i = 0; i < 3; i++) await t.call('POST', `/sessions/${ses._id}/answers`, { i, response: '모름' }, a.token);
+  await t.call('POST', `/sessions/${ses._id}/finish`, {}, a.token);
+  const rv = await t.call('POST', '/sessions', { source: { type: 'wrong', set: s._id }, mode: 'write_meaning' }, a.token);
+  assert.equal(rv.status, 201);
+  assert.equal(rv.data.total, 3);
+  assert.ok(rv.data.title.includes('세트별 오답 테스트'));
+});

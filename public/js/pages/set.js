@@ -9,11 +9,18 @@ import { burstAt } from '../motion.js';
 export default {
   title: ({ id }) => '학습 세트',
   async render(root, { id }, _query, ctx) {
-    let set, flipped = false, flashMode = false, index = 0, showKo = false;
+    // 10(사용자 요청): 단어 세트는 들어가자마자 학습 카드. '목록 보기' 로 전환
+    let set, flipped = false, flashMode = true, index = 0, showKo = false, wrongN = 0;
     const revealed = new Set();
     const load = async () => {
       render(root, html`<div class="page">${skeleton(4)}</div>`);
-      try { set = await api.get(`/sets/${encodeURIComponent(id)}`); if (ctx.isCurrent()) draw(); }
+      try {
+        set = await api.get(`/sets/${encodeURIComponent(id)}`);
+        if (set.kind === 'vocab') resetDeck(); else flashMode = false;
+        // 이 세트에서 생긴 오답 수(로그인했을 때만) → '이 세트 오답 복습' 버튼
+        if (state.user) wrongN = (await api.get(`/wrong?set=${encodeURIComponent(id)}`).catch(() => ({ items: [] }))).items.length;
+        if (ctx.isCurrent()) draw();
+      }
       catch (e) { if (ctx.isCurrent()) render(root, html`<div class="page">${errorBox(e.message)}</div>`); }
     };
     const isOwner = () => String(set?.author?._id) === String(state.user?.id || state.user?._id);
@@ -62,7 +69,7 @@ export default {
       const passageText = passage ? html`<p class="passage passage--reading" lang="en">${set.passage.sentences.map((s, i) => html`<span class="passage__sentence"><sup class="passage__num">${i + 1}</sup>${inline(parseSentence(s.en).tokens)}${showKo && s.ko ? html` <span class="passage-ko">${s.ko}</span>` : ''} </span>`)}</p>` : '';
       render(root, html`<div class="page stack"><section class="section"><div class="section__head"><div><span class="badge">${passage ? '본문' : '단어'} · ${set.visibility === 'public' ? '공개' : set.visibility === 'friends' ? '친구' : '비공개'}</span><h1 class="section__title">${set.title}</h1></div>
         ${isOwner() ? html`<div class="btn-row"><a class="btn btn--ghost btn--sm" href="#/sets/${set._id}/edit">수정</a><button class="btn btn--ghost btn--sm set-delete" data-delete>삭제</button></div>` : ''}</div>
-        ${set.description ? html`<p class="muted">${set.description}</p>` : ''}<div class="btn-row"><button class="btn btn--primary" data-test>${icon('play')}시험 보기</button>${!passage ? html`<button class="btn btn--ghost" data-flash>${flashMode ? '목록 보기' : '학습 카드'}</button>` : html`<button class="btn btn--ghost" data-translation>${showKo ? '해석 숨기기' : '해석 보기'}</button>`}<button class="btn btn--ghost" data-favorite>${icon('star')} ${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}</button><button class="btn btn--ghost" data-copy>${icon('copy')}내 세트로 복사</button><button class="btn btn--ghost" data-share>${icon('link')}공유</button></div>
+        ${set.description ? html`<p class="muted">${set.description}</p>` : ''}<div class="btn-row"><button class="btn btn--primary" data-test>${icon('play')}시험 보기</button>${wrongN ? html`<button class="btn btn--ghost btn--wrong" data-wrong-test>${icon('target')}이 세트 오답 복습 <span class="badge wrong-count">${wrongN}</span></button>` : ''}${!passage ? html`<button class="btn btn--ghost" data-flash>${flashMode ? '목록 보기' : '학습 카드'}</button>` : html`<button class="btn btn--ghost" data-translation>${showKo ? '해석 숨기기' : '해석 보기'}</button>`}<button class="btn btn--ghost" data-favorite>${icon('star')} ${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}</button><button class="btn btn--ghost" data-copy>${icon('copy')}내 세트로 복사</button><button class="btn btn--ghost" data-share>${icon('link')}공유</button></div>
       </section><section class="section"><div class="section__head"><h2 class="section__title">${passage ? `${items.length}개 문장` : `${items.length}개 단어`}</h2></div>
         ${passage ? passageText : flashMode ? (done ? flashDone() : flashCard(items[index], index)) : html`<div class="stack">${items.map((item, i) => vocabCard(item, i))}</div>`}</section></div>`);
     };
@@ -103,6 +110,7 @@ export default {
     const offs = [on(root, 'click', '[data-favorite]', async () => { try { const r = await api[set.favorited ? 'del' : 'post'](`/sets/${id}/favorite`); set.favorited = r.favorited; draw(); } catch (e) { toast(e.message, 'bad'); } }),
       on(root, 'click', '[data-copy]', async () => { try { const r = await api.post(`/sets/${id}/copy`); toast('내 세트에 복사했어요.', 'ok'); location.hash = `#/sets/${r._id}`; } catch (e) { toast(e.message, 'bad'); } }),
       on(root, 'click', '[data-share]', async () => { try { await navigator.clipboard.writeText(new URL(`#/sets/${id}`, location.href).href); toast('세트 링크를 복사했어요.', 'ok'); } catch { toast('이 브라우저에서는 링크를 복사할 수 없어요.', 'bad'); } }),
+      on(root, 'click', '[data-wrong-test]', () => startTest({ source: 'wrong', kind: set.kind, setId: id, info: { title: `${set.title} · 오답`, count: wrongN } })),
       on(root, 'click', '[data-test]', () => startTest({ setIds: [id], kind: set.kind, info: { title: set.title, count: (set.kind === 'passage' ? set.passage?.sentences : set.items)?.length } })),
       on(root, 'click', '[data-translation]', () => { showKo = !showKo; draw(); }),
       on(root, 'click', '[data-flip]', (_e, el) => {

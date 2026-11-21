@@ -49,7 +49,7 @@ export default {
     const preview = () => html`<article class="card profile-card ${cardClass(draft)}">
       ${user.bannerUrl ? html`<img class="profile-banner" src="${user.bannerUrl}" alt="">` : html`<div class="profile-banner profile-banner--empty" aria-hidden="true"></div>`}
       <div class="profile-id"><span class="profile-id__avatar ${frameClass(draft)}">${avatar(user, 88)}</span>
-        <div class="profile-id__text"><h2 class="profile-id__name">${user.username}</h2>${draft.title ? html`<p class="profile-id__ttl">${titleTag(titleOf(draft.title))}</p>` : ''}<p class="muted">미리보기 · 저장하면 프로필에 보여요</p></div></div></article>`;
+        <div class="profile-id__text"><div class="profile-id__nameline"><h2 class="profile-id__name">${user.username}</h2>${draft.title ? titleTag(titleOf(draft.title), { small: true }) : ''}</div><p class="muted">미리보기 · 저장하면 프로필에 보여요</p></div></div></article>`;
 
     const draw = () => render(root, html`<div class="page page--narrow"><section class="section stack">
       <div class="section__head"><div><a class="link-btn" href="#/me">${icon('chevronLeft', 14)}내 프로필</a><h1 class="section__title">프로필 수정</h1></div></div>

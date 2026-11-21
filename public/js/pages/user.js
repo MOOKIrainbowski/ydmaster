@@ -33,8 +33,7 @@ export async function renderProfile(root, username, ctx, { self = false } = {}) 
         <div class="profile-id">
           <span class="profile-id__avatar ${frameClass(cos)}">${avatar(user, 88)}</span>
           <div class="profile-id__text">
-            <h1 class="profile-id__name">${user.username}</h1>
-            ${cos.title ? html`<p class="profile-id__ttl">${titleTag(cos.title)}</p>` : ''}
+            <div class="profile-id__nameline"><h1 class="profile-id__name">${user.username}</h1>${cos.title ? titleTag(cos.title, { small: true }) : ''}</div>
             <p class="muted">가입 ${fmtDate(user.createdAt)}${game ? html` · Lv.${game.level} <b class="profile-id__title">${game.title}</b>` : ''}</p>
           </div>
           <div class="profile-id__act" data-friend-slot>${action}</div>
@@ -54,7 +53,7 @@ export async function renderProfile(root, username, ctx, { self = false } = {}) 
           <a class="list-row" href="#/settings">${icon('settings')}설정</a><a class="list-row" href="#/guide">${icon('lightbulb')}가이드</a>
           ${state.user?.isAdmin ? html`<a class="list-row" href="#/admin">${icon('shield')}관리자</a>` : ''}
           <a class="list-row" href="/privacy.html">${icon('info')}개인정보처리방침</a>
-          <button class="list-row" type="button" data-logout>${icon('logout')}로그아웃</button>
+          <button class="list-row list-row--danger" type="button" data-logout>${icon('logout')}로그아웃</button>
         </nav></section>` : ''}
       <section class="section"><div class="section__head"><h2 class="section__title">${mine ? '내 공개 세트' : '최근 공개 세트'}</h2></div>
         ${recentTests.length ? html`<div class="set-grid">${recentTests.map((s, i) => html`<a class="set-card reveal spotlight" style="--i:${i}" href="#/sets/${s._id}"><span class="kind-tile kind-tile--${s.kind === 'passage' ? 'passage' : 'vocab'}">${icon(s.kind === 'passage' ? 'text' : 'book', 24)}</span><div class="set-card__head"><h3 class="set-card__title">${s.title}</h3><span class="badge badge--${s.kind === 'passage' ? 'passage' : 'vocab'}">${s.kind === 'passage' ? '본문' : '단어'}</span></div><div class="set-card__meta"><span>${s.count}개</span><span>${fmtDate(s.updatedAt)}</span></div></a>`)}</div>` : empty({ icon: 'book', title: '공개 세트가 없어요' })}

@@ -5,6 +5,7 @@ import { html, render, icon, on, toast, closeAllModals, errorBox, empty, avatar,
 import { initMotion, viewTransition } from './motion.js';
 import { initUpdateCheck } from './update.js';
 import { applyPrefs } from './prefs.js';
+import { initNotifications, notifBadge } from './notify.js';
 
 const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
@@ -51,8 +52,11 @@ function shell(active, mod = {}) {
     <header class="topbar glass">
       <a class="topbar__brand" href="#/" aria-label="영단마스터 홈">${logoMark()}<span class="topbar__name">영단마스터</span></a>
       ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map((t, i) => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span style="view-transition-name:top-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>
-        <a class="topbar__help${active === 'guide' ? ' is-active' : ''}" href="#/guide" aria-label="가이드" title="가이드">${icon('lightbulb', 20)}</a>
-        <a class="topbar__help topbar__settings${active === 'settings' ? ' is-active' : ''}" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a>
+        <div class="topbar__tools">
+          <a class="topbar__help${active === 'guide' ? ' is-active' : ''}" href="#/guide" aria-label="가이드" title="가이드">${icon('lightbulb', 20)}</a>
+          <a class="topbar__help topbar__settings${active === 'settings' ? ' is-active' : ''}" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a>
+          <button class="topbar__help topbar__bell" type="button" data-notif aria-label="알림" aria-haspopup="dialog" aria-expanded="false" title="알림">${icon('bell', 20)}${notifBadge()}</button>
+        </div>
         <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 34)}</a>`
       : active === 'login' ? '' : html`<div class="topbar__guest"><a class="topbar__help topbar__settings" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
     </header>
@@ -176,6 +180,7 @@ async function boot() {
   onUser(u => { if (!!u !== wasIn) { wasIn = !!u; navigate(); } else refreshShellUser(); });
   initMotion(app);
   initUpdateCheck();
+  initNotifications(app);
   window.addEventListener('hashchange', navigate);
   navigate();
   if ('serviceWorker' in navigator && location.hostname !== 'localhost') navigator.serviceWorker.register('/sw.js').catch(() => {});

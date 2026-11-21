@@ -194,6 +194,8 @@ const UserSchema = new mongoose.Schema({
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],
   imageVersion: { type: Number, default: 0 }, // 아바타·배너 URL 캐시 무효화용(R10)
   // 09 프로필 꾸미기(장착한 것): 해금 여부는 장착할 때 서버가 확인(server/game.js checkEquip)
+  // 10 알림: 이미 알린 업적·레벨(없으면 첫 계산 때 조용히 채움)
+  achSeen: { type: [String], default: undefined }, levelSeen: { type: Number, default: 1 },
   cosmetics: { color: { type: String, default: 'rose' }, frame: { type: String, default: 'none' }, border: { type: String, default: 'none' }, title: { type: String, default: '' } },
   createdAt: { type: Date, default: Date.now }
 });
@@ -931,6 +933,7 @@ app.post('/api/friends/request', auth, async (req, res) => {
     const isFriend = req.user.friends.map(f => f.toString()).includes(toUserId);
     if (isFriend) return res.status(400).json({ message: '이미 친구입니다.' });
     const req2 = await new FriendRequest({ from: req.user._id, to: toUserId }).save();
+    await learnApi.notify(toUserId, { type: 'friend_req', title: '친구 요청', body: `${req.user.username}님이 친구 요청을 보냈어요.`, link: '#/friends' });
     res.status(201).json(req2);
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
 });
@@ -948,6 +951,7 @@ app.put('/api/friends/request/:reqId', auth, async (req, res) => {
     if (action === 'accept') {
       await User.updateOne({ _id: fr.from }, { $addToSet: { friends: fr.to } });
       await User.updateOne({ _id: fr.to }, { $addToSet: { friends: fr.from } });
+      await learnApi.notify(fr.from, { type: 'friend_ok', key: `friend_ok:${fr._id}`, title: '친구 수락', body: `${req.user.username}님이 친구 요청을 수락했어요.`, link: `#/u/${encodeURIComponent(req.user.username)}` });
     }
     res.json({ message: action === 'accept' ? '친구 요청을 수락했습니다.' : '친구 요청을 거절했습니다.' });
   } catch { res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
@@ -1251,6 +1255,9 @@ app.post('/api/notices', adminAuth, async (req, res) => {
     const { isPinned } = req.body;
     if (!title || !content) return res.status(400).json({ message: '제목과 내용을 입력해주세요.' });
     const notice = await new Notice({ title, content, isPinned: !!isPinned, author: req.user._id }).save();
+    // 새 공지는 모든 사용자에게 알림(공지별 key 로 한 번만). ponytail: 사용자가 아주 많아지면 읽을 때 합쳐 보여주는 방식으로
+    const users = await User.find().select('_id').lean();
+    await learnApi.Notification.insertMany(users.map(u => ({ user: u._id, type: 'notice', key: 'notice:' + notice._id, title: '새 공지사항', body: title, link: '#/notice' })), { ordered: false }).catch(() => {});
     res.status(201).json(notice);
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
@@ -1341,6 +1348,7 @@ app.put('/api/admin/inquiries/:id/answer', adminAuth, async (req, res) => {
       { new: true }
     ).populate('user', 'username email');
     if (!inquiry) return res.status(404).json({ message: '문의를 찾을 수 없습니다.' });
+    if (inquiry.user?._id) await learnApi.notify(inquiry.user._id, { type: 'inquiry', title: '문의에 답변이 달렸어요', body: inquiry.title, link: '#/inquiry' });
     res.json(inquiry);
   } catch { res.status(500).json({ message: '서버 오류' }); }
 });
