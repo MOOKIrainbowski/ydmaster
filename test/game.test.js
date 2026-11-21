@@ -30,7 +30,8 @@ test('업적 판정', () => {
 test('업적: 하·중·상 단계가 모두 있고 id 가 겹치지 않음', () => {
   assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, ACHIEVEMENTS.length);
   for (const t of [1, 2, 3]) assert.ok(ACHIEVEMENTS.filter(a => a.tier === t).length >= 8, '단계 ' + t);
-  assert.ok(ACHIEVEMENTS.length >= 30);
+  for (const t of [4, 5]) assert.ok(ACHIEVEMENTS.filter(a => a.tier === t).length >= 6, '단계 ' + t); // 08 최상·전설
+  assert.ok(ACHIEVEMENTS.length >= 50);
 });
 
 test('퀘스트: 상태·매일 키·받기 판정', () => {
@@ -49,4 +50,15 @@ test('퀘스트: 상태·매일 키·받기 판정', () => {
   assert.equal(canClaim(QUEST_BY_ID.guide_start, m), true);
   assert.ok(qs.every(q => !('check' in q) && !('goal' in q)));
   assert.equal(new Set(QUESTS.map(q => q.id)).size, QUESTS.length);
+});
+
+test('08 연속 학습 업적은 최고 기록 기준, 업적 수집가는 하·중·상 전부', () => {
+  const base = { attempts: 0, perfects: 0, streakDays: 0, learned: 0, sets: 0, publicSets: 0, xp: 0, modesUsed: 0, passageTests: 0, cleared: 0, wrongReviews: 0, friends: 0, questsDone: 0 };
+  const got = m => achievementsOf({ ...base, ...m }).filter(a => a.got).map(a => a.id);
+  assert.ok(got({ streakDays: 0, bestStreak: 7 }).includes('streak7')); // 오늘 끊겨도 유지
+  assert.ok(!got({ bestStreak: 99 }).includes('streak100'));
+  assert.ok(got({ bestStreak: 365 }).includes('streak365'));
+  const max = { attempts: 200, perfects: 20, bestStreak: 30, learned: 1000, sets: 10, publicSets: 1, xp: xpForLevel(17), modesUsed: 11, passageTests: 30, cleared: 200, wrongReviews: 5, friends: 5, questsDone: 20 };
+  assert.ok(got(max).includes('collector'));
+  assert.ok(!got({ ...max, friends: 4 }).includes('collector'));
 });

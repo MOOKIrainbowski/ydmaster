@@ -832,3 +832,21 @@ a.podium-step__name:hover { color: var(--accent-ink); }
   .podium-step__ghost { width: 56px; height: 56px; } .podium-step--1 .podium-step__ghost { width: 68px; height: 68px; }
   .rank-row { grid-template-columns: 28px 40px minmax(0, 1fr) auto; gap: 8px; padding: 10px; }
 }
+
+/* 08: '링크에 항상 밑줄' 을 꺼도 밑줄이 보이던 문제 — 브라우저 기본 a 밑줄을 끄지 않았음.
+   꺼짐(기본): 글자 링크는 밑줄 없이 색으로, 마우스를 올렸을 때만 밑줄. 켜짐: 06 규칙대로 항상 밑줄 */
+:root:not([data-underline="on"]) a { text-decoration: none; }
+:root:not([data-underline="on"]) a:not(.btn):not(.set-card):not(.topbar__link):not(.topbar__brand):not(.topbar__help):not(.topbar__me):not(.tabbar__item):not(.list-row):not(.bento__cell):not(.guide__link):not(.quest-nudge):not(.rank-row__name):not(.podium-step__name):hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── 08 업적 단계: 최상(백금·보석) · 전설(무지개 빛) ── */
+.ach--t4.is-got .ach__icon { background: linear-gradient(140deg, #A5F3FC, #6366F1 55%, #C026D3); box-shadow: 0 6px 20px -4px rgb(99 102 241 / 60%); }
+.ach--t4.is-got .ach__tier { background: #E0E7FF; color: #3730A3; }
+.ach--t4.is-got { box-shadow: 0 0 0 1px rgb(99 102 241 / 35%), var(--shadow-1); }
+.ach--t5.is-got { overflow: hidden; box-shadow: 0 0 0 2px transparent, var(--shadow-2); background: linear-gradient(var(--glass-card-strong), var(--glass-card-strong)) padding-box, linear-gradient(120deg, #F43F5E, #F59E0B, #22C55E, #06B6D4, #8B5CF6, #F43F5E) border-box; border: 2px solid transparent; background-size: 100% 100%, 300% 300%; animation: legend-edge 6s linear infinite; }
+.ach--t5.is-got .ach__icon { background: conic-gradient(from 0deg, #F43F5E, #F59E0B, #22C55E, #06B6D4, #8B5CF6, #F43F5E); box-shadow: 0 0 22px -2px rgb(245 158 11 / 65%); }
+.ach--t5.is-got .ach__tier { background: linear-gradient(90deg, #F59E0B, #F43F5E, #8B5CF6); color: #fff; }
+.ach--t5.is-got .ach__title { background: linear-gradient(90deg, #E11D48, #D97706, #7C3AED); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ach--t5:not(.is-got) .ach__tier { background: #FDE68A; color: #92400E; } /* 잠겨 있어도 '전설' 표시는 눈에 띄게 */
+@keyframes legend-edge { to { background-position: 0 0, 300% 0; } }
+@media (prefers-reduced-motion: reduce) { .ach--t5.is-got { animation: none; } }
+html[data-motion="reduce"] .ach--t5.is-got { animation: none; }

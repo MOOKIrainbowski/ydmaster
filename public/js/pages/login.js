@@ -10,7 +10,7 @@
 // '비밀번호를 잊으셨나요? · 회원가입' 은 작은 글자 링크(탭 대신).
 import { api } from '../api.js';
 import { state, setUser } from '../state.js';
-import { html, render, on, toast, confirmDialog, busy, icon, $, logoMark } from '../ui.js';
+import { html, raw, render, on, toast, confirmDialog, busy, icon, $, logoMark } from '../ui.js';
 import { reduced } from '../motion.js';
 import { mountMascot } from '../mascot.js';
 
@@ -24,8 +24,10 @@ let mem = null; // sessionStorage 를 못 쓰는 환경 대비
 const current = () => pending.get() || mem;
 
 // 입력칸 + 한 번에 지우기 버튼(값이 있을 때만 보임)
-const field = (label, name, type = 'text', attrs = '', value = '') =>
-  html`<label class="field"><span class="field__label">${label}</span><span class="input-wrap"><input class="input" name="${name}" type="${type}" value="${value}" ${attrs} required><button class="input-clear" type="button" tabindex="-1" data-clear aria-label="${label} 지우기"${value ? '' : ' hidden'}>${icon('x', 14)}</button></span></label>`;
+// attrs 는 이 파일의 고정 문자열(사용자 입력 아님)이라 raw 로 넣는다 — html`` 에 그대로 넣으면 " 가 &quot; 로 바뀌어
+// pattern="…" 값에 따옴표가 섞여 어떤 아이디도 형식 검사를 통과하지 못했음(08, 사용자 제보: 가입 시 '요청한 형식과 일치시키세요' 반복)
+export const field = (label, name, type = 'text', attrs = '', value = '') =>
+  html`<label class="field"><span class="field__label">${label}</span><span class="input-wrap"><input class="input" name="${name}" type="${type}" value="${value}" ${raw(attrs)} required><button class="input-clear" type="button" tabindex="-1" data-clear aria-label="${label} 지우기"${value ? '' : ' hidden'}>${icon('x', 14)}</button></span></label>`;
 
 // 아이디 저장·로그인 유지(이 브라우저에만 저장)
 const PREF = {

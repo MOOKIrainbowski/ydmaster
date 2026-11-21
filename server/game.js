@@ -24,8 +24,9 @@ export function levelOf(xp) {
 const TITLES = [[1, '새싹'], [3, '단어 탐험가'], [5, '문장 사냥꾼'], [8, '어휘 기사'], [12, '내신 마법사'], [17, '영단 마스터']];
 export const titleOf = n => TITLES.filter(([k]) => n >= k).pop()[1];
 
-// ── 업적: tier 1 하 · 2 중 · 3 상 ──
-// m = { attempts, perfects, streakDays, learned, sets, publicSets, xp, modesUsed, passageTests, cleared, wrongReviews, friends, questsDone }
+// ── 업적: tier 1 하 · 2 중 · 3 상 · 4 최상 · 5 전설(08 추가) ──
+// 연속 학습 업적은 '지금까지 가장 길게 이어간 날 수'(bestStreak) 기준 — 하루 쉬었다고 딴 업적이 사라지지 않게(08)
+// m = { attempts, perfects, streakDays, bestStreak, learned, sets, publicSets, xp, modesUsed, passageTests, cleared, wrongReviews, friends, questsDone }
 // id 는 한 번 정하면 바꾸지 않는다(브라우저가 '이미 본 업적' 을 id 로 기억).
 const A = (id, tier, icon, title, desc, test) => ({ id, tier, icon, title, desc, test });
 export const ACHIEVEMENTS = [
@@ -39,9 +40,9 @@ export const ACHIEVEMENTS = [
   A('perfect5', 2, 'star', '만점 수집가', '만점 5번', m => m.perfects >= 5),
   A('perfect20', 3, 'star', '만점 제조기', '만점 20번', m => m.perfects >= 20),
   // 연속 학습
-  A('streak3', 1, 'flame', '사흘 연속', '3일 연속 학습', m => m.streakDays >= 3),
-  A('streak7', 2, 'flame', '일주일 불꽃', '7일 연속 학습', m => m.streakDays >= 7),
-  A('streak30', 3, 'flame', '한 달의 불꽃', '30일 연속 학습', m => m.streakDays >= 30),
+  A('streak3', 1, 'flame', '사흘 연속', '3일 연속 학습', m => (m.bestStreak ?? m.streakDays) >= 3),
+  A('streak7', 2, 'flame', '일주일 불꽃', '7일 연속 학습', m => (m.bestStreak ?? m.streakDays) >= 7),
+  A('streak30', 3, 'flame', '한 달의 불꽃', '30일 연속 학습', m => (m.bestStreak ?? m.streakDays) >= 30),
   // 외운 문항(서로 다른 문항을 맞힌 수)
   A('learned30', 1, 'book', '서른 단어', '서로 다른 문항 30개를 맞힘', m => m.learned >= 30),
   A('learned100', 2, 'book', '백 문항 정복', '서로 다른 문항 100개를 맞힘', m => m.learned >= 100),
@@ -74,7 +75,30 @@ export const ACHIEVEMENTS = [
   A('level17', 3, 'trophy', '영단 마스터', '레벨 17 — 최고 칭호', m => levelOf(m.xp).level >= 17),
   A('quests5', 1, 'check', '퀘스트 입문', '퀘스트 보상 5번 받기', m => m.questsDone >= 5),
   A('quests20', 2, 'check', '퀘스트 수집가', '퀘스트 보상 20번 받기', m => m.questsDone >= 20),
+  // ── 최상(4): 몇 달을 꾸준히 해야 닿는 목표 ──
+  A('attempts500', 4, 'target', '오백 번의 시험', '시험 500번 완주', m => m.attempts >= 500),
+  A('perfect50', 4, 'star', '만점의 달인', '만점 50번', m => m.perfects >= 50),
+  A('streak60', 4, 'flame', '두 달의 불꽃', '60일 연속 학습', m => (m.bestStreak ?? m.streakDays) >= 60),
+  A('learned2000', 4, 'book', '이천 문항', '서로 다른 문항 2,000개를 맞힘', m => m.learned >= 2000),
+  A('passage100', 4, 'text', '본문 백 번 읽기', '본문 시험 100번 완주', m => m.passageTests >= 100),
+  A('cleared500', 4, 'check', '오답 소멸', '오답 500개 졸업', m => m.cleared >= 500),
+  A('review30', 4, 'refresh', '복습 장인', '오답 복습 시험 30번 완주', m => m.wrongReviews >= 30),
+  A('maker30', 4, 'edit', '세트 공장장', '내 세트 30개 만들기', m => m.sets >= 30),
+  A('public10', 4, 'link', '나눔 천사', '공개 세트 10개', m => m.publicSets >= 10),
+  A('friend15', 4, 'users', '스터디 리더', '친구 15명', m => m.friends >= 15),
+  A('level20', 4, 'trophy', '레벨 20', '레벨 20 달성', m => levelOf(m.xp).level >= 20),
+  A('quests50', 4, 'check', '퀘스트 마니아', '퀘스트 보상 50번 받기', m => m.questsDone >= 50),
+  // ── 전설(5): 한 해를 걸어야 하는 기록 ──
+  A('attempts1000', 5, 'target', '천 번의 도전자', '시험 1,000번 완주', m => m.attempts >= 1000),
+  A('perfect100', 5, 'star', '완벽주의자', '만점 100번', m => m.perfects >= 100),
+  A('streak100', 5, 'flame', '백일의 기적', '100일 연속 학습', m => (m.bestStreak ?? m.streakDays) >= 100),
+  A('streak365', 5, 'flame', '365일의 불꽃', '1년 내내 하루도 빠짐없이 학습', m => (m.bestStreak ?? m.streakDays) >= 365),
+  A('learned5000', 5, 'book', '오천 문항의 현자', '서로 다른 문항 5,000개를 맞힘', m => m.learned >= 5000),
+  A('cleared1000', 5, 'check', '오답 제로', '오답 1,000개 졸업', m => m.cleared >= 1000),
+  A('level30', 5, 'trophy', '전설의 영단 마스터', '레벨 30 달성', m => levelOf(m.xp).level >= 30),
 ];
+// 전설 메타 업적: 상(3) 단계까지의 업적을 전부 모으면
+ACHIEVEMENTS.push(A('collector', 5, 'trophy', '업적 수집가', '하·중·상 업적을 모두 달성', m => ACHIEVEMENTS.filter(a => a.tier <= 3).every(a => a.test(m))));
 export const achievementsOf = m => ACHIEVEMENTS.map(({ test, ...a }) => ({ ...a, got: !!test(m) }));
 
 // ── 퀘스트: 활동마다 소소한 보상 ──

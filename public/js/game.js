@@ -80,14 +80,14 @@ export const levelBar = g => html`<div class="lvbar" data-lvbar>
     <div class="lvbar__track"><i data-lvfill style="--p:${g.need ? g.into / g.need : 0}"></i></div></div></div>`;
 
 // 업적 배지: 단계 1 하(동) · 2 중(은) · 3 상(금)
-export const TIER = ['', '하', '중', '상'];
+export const TIER = ['', '하', '중', '상', '최상', '전설']; // 08: 최상·전설 추가
 export const badge = a => html`<div class="ach ach--t${a.tier || 1}${a.got ? ' is-got' : ''}" title="${a.desc}"><span class="ach__tier">${TIER[a.tier || 1]}</span><span class="ach__icon">${icon(a.icon, 22)}</span><span class="ach__title">${a.title}</span><span class="ach__desc">${a.desc}</span></div>`;
 
 // 업적 보드: 전체/하/중/상 거르기(홈·프로필 공용)
 export function achBoard(list, { filter = 'all' } = {}) {
   const n = t => list.filter(a => (t === 'all' || a.tier === t)).length, g = t => list.filter(a => (t === 'all' || a.tier === t) && a.got).length;
   return html`<div class="ach-board" data-ach-board>
-    <div class="seg seg--sm" role="radiogroup" aria-label="업적 단계">${['all', 1, 2, 3].map(t => html`<label class="seg__opt"><input type="radio" name="ach-tier" value="${t}" ${String(t) === String(filter) ? 'checked' : ''}><span>${t === 'all' ? '전체' : TIER[t]} <small>${g(t)} / ${n(t)}</small></span></label>`)}</div>
+    <div class="seg seg--sm" role="radiogroup" aria-label="업적 단계">${['all', 1, 2, 3, 4, 5].map(t => html`<label class="seg__opt"><input type="radio" name="ach-tier" value="${t}" ${String(t) === String(filter) ? 'checked' : ''}><span>${t === 'all' ? '전체' : TIER[t]} <small>${g(t)} / ${n(t)}</small></span></label>`)}</div>
     <div class="ach-grid">${list.filter(a => filter === 'all' || a.tier === Number(filter)).sort((a, b) => (b.got - a.got) || (a.tier - b.tier)).map(badge)}</div></div>`;
 }
 // 보드의 단계 칩을 누르면 다시 그림

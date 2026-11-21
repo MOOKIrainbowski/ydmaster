@@ -454,7 +454,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       Result.countDocuments({ user: uid }),
       ItemStat.countDocuments({ user: uid, wrong: { $gt: 0 }, streak: { $lt: 2 } }),
       Result.aggregate([
-        { $match: { user: uid, createdAt: { $gte: new Date(Date.now() - 400 * 864e5) } } },
+        { $match: { user: uid, createdAt: { $gte: new Date(Date.now() - 420 * 864e5) } } }, // 365일 연속 업적까지 보려고 여유 있게
         { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+09:00' } } } },
       ]),
       // 경험치는 결과에서 매번 계산(game.js xpOf 와 같은 식 — golden·API 테스트로 일치 확인)
@@ -477,11 +477,14 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     let streakDays = 0, t = Date.now();
     if (!set.has(kstDay(t))) t -= 864e5;
     while (set.has(kstDay(t))) { streakDays++; t -= 864e5; }
+    // 지금까지 가장 길게 이어간 날 수(최근 400일 안) — 연속 학습 업적 기준(08)
+    let bestStreak = 0;
+    for (const d of set) { if (set.has(kstDay(Date.parse(d + 'T12:00:00+09:00') - 864e5))) continue; let n = 0, x = Date.parse(d + 'T12:00:00+09:00'); while (set.has(kstDay(x))) { n++; x += 864e5; } bestStreak = Math.max(bestStreak, n); }
     const g = resAgg[0] || { correct: 0, n: 0, perfects: 0, passage: 0, today: 0, todayCorrect: 0 };
     const questXp = claims.reduce((a, c) => a + (c.xp || 0), 0);
     const xp = g.correct * XP.perCorrect + g.n * XP.perFinish + g.perfects * XP.perfectBonus + questXp;
     const m = {
-      attempts, perfects: g.perfects, streakDays, learned, sets, publicSets, xp, modesUsed: modes.length,
+      attempts, perfects: g.perfects, streakDays, bestStreak: Math.max(bestStreak, streakDays), learned, sets, publicSets, xp, modesUsed: modes.length,
       passageTests: g.passage, cleared, wrongReviews, friends: user?.friends?.length || 0, hasAvatar: !!user?.avatarImage,
       questsDone: claims.length, todayAttempts: g.today, todayCorrect: g.todayCorrect,
     };
