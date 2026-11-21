@@ -3,7 +3,7 @@
 import { html, icon, toast } from './ui.js';
 import { api } from './api.js';
 import { reduced, burst } from './motion.js';
-import { getPref } from './prefs.js';
+import { getPref, zoomOf } from './prefs.js';
 
 // ── 효과음: 파일 없이 Web Audio 로 합성(용량 0). 끄기 설정은 이 브라우저에 저장 ──
 const SFX_KEY = 'ydm_sfx';
@@ -49,7 +49,7 @@ export function floatText(el, text, kind = 'xp') {
   const f = document.createElement('div');
   f.className = `float-text float-text--${kind}`;
   f.textContent = text;
-  f.style.left = `${r.left + r.width / 2}px`; f.style.top = `${r.top}px`;
+  const z = zoomOf(); f.style.left = `${(r.left + r.width / 2) / z}px`; f.style.top = `${r.top / z}px`; // 14: 화면 → CSS 좌표
   document.body.append(f);
   setTimeout(() => f.remove(), 1100);
 }

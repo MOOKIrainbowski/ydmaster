@@ -17,6 +17,7 @@ const ROUTES = [
 // 하단 탭바(모바일)·상단 링크(데스크톱)에 같은 목록을 쓴다 → 선택 표시가 한 원본(I-042)
 // 06: 메뉴 글자·아이콘에도 각자 view-transition-name 을 준다. 화면 전환 중 이름 붙은 알약(pill)만 따로 떠서
 //     글자를 덮던 문제 — 글자도 따로 떠야 알약 위(그리는 순서상 뒤)에 그려진다.
+// 14(사용자 요청): 위 메뉴의 '내 정보' 는 프로필 사진 버튼과 겹쳐서 뺌. 휴대폰 아래 탭은 프로필 버튼이 없어 그대로 둔다.
 const TABS = [
   { href: '#/', label: '홈', icon: 'home', match: ['home'] },
   { href: '#/explore', label: '둘러보기', icon: 'compass', match: ['explore'] },
@@ -51,13 +52,13 @@ function shell(active, mod = {}) {
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
     <header class="topbar glass">
       <a class="topbar__brand" href="#/" aria-label="영단마스터 홈">${logoMark()}<span class="topbar__name">영단마스터</span></a>
-      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map((t, i) => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span style="view-transition-name:top-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>
+      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.filter(t => t.href !== '#/me').map((t, i) => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span style="view-transition-name:top-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>
         <div class="topbar__tools">
           <a class="topbar__help${active === 'guide' ? ' is-active' : ''}" href="#/guide" aria-label="가이드" title="가이드">${icon('lightbulb', 20)}</a>
           <a class="topbar__help topbar__settings${active === 'settings' ? ' is-active' : ''}" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a>
           <button class="topbar__help topbar__bell" type="button" data-notif aria-label="알림" aria-haspopup="dialog" aria-expanded="false" title="알림">${icon('bell', 20)}${notifBadge()}</button>
         </div>
-        <a class="topbar__me" href="#/me" aria-label="내 정보">${avatar(u, 34)}</a>`
+        <a class="topbar__me${TABS[4].match.includes(active) ? ' is-active' : ''}" href="#/me" aria-label="내 정보" title="내 정보"${TABS[4].match.includes(active) ? html` aria-current="page"` : ''}>${avatar(u, 34)}</a>`
       : active === 'login' ? '' : html`<div class="topbar__guest"><a class="topbar__help topbar__settings" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
     </header>
     <main class="main" id="main" tabindex="-1"></main>

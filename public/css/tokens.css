@@ -102,6 +102,8 @@
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
   --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px; --space-24: 96px;
   --topbar-h: 64px; --tabbar-h: 72px;
+  /* 14: html zoom(화면 맞춤 × 글자 크기) 안에서 vh·vw 가 배율만큼 커지는 것을 되돌린 화면 크기 */
+  --vh: calc(100vh / var(--z, 1)); --dvh: calc(100dvh / var(--z, 1)); --vw: calc(100vw / var(--z, 1));
   --content-narrow: 960px; --content-wide: 1240px; /* 09: 넓은 화면 양옆 여백이 커서 넓힘(사용자 요청) */ --content-landing: 1180px;
 
   /* ── 모션(D5) ── */

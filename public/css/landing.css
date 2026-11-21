@@ -491,7 +491,7 @@
 .lp-story__step.is-active .lp-step__num { transform: scale(1.08) rotate(-4deg); }
 .lp-story__step h3 { margin: 4px 0 8px; color: var(--text); font-size: clamp(24px, 3vw, 34px); font-weight: 850; letter-spacing: -.02em; }
 .lp-story__step p { margin: 0; max-width: 30em; color: var(--text-2); font-size: 17px; line-height: 1.75; }
-.lp-story__stage { position: sticky; top: calc(var(--topbar-h) + 48px); height: min(640px, calc(100vh - var(--topbar-h) - 96px)); display: grid; place-items: center; }
+.lp-story__stage { position: sticky; top: calc(var(--topbar-h) + 48px); height: min(640px, calc(var(--vh) - var(--topbar-h) - 96px)); display: grid; place-items: center; }
 .lp-phone {
   position: relative; overflow: hidden;
   width: min(100%, 320px); aspect-ratio: 9 / 18.5; max-height: 100%;

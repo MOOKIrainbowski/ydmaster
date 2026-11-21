@@ -13,7 +13,7 @@ export default {
         const [stats, sets, qs] = await Promise.all([api.get('/stats'), api.get('/sets?scope=mine&page=0'), api.get('/quests').catch(() => null)]);
         achList = stats.game?.achievements || [];
         if (!ctx.isCurrent()) return;
-        latest = sets.items[0];
+        latest = stats.recent || sets.items[0]; // 14: 가장 최근에 공부한 세트, 기록이 없으면 최근 만든 세트
         render(root, html`<div class="page stack">
           <section class="section">
             <div class="bento">

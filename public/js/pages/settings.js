@@ -3,7 +3,10 @@
 // 11(사용자 요청): 움직임 아래 '단축키' — 켜기/끄기, 숫자로 보기 고르기, 안내 표시, 동작마다 키 바꾸기(같은 묶음 안 겹치면 서로 맞바꿈).
 // 바꾸는 즉시 적용·저장(이 기기), 위쪽 미리보기 카드로 바로 확인. 효과음 켜기는 시험 화면 버튼과 같은 값(game.js).
 import { html, render, on, icon, speak, toast, confirmDialog } from '../ui.js';
-import { getPrefs, setPref, resetPrefs, getTheme, setTheme, voiceRate, KEY_ACTIONS, keyOf, keyLabel } from '../prefs.js';
+import { getPrefs, setPref, resetPrefs, getTheme, setTheme, voiceRate, KEY_ACTIONS, keyOf, keyLabel, screenInfo } from '../prefs.js';
+// 14: 화면 맞춤 — 지금 화면을 분석한 결과를 보여 주고 켜고 끌 수 있게
+const SCREEN_NAME = { phone: '휴대폰', tablet: '태블릿', laptop: '노트북', desktop: '데스크톱 모니터', wide: '큰 모니터' };
+const fitText = () => { const s = screenInfo(); return `지금 화면 ${s.w}×${s.h} · ${SCREEN_NAME[s.kind]}${s.aspect === 'ultra' ? '(울트라와이드)' : ''} → 배율 ${Math.round(s.fit * 100)}%`; };
 import { sfxOn, setSfx, sfx } from '../game.js';
 
 const FONT = ['sm', 'md', 'lg', 'xl'], FONT_LABEL = ['작게', '보통', '크게', '아주 크게'];
@@ -35,6 +38,7 @@ export default {
         <article class="card set-group"><h2 class="set-group__title">${icon('eye', 20)}화면</h2>
           ${toggle('themeSystem', theme === 'system', '기기 설정 따르기', '휴대폰·컴퓨터의 밝게/어둡게 설정을 그대로 따라가요.')}
           ${toggle('themeDark', theme === 'dark', '어두운 테마', '밤에 눈이 덜 부셔요. 끄면 밝은 테마(기본).', theme === 'system')}
+          ${toggle('autoFit', p.autoFit !== false, '화면 크기에 자동 맞춤', html`큰 모니터는 키우고, 낮은 노트북 화면은 살짝 줄여요. <span data-fit-info>${fitText()}</span>`)}
           ${bar({ name: 'font', label: '글자·화면 크기', desc: '모든 글자와 버튼을 함께 키우거나 줄여요.', min: 0, max: 3, step: 1, value: fi, out: FONT_LABEL[fi], ticks: FONT_LABEL })}
           ${toggle('spacing', p.spacing === 'wide', '넓은 줄 간격', '문장이 촘촘해 읽기 어려우면 켜세요.')}
           ${toggle('contrast', p.contrast, '고대비', '테두리와 흐린 글자를 진하게 해서 구분이 쉬워져요.')}

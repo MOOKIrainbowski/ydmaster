@@ -1,3 +1,4 @@
+import { zoomOf } from './prefs.js';
 // 모션 엔진(02 D5) — 페이지는 표시만 붙이면 된다:
 //   class="reveal" style="--i:3"   → 화면에 보일 때 순차 등장
 //   data-count="128"               → 0 에서 128 까지 카운트업(보일 때 1회)
@@ -56,8 +57,9 @@ function onPointer(e) {
     const el = spotEvt.target.closest?.('.spotlight');
     if (!el) return;
     const r = el.getBoundingClientRect();
-    el.style.setProperty('--mx', `${spotEvt.clientX - r.left}px`);
-    el.style.setProperty('--my', `${spotEvt.clientY - r.top}px`);
+    const z = zoomOf();
+    el.style.setProperty('--mx', `${(spotEvt.clientX - r.left) / z}px`);
+    el.style.setProperty('--my', `${(spotEvt.clientY - r.top) / z}px`);
   });
 }
 
@@ -67,7 +69,7 @@ export function burst(x, y, n = 18) {
   if (reduced()) return;
   const b = document.createElement('div');
   b.className = 'burst';
-  b.style.left = `${x}px`; b.style.top = `${y}px`;
+  const z = zoomOf(); b.style.left = `${x / z}px`; b.style.top = `${y / z}px`; // 14: 화면 좌표 → CSS 좌표
   for (let k = 0; k < n; k++) {
     const i = document.createElement('i');
     const ang = (Math.PI * 2 * k) / n + Math.random() * 0.5;

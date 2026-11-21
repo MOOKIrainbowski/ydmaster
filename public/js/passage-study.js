@@ -5,6 +5,7 @@
 // 문법 분석(compromise + shared/grammar.js)은 이 화면을 처음 열 때만 불러온다(다른 화면 용량에 영향 없음).
 import { html, render, icon } from './ui.js';
 import { parseSentence } from './shared/passage.js';
+import { zoomOf } from './prefs.js';
 
 let libP;
 const loadLib = () => (libP ||= Promise.all([import('/vendor/compromise-14.14.4.mjs'), import('./shared/grammar.js')]).then(([m, g]) => ({ nlp: m.default, analyze: g.analyze })));
@@ -101,9 +102,11 @@ export function mountPassageStudy(host, set) {
   document.body.append(tip);
   let hideT = 0, pinned = null;
   const place = el => {
-    const r = el.getBoundingClientRect(); tip.hidden = false;
-    const tw = tip.offsetWidth, th = tip.offsetHeight;
-    let x = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), innerWidth - tw - 8);
+    // 14: 화면 맞춤 배율(zoom) 안이라 화면 좌표를 CSS 좌표로 바꿔 계산
+    const z = zoomOf(), b = el.getBoundingClientRect(), r = { left: b.left / z, top: b.top / z, bottom: b.bottom / z, width: b.width / z };
+    tip.hidden = false;
+    const tw = tip.offsetWidth, th = tip.offsetHeight, vw = innerWidth / z;
+    let x = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), vw - tw - 8);
     let y = r.top - th - 10; let below = false;
     if (y < 8) { y = r.bottom + 10; below = true; }
     tip.style.left = `${x}px`; tip.style.top = `${y}px`;

@@ -196,6 +196,7 @@ const UserSchema = new mongoose.Schema({
   // 09 프로필 꾸미기(장착한 것): 해금 여부는 장착할 때 서버가 확인(server/game.js checkEquip)
   // 10 알림: 이미 알린 업적·레벨(없으면 첫 계산 때 조용히 채움)
   achSeen: { type: [String], default: undefined }, levelSeen: { type: Number, default: 1 },
+  recentSet: { type: mongoose.Schema.Types.ObjectId, default: undefined }, // 14: 가장 최근에 공부한 세트(홈 '오늘의 학습')
   cosmetics: { color: { type: String, default: 'rose' }, frame: { type: String, default: 'none' }, border: { type: String, default: 'none' }, title: { type: String, default: '' } },
   createdAt: { type: Date, default: Date.now }
 });

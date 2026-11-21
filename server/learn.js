@@ -174,6 +174,8 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
   const idOk = id => mongoose.isValidObjectId(id) && String(id).length === 24;
   const notFound = res => res.status(404).json({ message: '세트를 찾을 수 없습니다.' });
 
+  // 14(사용자 요청: 오늘의 학습은 가장 최근에 학습한 것): 세트를 열거나 시험을 시작하면 기록. 실패해도 본 요청은 계속.
+  const touchRecent = (req, id) => User.updateOne({ _id: req.user._id }, { $set: { recentSet: id } }).catch(() => {});
   async function loadViewable(req, id) {
     if (!idOk(id)) return null;
     const doc = await Test.findById(id).populate('author', 'username').lean();
@@ -205,6 +207,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
   app.get('/api/sets/:id', auth, wrap(async (req, res) => {
     const s = await loadViewable(req, req.params.id);
     if (!s) return notFound(res);
+    await touchRecent(req, s._id);
     res.json(full(s, req.user));
   }));
 
@@ -318,6 +321,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       if (!ids.length) return res.status(400).json({ message: '시험 볼 세트를 선택해주세요.' });
       const docs = await Test.find({ _id: { $in: ids } }).lean();
       sets = docs.map(toSet).filter(s => canView(req.user, s));
+      if (sets[0]) await touchRecent(req, sets[0]._id);
       if (sets.length !== ids.length) return res.status(404).json({ message: '볼 수 없는 세트가 포함되어 있습니다.' });
       sets.sort((a, b) => ids.indexOf(String(a._id)) - ids.indexOf(String(b._id)));
       title = sets.length === 1 ? sets[0].title : `${sets[0].title} 외 ${sets.length - 1}개`;
@@ -549,7 +553,8 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     const { m } = G;
     const day = kstDay();
     const quests = questsOf(m, G.claims.map(c => c.key), day);
-    res.json({ sets: m.sets, attempts: m.attempts, wrongCount: G.wrongCount, weekLearned, streakDays: m.streakDays, learned: m.learned, perfects: m.perfects,
+    const recentDoc = req.user.recentSet ? await loadViewable(req, String(req.user.recentSet)) : null;
+    res.json({ recent: recentDoc ? summary(recentDoc, req.user) : null, sets: m.sets, attempts: m.attempts, wrongCount: G.wrongCount, weekLearned, streakDays: m.streakDays, learned: m.learned, perfects: m.perfects,
       game: { ...G.level, achievements: G.achievements, questsReady: quests.filter(q => q.status === 'ready').length } });
   }));
 

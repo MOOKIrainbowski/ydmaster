@@ -19,6 +19,7 @@ export const DEFAULTS = {
   choiceNumbers: true, // 숫자 1~5 로 보기 고르기
   keyHints: true,      // 화면에 단축키 안내 표시
   keys: {},            // 바꾼 키만 저장(나머지는 KEY_DEFAULTS)
+  autoFit: true,       // 14: 화면 크기에 맞춰 자동 배율(큰 모니터는 키우고, 낮은 노트북 화면은 살짝 줄임)
 };
 // 단축키(11, 사용자 요청: 설정에 단축키 섹션). 같은 묶음(시험/학습 카드) 안에서는 키가 겹치지 않게 설정 화면이 막는다.
 export const KEY_ACTIONS = [
@@ -55,8 +56,23 @@ export function resetPrefs() {
   setTheme('light');
   applyPrefs();
 }
+// ── 14 화면 맞춤(사용자 요청: 실행 중인 화면 크기를 분석해 어떤 모니터에서도 최적 배치) ──
+// 기준은 1920×1050(풀HD 브라우저 창, 지금 디자인을 맞춘 크기). 그보다 넓고 높으면 같은 비율로 키우고(최대 1.5배),
+// 낮은 노트북 화면(높이 800 미만)은 살짝 줄인다. 휴대폰·태블릿(<1024)은 이미 반응형 배치라 1배.
+// 글자 크기 설정과 곱해 <html> zoom 하나로 적용. vh·vw 와 좌표 계산은 --z 로 나눠 보정한다(app.css · zoomOf).
+const FONT_Z = { sm: 0.92, md: 1, lg: 1.1, xl: 1.22 };
+export function screenInfo() {
+  const w = innerWidth, h = innerHeight;
+  const kind = w < 600 ? 'phone' : w < 1024 ? 'tablet' : w < 1600 ? 'laptop' : w < 2400 ? 'desktop' : 'wide';
+  let fit = 1;
+  if (w >= 1024) { const r = Math.min(w / 1920, h / 1050); fit = r > 1 ? Math.min(r, 1.5) : h < 800 ? 0.92 : 1; }
+  return { w, h, kind, fit: Math.round(fit * 50) / 50, aspect: w / h >= 2 ? 'ultra' : w / h < 1 ? 'portrait' : 'normal' };
+}
+export const zoomOf = () => parseFloat(document.documentElement.style.getPropertyValue('--z')) || 1;
 export function applyPrefs() {
-  const p = getPrefs(), d = document.documentElement.dataset;
+  const p = getPrefs(), d = document.documentElement.dataset, s = screenInfo();
+  d.screen = s.kind; d.aspect = s.aspect;
+  document.documentElement.style.setProperty('--z', String(Math.round((p.autoFit === false ? 1 : s.fit) * (FONT_Z[p.font] || 1) * 1000) / 1000));
   d.font = p.font; d.spacing = p.spacing;
   p.contrast ? (d.contrast = 'on') : delete d.contrast;
   p.underline ? (d.underline = 'on') : delete d.underline;
@@ -67,3 +83,6 @@ export function applyPrefs() {
 const OLD_RATE = { slow: 0.7, normal: 0.9, fast: 1.1 };
 export const voiceRate = () => { const v = getPrefs().voiceRate; return typeof v === 'number' ? v : OLD_RATE[v] || 0.9; };
 export { getTheme, setTheme };
+// 창 크기·모니터가 바뀌면 다시 계산(드래그 중엔 끝난 뒤 한 번)
+let fitT = 0;
+if (typeof window !== 'undefined') addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(applyPrefs, 150); });
