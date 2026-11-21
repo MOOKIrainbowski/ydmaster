@@ -22,7 +22,6 @@ const META = {
   sentence_order: { icon: 'arrowUpDown', type: '배열', level: 3, sec: 30, ex: '섞인 문장 ①②③ → 본문 순서로' },
   translate: { icon: 'edit', type: '영작', level: 3, sec: 35, ex: '그녀는 걸어서 등교한다 → She …' },
 };
-const LEVEL = ['', '쉬움', '보통', '어려움'];
 const COUNTS = [10, 20, 30, 50, 100];
 
 // 10: 문항 수·진행 방식은 토글 버튼(한 줄 트랙 안에서 고른 칸이 떠오름)
@@ -55,8 +54,6 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
                 <span class="mode-option__body">
                   <span class="mode-option__label">${m.label}</span>
                   <span class="mode-option__desc">${m.desc}</span>
-                  <span class="mode-option__ex" lang="en">${x.ex || ''}</span>
-                  <span class="mode-option__tags"><span>${x.type || ''}</span><span class="lv lv--${x.level || 1}" aria-label="난이도 ${LEVEL[x.level || 1]}"><i></i><i></i><i></i>${LEVEL[x.level || 1]}</span></span>
                 </span>
               </label>`; })}</div>
           </fieldset>

@@ -1035,3 +1035,17 @@ button.list-row { width: 100%; background: var(--glass-card-strong); color: var(
 .notif__dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--hot); }
 .notif-empty { display: grid; justify-items: center; gap: 8px; margin: 0; padding: 28px 12px; color: var(--text-3); text-align: center; }
 @media (max-width: 768px) { .notif-panel { right: 12px; left: 12px; width: auto; } }
+
+/* ── 11 설정: 단축키 ── */
+.key-group { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--border); }
+.key-group.is-disabled { opacity: .5; }
+.key-group__title { margin: 0 0 2px; color: var(--text-2); font-size: 13px; font-weight: 800; }
+.key-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.key-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 4px 6px 4px 4px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: var(--text-2); font: inherit; cursor: pointer; transition: border-color var(--dur-2), box-shadow var(--dur-2); }
+.key-btn kbd { min-width: 44px; font-size: 13px; }
+.key-btn small { font-size: 12px; font-weight: 700; }
+.key-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-ink); }
+.key-btn:disabled { cursor: not-allowed; }
+.key-btn.is-listening { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); color: var(--accent-ink); animation: border-neon 1.6s ease-in-out infinite; --pf2: var(--accent); }
+.key-note { margin: 4px 0 0; font-size: 12px; }
+.flash__keys kbd { min-width: 20px; margin-right: 2px; font-size: 11px; line-height: 18px; }

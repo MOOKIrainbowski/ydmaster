@@ -4,7 +4,8 @@ import { html, render, on, icon, skeleton, errorBox, toast, confirmDialog, speak
 import { parseSentence } from '../shared/passage.js';
 import { startTest } from '../start.js';
 import { sfx, floatText, banner, COMBO_LINES, reportQuest } from '../game.js';
-import { burstAt } from '../motion.js';
+import { burstAt, reduced } from '../motion.js';
+import { getPref, isKey, keyOf, keyLabel } from '../prefs.js';
 
 export default {
   title: ({ id }) => '학습 세트',
@@ -50,7 +51,12 @@ export default {
         <button class="btn btn--icon btn--ghost" data-next aria-label="다음 단어">${icon('chevronRight')}</button>
       </div>
       <div class="flash__judge"><button class="btn btn--ghost" data-again>${icon('refresh', 18)}다시 볼래요</button><button class="btn btn--primary" data-know>${icon('check', 18)}알아요</button></div>
-      <p class="field__hint flash__keys">← → 넘기기 · Space 뒤집기 · ↑ 알아요 · ↓ 다시 볼래요</p></div>`;
+      ${getPref('keyHints') !== false && getPref('shortcuts') !== false ? html`<p class="field__hint flash__keys">${[['card.prev', '이전'], ['card.next', '다음'], ['card.flip', '뒤집기'], ['card.know', '알아요'], ['card.again', '다시 볼래요']].map(([a, l]) => html`<kbd>${keyLabel(keyOf(a))}</kbd> ${l} `)}</p>` : ''}</div>`;
+    // 11: 학습 영역만 다시 그림(페이지 전체를 다시 그리면 화면이 깜빡여 전환이 어색했음)
+    const studyContent = () => {
+      const items = set.items;
+      return flashMode ? (done ? flashDone() : flashCard(items[index], index)) : html`<div class="stack">${items.map((item, i) => html`<div class="reveal" style="--i:${Math.min(i, 12)}">${vocabCard(item, i)}</div>`)}</div>`;
+    };
     const draw = () => {
       const passage = set.kind === 'passage';
       const items = passage ? set.passage.sentences : set.items;
@@ -71,39 +77,59 @@ export default {
         ${isOwner() ? html`<div class="btn-row"><a class="btn btn--ghost btn--sm" href="#/sets/${set._id}/edit">수정</a><button class="btn btn--ghost btn--sm set-delete" data-delete>삭제</button></div>` : ''}</div>
         ${set.description ? html`<p class="muted">${set.description}</p>` : ''}<div class="btn-row"><button class="btn btn--primary" data-test>${icon('play')}시험 보기</button>${wrongN ? html`<button class="btn btn--ghost btn--wrong" data-wrong-test>${icon('target')}이 세트 오답 복습 <span class="badge wrong-count">${wrongN}</span></button>` : ''}${!passage ? html`<button class="btn btn--ghost" data-flash>${flashMode ? '목록 보기' : '학습 카드'}</button>` : html`<button class="btn btn--ghost" data-translation>${showKo ? '해석 숨기기' : '해석 보기'}</button>`}<button class="btn btn--ghost" data-favorite>${icon('star')} ${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}</button><button class="btn btn--ghost" data-copy>${icon('copy')}내 세트로 복사</button><button class="btn btn--ghost" data-share>${icon('link')}공유</button></div>
       </section><section class="section"><div class="section__head"><h2 class="section__title">${passage ? `${items.length}개 문장` : `${items.length}개 단어`}</h2></div>
-        ${passage ? passageText : flashMode ? (done ? flashDone() : flashCard(items[index], index)) : html`<div class="stack">${items.map((item, i) => vocabCard(item, i))}</div>`}</section></div>`);
+        ${passage ? passageText : html`<div data-study>${studyContent()}</div>`}</section></div>`);
+    };
+    const EXIT = {
+      next: [{ transform: 'none', opacity: 1 }, { transform: 'translateX(-70px) rotate(-5deg)', opacity: 0 }],
+      prev: [{ transform: 'none', opacity: 1 }, { transform: 'translateX(70px) rotate(5deg)', opacity: 0 }],
+      know: [{ transform: 'none', opacity: 1, filter: 'none' }, { transform: 'translateY(-46px) scale(.9)', opacity: 0, filter: 'drop-shadow(0 0 18px rgb(34 197 94 / 70%))' }],
+      again: [{ transform: 'none', opacity: 1 }, { transform: 'translateY(36px) scale(.88)', opacity: 0 }],
+    };
+    let animating = false;
+    const drawStudy = () => { const el = $('[data-study]', root); el ? render(el, studyContent()) : draw(); };
+    const swap = async (kind, mutate) => {
+      if (animating) return;
+      animating = true;
+      const card = $('.flash-card', root), from = known.size / set.items.length;
+      if (card && !reduced()) await card.animate(EXIT[kind], { duration: 210, easing: 'cubic-bezier(.4, 0, 1, 1)', fill: 'forwards' }).finished.catch(() => {});
+      mutate();
+      slide = kind === 'prev' ? -1 : 1; drawStudy(); slide = 0;
+      animating = false;
+      const bar = $('.flash__progress i', root);
+      if (bar && !done) { bar.style.setProperty('--p', from); requestAnimationFrame(() => requestAnimationFrame(() => bar.style.setProperty('--p', known.size / set.items.length))); }
+      $('[data-flip]', root)?.focus({ preventScroll: true });
     };
     const turn = d => {
       if (done || !deck.length) return;
-      pos = (pos + d + deck.length) % deck.length; index = deck[pos]; flipped = false; slide = d; draw(); slide = 0;
-      $('[data-flip]', root)?.focus({ preventScroll: true });
+      swap(d > 0 ? 'next' : 'prev', () => { pos = (pos + d + deck.length) % deck.length; index = deck[pos]; flipped = false; });
     };
     // 학습 카드 키보드: ← → 넘기기(Space·Enter 뒤집기는 버튼 기본 동작)
     // 알아요/다시 볼래요(04 게임 요소): 연속으로 알면 콤보, 더미를 다 비우면 완료 축하
-    const judge = know => {
-      if (!flashMode || done || !deck.length) return;
+    const judge = async know => {
+      if (!flashMode || done || !deck.length || animating) return;
       const card = $('.flash-card', root);
-      if (know) {
-        known.add(index); deck.splice(pos, 1); streak++;
-        floatText(card, '외웠어요 +1', 'good'); sfx.correct(streak);
-        if (COMBO_LINES[streak]) banner(...COMBO_LINES[streak]);
-      } else {
-        again++; streak = 0; deck.push(deck.splice(pos, 1)[0]); sfx.flip();
-      }
-      if (!deck.length) {
-        done = true; draw(); sfx.levelUp();
+      if (know) { floatText(card, '외웠어요 +1', 'good'); sfx.correct(streak + 1); } else sfx.flip();
+      await swap(know ? 'know' : 'again', () => {
+        if (know) { known.add(index); deck.splice(pos, 1); streak++; } else { again++; streak = 0; deck.push(deck.splice(pos, 1)[0]); }
+        if (!deck.length) { done = true; return; }
+        if (pos >= deck.length) pos = 0;
+        index = deck[pos]; flipped = false;
+      });
+      if (know && COMBO_LINES[streak]) banner(...COMBO_LINES[streak]);
+      if (done) {
+        sfx.levelUp();
         const m = $('.flash-done__mascot', root); if (m) setTimeout(() => burstAt(m, 34), 200);
         // 학습 카드 퀘스트(05): 서버가 볼 수 없는 활동이라 보고로 완료 — 첫걸음 + 오늘의 퀘스트(이미 받았으면 조용히 무시)
         if (state.user) setTimeout(async () => { const t = $('.flash-done__title', root); await reportQuest('first_cards', t); await reportQuest('daily_cards', t); }, 900);
-        return;
       }
-      if (pos >= deck.length) pos = 0;
-      index = deck[pos]; flipped = false; slide = 1; draw(); slide = 0;
     };
     const onKey = e => {
-      if (!flashMode || document.querySelector('.modal-backdrop') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
-      if (e.key === 'ArrowRight') { e.preventDefault(); turn(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); turn(-1); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); judge(true); } else if (e.key === 'ArrowDown') { e.preventDefault(); judge(false); }
+      if (!flashMode || done || document.querySelector('.modal-backdrop') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      if (isKey(e, 'card.next')) { e.preventDefault(); turn(1); }
+      else if (isKey(e, 'card.prev')) { e.preventDefault(); turn(-1); }
+      else if (isKey(e, 'card.know')) { e.preventDefault(); judge(true); }
+      else if (isKey(e, 'card.again')) { e.preventDefault(); judge(false); }
+      else if (isKey(e, 'card.flip') && !(e.target.closest?.('.flash-card') && (e.key === ' ' || e.key === 'Enter'))) { e.preventDefault(); $('.flash-card', root)?.click(); }
     };
     document.addEventListener('keydown', onKey);
     await load();
@@ -118,8 +144,15 @@ export default {
         if (flashMode) { flipped = !flipped; el.classList.remove('is-in-next', 'is-in-prev'); el.classList.toggle('is-flipped', flipped); el.setAttribute('aria-pressed', String(flipped)); return; }
         revealed.has(i) ? revealed.delete(i) : revealed.add(i); draw();
       }),
-      on(root, 'click', '[data-flash]', () => { flashMode = !flashMode; resetDeck(); slide = 0; draw(); }),
-      on(root, 'click', '[data-flash-reset]', () => { resetDeck(); draw(); }),
+      on(root, 'click', '[data-flash]', async (_e, b) => {
+        const el = $('[data-study]', root);
+        if (el && !reduced()) await el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).finished.catch(() => {});
+        flashMode = !flashMode; resetDeck(); slide = 0;
+        b.textContent = flashMode ? '목록 보기' : '학습 카드';
+        drawStudy();
+        $('[data-study]', root)?.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+      }),
+      on(root, 'click', '[data-flash-reset]', () => { resetDeck(); drawStudy(); }),
       on(root, 'click', '[data-know]', () => judge(true)),
       on(root, 'click', '[data-again]', () => judge(false)),
       on(root, 'click', '[data-next]', () => turn(1)),

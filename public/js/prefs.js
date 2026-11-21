@@ -15,7 +15,29 @@ export const DEFAULTS = {
   sfxVolume: 70,       // 0 ~ 100 효과음 크기
   voiceLang: 'en-US',  // en-US | en-GB      발음 억양
   autoSpeak: false,    // 시험에서 영어 문제를 자동으로 읽어 줌
+  shortcuts: true,     // 단축키 사용(11)
+  choiceNumbers: true, // 숫자 1~5 로 보기 고르기
+  keyHints: true,      // 화면에 단축키 안내 표시
+  keys: {},            // 바꾼 키만 저장(나머지는 KEY_DEFAULTS)
 };
+// 단축키(11, 사용자 요청: 설정에 단축키 섹션). 같은 묶음(시험/학습 카드) 안에서는 키가 겹치지 않게 설정 화면이 막는다.
+export const KEY_ACTIONS = [
+  { id: 'quiz.submit', group: '시험', label: '확인 · 다음 문제', def: 'Enter' },
+  { id: 'quiz.skip', group: '시험', label: '모르겠어요', def: 'm' },
+  { id: 'quiz.speak', group: '시험', label: '발음 듣기', def: 'p' },
+  { id: 'quiz.quit', group: '시험', label: '시험 그만두기', def: 'Escape' },
+  { id: 'card.flip', group: '학습 카드', label: '카드 뒤집기', def: ' ' },
+  { id: 'card.prev', group: '학습 카드', label: '이전 카드', def: 'ArrowLeft' },
+  { id: 'card.next', group: '학습 카드', label: '다음 카드', def: 'ArrowRight' },
+  { id: 'card.know', group: '학습 카드', label: '알아요', def: 'ArrowUp' },
+  { id: 'card.again', group: '학습 카드', label: '다시 볼래요', def: 'ArrowDown' },
+];
+const norm = k => (k && k.length === 1 ? k.toLowerCase() : k);
+export const keyOf = id => getPrefs().keys?.[id] ?? KEY_ACTIONS.find(a => a.id === id)?.def;
+// 키 이벤트가 그 동작인지(단축키 사용이 꺼져 있으면 항상 아님)
+export const isKey = (e, id) => getPrefs().shortcuts !== false && !e.ctrlKey && !e.metaKey && !e.altKey && norm(e.key) === norm(keyOf(id));
+const KEY_NAME = { ' ': 'Space', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Escape: 'Esc', Enter: 'Enter', Backspace: '⌫' };
+export const keyLabel = k => KEY_NAME[k] || (k?.length === 1 ? k.toUpperCase() : k);
 let cache;
 export function getPrefs() {
   if (!cache) { try { cache = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { cache = { ...DEFAULTS }; } }

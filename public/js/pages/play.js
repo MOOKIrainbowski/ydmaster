@@ -4,7 +4,7 @@ import { api } from '../api.js';
 import { html, render, icon, on, $, $$, toast, confirmDialog, busy, errorBox, speak } from '../ui.js';
 import { burstAt, shake, pop } from '../motion.js';
 import { sfx, sfxOn, setSfx, floatText, banner, COMBO_LINES } from '../game.js';
-import { getPref } from '../prefs.js';
+import { getPref, isKey } from '../prefs.js';
 
 export default {
   title: '시험',
@@ -246,25 +246,32 @@ export default {
     ];
     function refreshOrder() { render($('[data-order]', root), orderView(s.questions[i])); }
 
-    // 키보드: 1~5 보기, Enter 확인/다음, Esc 그만두기
+    // 키보드(11: 설정의 단축키를 따름) — 숫자 1~5 보기, 확인/다음, 모르겠어요, 발음, 그만두기
+    // 글자 키 단축키는 답을 쓰는 중에는 쓰지 않는다(타자와 겹치지 않게). 쓰는 칸의 Enter 는 항상 확인.
     const onKey = e => {
-      if (document.querySelector('.modal-backdrop')) return;
+      if (document.querySelector('.modal-backdrop') || e.isComposing) return;
       const q = s.questions[i];
       if (!q) return;
       const typing = /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
-      if (phase === 'answer' && q.type === 'choice' && /^[1-5]$/.test(e.key) && !typing) {
+      const letter = e.key.length === 1;
+      const submitKey = (typing && e.key === 'Enter' && !e.shiftKey) || (isKey(e, 'quiz.submit') && !(typing && letter));
+      if (phase === 'answer' && q.type === 'choice' && /^[1-5]$/.test(e.key) && !typing && getPref('shortcuts') !== false && getPref('choiceNumbers') !== false) {
         const b = $(`[data-choice="${Number(e.key) - 1}"]`, root);
         if (b) { e.preventDefault(); b.click(); }
-      } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      } else if (submitKey) {
         if (phase === 'feedback') { e.preventDefault(); $('[data-next]', root)?.click(); }
         else if (phase === 'answer' && q.type !== 'choice' && (typing || q.type !== 'text')) {
-          // 빈칸이 여러 개면 Enter 로 다음 빈칸으로, 마지막에서 제출
+          // 빈칸이 여러 개면 다음 빈칸으로, 마지막에서 제출
           const blanks = $$('.blank', root), at = blanks.indexOf(e.target);
           e.preventDefault();
           if (at >= 0 && at < blanks.length - 1) blanks[at + 1].focus();
           else $('[data-submit]', root)?.click();
         }
-      } else if (e.key === 'Escape') { $('[data-quit]', root)?.click(); }
+      } else if (typing && letter) {
+        return;
+      } else if (isKey(e, 'quiz.quit')) { e.preventDefault(); $('[data-quit]', root)?.click(); }
+      else if (phase === 'answer' && isKey(e, 'quiz.skip')) { e.preventDefault(); $('[data-skip]', root)?.click(); }
+      else if (isKey(e, 'quiz.speak')) { const b = $('[data-speak]', root); if (b) { e.preventDefault(); b.click(); } }
     };
     document.addEventListener('keydown', onKey);
 

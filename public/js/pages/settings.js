@@ -1,8 +1,9 @@
 // 설정(06, 2026-11-20 사용자 요청: 상단 설정 버튼 → 이용 편의·접근 설정 페이지).
 // 07(2026-11-21 사용자 요청): 고르는 버튼 대신 토글(켜기/끄기)과 바(슬라이더)로. 테마 기본값은 라이트.
+// 11(사용자 요청): 움직임 아래 '단축키' — 켜기/끄기, 숫자로 보기 고르기, 안내 표시, 동작마다 키 바꾸기(같은 묶음 안 겹치면 서로 맞바꿈).
 // 바꾸는 즉시 적용·저장(이 기기), 위쪽 미리보기 카드로 바로 확인. 효과음 켜기는 시험 화면 버튼과 같은 값(game.js).
 import { html, render, on, icon, speak, toast, confirmDialog } from '../ui.js';
-import { getPrefs, setPref, resetPrefs, getTheme, setTheme, voiceRate } from '../prefs.js';
+import { getPrefs, setPref, resetPrefs, getTheme, setTheme, voiceRate, KEY_ACTIONS, keyOf, keyLabel } from '../prefs.js';
 import { sfxOn, setSfx, sfx } from '../game.js';
 
 const FONT = ['sm', 'md', 'lg', 'xl'], FONT_LABEL = ['작게', '보통', '크게', '아주 크게'];
@@ -45,6 +46,17 @@ export default {
           ${toggle('aurora', p.aurora, '배경 오로라', '천천히 움직이는 배경 빛. 끄면 단색 배경이 되고 배터리를 조금 아껴요.')}
         </article>
 
+        <article class="card set-group"><h2 class="set-group__title">${icon('layers', 20)}단축키</h2>
+          ${toggle('shortcuts', p.shortcuts !== false, '단축키 사용', '시험과 학습 카드에서 키보드로 빠르게 조작해요.')}
+          ${toggle('choiceNumbers', p.choiceNumbers !== false, '숫자 키로 보기 고르기', '객관식에서 1~5 를 누르면 그 보기를 골라요.', p.shortcuts === false)}
+          ${toggle('keyHints', p.keyHints !== false, '화면에 단축키 안내 표시', '학습 카드 아래에 어떤 키를 누르면 되는지 보여줘요.', p.shortcuts === false)}
+          ${['시험', '학습 카드'].map(g => html`<div class="key-group${p.shortcuts === false ? ' is-disabled' : ''}"><p class="key-group__title">${g}</p>
+            ${KEY_ACTIONS.filter(a => a.group === g).map(a => html`<div class="key-row"><span>${a.label}</span>
+              <button class="key-btn" type="button" data-rebind="${a.id}" ${p.shortcuts === false ? 'disabled' : ''} aria-label="${a.label} 단축키 바꾸기 (지금 ${keyLabel(keyOf(a.id))})"><kbd>${keyLabel(keyOf(a.id))}</kbd><small>바꾸기</small></button></div>`)}</div>`)}
+          <p class="muted key-note">바꾸기를 누른 뒤 원하는 키를 누르세요. 같은 묶음에서 이미 쓰는 키면 두 동작의 키를 맞바꿔요. 답을 쓰는 중에는 글자 키 단축키가 동작하지 않아요.</p>
+          <button class="btn btn--ghost btn--sm set-try" data-keys-reset>${icon('refresh', 16)}단축키 기본값으로</button>
+        </article>
+
         <article class="card set-group"><h2 class="set-group__title">${icon('volume', 20)}소리·발음</h2>
           ${toggle('sfx', sfxOn(), '효과음', '정답·콤보·레벨 업 소리. 시험 화면 위 스피커 버튼과 같은 설정이에요.')}
           ${bar({ name: 'sfxVolume', label: '효과음 크기', desc: '놓는 순간 들어볼 수 있어요.', min: 0, max: 100, step: 5, value: p.sfxVolume ?? 70, out: `${p.sfxVolume ?? 70}%` })}
@@ -55,7 +67,7 @@ export default {
         </article>
 
         <article class="card set-group"><h2 class="set-group__title">${icon('info', 20)}도움말</h2>
-          <p class="muted">시험 단축키: 숫자 1~5 보기 고르기 · Enter 확인/다음 · Esc 그만두기. 학습 카드: ← → 넘기기 · Space 뒤집기 · ↑ 알아요 · ↓ 다시 볼래요.</p>
+          <p class="muted">처음 쓰는 기능은 가이드에서 순서대로 볼 수 있어요. 단축키는 위 '단축키' 에서 바꿔요.</p>
           <a class="btn btn--ghost btn--sm" href="#/guide">${icon('lightbulb', 16)}가이드 보기</a>
         </article>
       </section></div>`);
@@ -80,13 +92,37 @@ export default {
       else if (n === 'reduceMotion') setPref('motion', el.checked ? 'reduce' : 'system');
       else if (n === 'voiceGB') setPref('voiceLang', el.checked ? 'en-GB' : 'en-US');
       else if (n === 'sfx') { setSfx(el.checked); if (el.checked) sfx.correct(2); }
-      else if (el.type === 'checkbox') setPref(n, el.checked);
+      else if (el.type === 'checkbox') { setPref(n, el.checked); if (n === 'shortcuts') draw(); }
     });
+    // 키 바꾸기: 버튼을 누르면 다음 키 입력을 그 동작에 배정(Tab·수정 키는 무시, 버튼 다시 누르면 취소)
+    let capture = null;
+    const stopCapture = () => { if (!capture) return; document.removeEventListener('keydown', capture.fn, true); capture.btn.classList.remove('is-listening'); capture = null; };
+    const onRebind = on(root, 'click', '[data-rebind]', (_e, btn) => {
+      if (capture) { const same = capture.btn === btn; stopCapture(); if (same) { draw(); return; } }
+      btn.classList.add('is-listening'); btn.innerHTML = String(html`<kbd>…</kbd><small>키를 누르세요</small>`);
+      const id = btn.dataset.rebind, action = KEY_ACTIONS.find(a => a.id === id);
+      const fn = e => {
+        if (['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key) || e.isComposing) return;
+        e.preventDefault(); e.stopPropagation();
+        const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        if (/^[1-5]$/.test(key) && action.group === '시험') { toast('1~5 는 보기 고르기에 쓰여요. 다른 키를 골라 주세요.', 'info'); return; }
+        const keys = { ...(getPrefs().keys || {}) };
+        const clash = KEY_ACTIONS.find(a => a.group === action.group && a.id !== id && keyOf(a.id) === key);
+        if (clash) keys[clash.id] = keyOf(id); // 맞바꿈
+        keys[id] = key;
+        setPref('keys', keys);
+        stopCapture(); draw();
+        toast(clash ? `'${clash.label}' 과 키를 맞바꿨어요.` : `'${action.label}' 단축키를 ${keyLabel(key)} 로 바꿨어요.`, 'ok');
+      };
+      capture = { btn, fn };
+      document.addEventListener('keydown', fn, true);
+    });
+    const onKeysReset = on(root, 'click', '[data-keys-reset]', () => { stopCapture(); setPref('keys', {}); draw(); toast('단축키를 기본값으로 되돌렸어요.', 'ok'); });
     const onTry = on(root, 'click', '[data-try]', () => { if (!speak('Serendipity. Practice makes perfect.')) toast('이 브라우저는 발음 듣기를 지원하지 않아요.', 'info'); });
     const onReset = on(root, 'click', '[data-reset]', async () => {
       if (!await confirmDialog('화면·움직임·소리 설정을 모두 처음 값으로 되돌릴까요? (테마는 밝게)', { title: '기본값으로', ok: '되돌리기' })) return;
       resetPrefs(); setSfx(true); draw(); toast('설정을 기본값으로 되돌렸어요.', 'ok');
     });
-    return () => { onSlide(); onChange(); onTry(); onReset(); };
+    return () => { stopCapture(); onSlide(); onChange(); onTry(); onReset(); onRebind(); onKeysReset(); };
   },
 };
