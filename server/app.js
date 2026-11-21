@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import crypto from 'node:crypto';
 import { mountLearn, avatarUrl, bannerUrl, toSet, PUBLIC_SET } from './learn.js';
+import { DEFAULT_COSMETICS, TITLE_ITEMS } from './game.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -192,6 +193,8 @@ const UserSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false },
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],
   imageVersion: { type: Number, default: 0 }, // 아바타·배너 URL 캐시 무효화용(R10)
+  // 09 프로필 꾸미기(장착한 것): 해금 여부는 장착할 때 서버가 확인(server/game.js checkEquip)
+  cosmetics: { color: { type: String, default: 'rose' }, frame: { type: String, default: 'none' }, border: { type: String, default: 'none' }, title: { type: String, default: '' } },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -789,6 +792,7 @@ app.get('/api/auth/me', auth, async (req, res) => {
         favorites: (req.user.favorites || []).map(id => id.toString()),
         avatarUrl: avatarUrl(u), bannerUrl: bannerUrl(u), loginType: req.user.loginType,
         hasPassword: !!(await User.exists({ _id: req.user._id, password: { $nin: ['', null] } })),
+        cosmetics: cosmeticsView(req.user.cosmetics),
       }
     });
   } catch (e) { console.error('auth/me error:', e.message); res.status(500).json({ message: '서버 오류가 발생했습니다.' }); }
@@ -981,11 +985,17 @@ app.delete('/api/wrongnote/:groupId', auth, async (req, res) => {
 });
 
 // ==================== 공개 프로필 (by username) ====================
+// 장착한 꾸미기를 응답용으로(칭호는 이름·등급까지 붙여서)
+function cosmeticsView(c) {
+  const v = { ...DEFAULT_COSMETICS, ...(c?.toObject ? c.toObject() : c || {}) };
+  const t = TITLE_ITEMS.find(x => x.id === v.title);
+  return { color: v.color, frame: v.frame, border: v.border, title: t ? { id: t.id, name: t.name, tier: t.tier } : null };
+}
 let learnApi; // mountLearn 이 돌려주는 gameOf(아래에서 채움 — 요청 시점엔 이미 준비됨)
 app.get('/api/p/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
-      .select('username avatarImage bannerImage bannerGradient imageVersion loginType createdAt friends');
+      .select('username avatarImage bannerImage bannerGradient imageVersion loginType createdAt friends cosmetics');
     if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
 
     const results = await Result.find({ user: user._id });
@@ -1014,6 +1024,7 @@ app.get('/api/p/:username', async (req, res) => {
         avatarUrl: avatarUrl(user), bannerUrl: bannerUrl(user),
         loginType: user.loginType,
         createdAt: user.createdAt,
+        cosmetics: cosmeticsView(user.cosmetics),
       },
       stats: { totalAttempts, avgScore, bestScore, totalTests, friendCount },
       game: await learnApi.gameOf(user._id).then(G => ({ level: G.level.level, title: G.level.title, xp: G.level.xp, into: G.level.into, need: G.level.need,

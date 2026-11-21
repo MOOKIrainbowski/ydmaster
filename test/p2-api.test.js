@@ -108,6 +108,17 @@ test('세션: 서버 채점·중복 답 멱등·종료 멱등·결과·오답·�
   assert.equal((await t.call('GET', '/stats', undefined, b.token)).data.game.xp, 30 + 20 + 5);
   const prof = await t.call('GET', '/p/' + encodeURIComponent((await t.call('GET', '/auth/me', undefined, b.token)).data.user.username), undefined, a.token);
   assert.equal(prof.data.game.xp, 55);
+  // 꾸미기(09): 해금 안 된 것은 거절, 해금된 것만 장착 → 프로필에 보임
+  const cat = await t.call('GET', '/cosmetics', undefined, b.token);
+  assert.equal(cat.data.catalog.color.find(c => c.id === 'mint').got, true); // 첫걸음 업적으로 해금
+  assert.equal(cat.data.catalog.color.find(c => c.id === 'legend').got, false);
+  assert.equal((await t.call('PUT', '/cosmetics', { color: 'legend' }, b.token)).status, 400);
+  assert.equal((await t.call('PUT', '/cosmetics', { title: 'level30' }, b.token)).status, 400);
+  assert.equal((await t.call('PUT', '/cosmetics', { frame: 'nope' }, b.token)).status, 400);
+  const eq = await t.call('PUT', '/cosmetics', { color: 'mint', frame: 'rose', border: 'soft' }, b.token);
+  assert.equal(eq.status, 200); assert.equal(eq.data.equipped.color, 'mint');
+  const prof2 = await t.call('GET', '/p/' + encodeURIComponent((await t.call('GET', '/auth/me', undefined, b.token)).data.user.username), undefined, a.token);
+  assert.deepEqual([prof2.data.user.cosmetics.color, prof2.data.user.cosmetics.frame, prof2.data.user.cosmetics.title], ['mint', 'rose', null]);
 
   // 오답 복습 세션 → 2번 연속 맞히면 오답에서 빠짐
   for (let k = 0; k < 2; k++) {

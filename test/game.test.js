@@ -1,7 +1,7 @@
 // 04 게임 규칙(순수 함수) golden 값 — 서버 집계식(learn.js /stats)과 같은 숫자여야 함
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { xpOf, levelOf, xpForLevel, achievementsOf, ACHIEVEMENTS, questsOf, QUESTS, questKey, canClaim, QUEST_BY_ID } from '../server/game.js';
+import { xpOf, levelOf, xpForLevel, achievementsOf, ACHIEVEMENTS, questsOf, QUESTS, questKey, canClaim, QUEST_BY_ID, TITLE_ITEMS, COSMETICS, cosmeticsCatalog, checkEquip } from '../server/game.js';
 
 test('경험치: 맞힘×10 + 완주 20 + 5문항 이상 만점 50', () => {
   assert.equal(xpOf({ correctAnswers: 3, totalQuestions: 10 }), 50);
@@ -61,4 +61,18 @@ test('08 연속 학습 업적은 최고 기록 기준, 업적 수집가는 하·
   const max = { attempts: 200, perfects: 20, bestStreak: 30, learned: 1000, sets: 10, publicSets: 1, xp: xpForLevel(17), modesUsed: 11, passageTests: 30, cleared: 200, wrongReviews: 5, friends: 5, questsDone: 20 };
   assert.ok(got(max).includes('collector'));
   assert.ok(!got({ ...max, friends: 4 }).includes('collector'));
+});
+
+test('09 칭호·꾸미기: 상 이상 업적마다 칭호, 해금 조건은 실제 업적, 장착 검증', () => {
+  assert.deepEqual(TITLE_ITEMS.map(t => t.id).sort(), ACHIEVEMENTS.filter(a => a.tier >= 3).map(a => a.id).sort());
+  assert.equal(new Set(TITLE_ITEMS.map(t => t.name)).size, TITLE_ITEMS.length); // 칭호 이름이 모두 다름
+  const ids = new Set(ACHIEVEMENTS.map(a => a.id));
+  for (const k of Object.keys(COSMETICS)) for (const c of COSMETICS[k]) assert.ok(!c.unlock || ids.has(c.unlock), k + ':' + c.id);
+  const cat = cosmeticsCatalog(['first']);
+  assert.equal(cat.color.find(c => c.id === 'mint').got, true);
+  assert.equal(cat.title.every(t => !t.got), true);
+  assert.equal(checkEquip('title', 'perfect20', ['perfect20']).value, 'perfect20');
+  assert.ok(checkEquip('title', 'perfect20', []).error);
+  assert.equal(checkEquip('title', '', []).value, '');
+  assert.ok(checkEquip('hat', 'x', []).error);
 });

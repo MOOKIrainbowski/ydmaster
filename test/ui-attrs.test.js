@@ -18,3 +18,13 @@ test('field(): 값(사용자 입력)은 여전히 이스케이프', () => {
   const out = String(field('이메일', 'email', 'text', '', '"><script>'));
   assert.ok(!out.includes('"><script>'));
 });
+
+// 09: 칭호마다 화면 효과가 있고, 효과 조합이 모두 다름
+test('칭호 효과: 서버 칭호 전부에 서로 다른 효과·색 조합', async () => {
+  const { TITLE_FX, titleTag } = await import('../public/js/cosmetics.js');
+  const { TITLE_ITEMS } = await import('../server/game.js');
+  for (const t of TITLE_ITEMS) assert.ok(TITLE_FX[t.id], t.id);
+  assert.equal(new Set(TITLE_ITEMS.map(t => TITLE_FX[t.id].join('|'))).size, TITLE_ITEMS.length);
+  const out = String(titleTag({ id: 'modes11', name: '만능 해결사', tier: 3 }));
+  assert.ok(out.includes('fx-wave') && out.includes('ttl__ch'));
+});

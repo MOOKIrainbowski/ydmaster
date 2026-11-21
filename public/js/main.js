@@ -9,7 +9,7 @@ import { applyPrefs } from './prefs.js';
 const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
   ['/play/:id', 'play'], ['/result/:id', 'result'], ['/wrong', 'wrong'], ['/history', 'history'], ['/ranking', 'ranking'],
-  ['/friends', 'friends'], ['/me', 'me'], ['/u/:username', 'user'], ['/notice', 'notice'], ['/inquiry', 'inquiry'],
+  ['/friends', 'friends'], ['/me', 'me'], ['/me/edit', 'profile-edit'], ['/u/:username', 'user'], ['/notice', 'notice'], ['/inquiry', 'inquiry'],
   ['/admin', 'admin'], ['/login', 'login'], ['/oauth', 'oauth'], ['/guide', 'guide'], ['/settings', 'settings'],
 ].map(([pattern, page]) => ({ page, keys: [...pattern.matchAll(/:(\w+)/g)].map(m => m[1]), re: new RegExp('^' + pattern.replace(/:\w+/g, '([^/]+)') + '/?$') }));
 
@@ -21,7 +21,7 @@ const TABS = [
   { href: '#/explore', label: '둘러보기', icon: 'compass', match: ['explore'] },
   { href: '#/wrong', label: '오답', icon: 'target', match: ['wrong'] },
   { href: '#/ranking', label: '랭킹', icon: 'trophy', match: ['ranking'] },
-  { href: '#/me', label: '내 정보', icon: 'user', match: ['me', 'history', 'friends'] },
+  { href: '#/me', label: '내 정보', icon: 'user', match: ['me', 'history', 'friends', 'profile-edit', 'settings'] },
 ];
 
 const app = document.getElementById('app');

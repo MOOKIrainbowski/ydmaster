@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import { buildQuestions, grade, expectedOf, MODES, MODE_BY_ID, GenError } from './generators.js';
 import { plainText } from '../public/js/shared/passage.js';
-import { xpOf, levelOf, achievementsOf, XP, questsOf, QUEST_BY_ID, questKey, canClaim } from './game.js';
+import { xpOf, levelOf, achievementsOf, XP, questsOf, QUEST_BY_ID, questKey, canClaim, cosmeticsCatalog, checkEquip, COSMETIC_KINDS, DEFAULT_COSMETICS } from './game.js';
 
 const { ObjectId } = mongoose.Types;
 const LIMITS = { items: 500, sentences: 80, term: 200, meaning: 200, example: 300, en: 600, ko: 600, tags: 10, tag: 20 };
@@ -498,6 +498,26 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     const quests = questsOf(m, G.claims.map(c => c.key), day);
     res.json({ sets: m.sets, attempts: m.attempts, wrongCount: G.wrongCount, weekLearned, streakDays: m.streakDays, learned: m.learned, perfects: m.perfects,
       game: { ...G.level, achievements: G.achievements, questsReady: quests.filter(q => q.status === 'ready').length } });
+  }));
+
+  // ── 프로필 꾸미기(09): 해금 목록 · 장착(서버가 업적 달성 확인) ──
+  app.get('/api/cosmetics', auth, wrap(async (req, res) => {
+    const [G, u] = await Promise.all([gameOf(req.user._id), User.findById(req.user._id).select('cosmetics').lean()]);
+    res.json({ equipped: { ...DEFAULT_COSMETICS, ...(u?.cosmetics || {}) }, catalog: cosmeticsCatalog(G.achievements.filter(a => a.got).map(a => a.id)) });
+  }));
+  app.put('/api/cosmetics', auth, wrap(async (req, res) => {
+    const G = await gameOf(req.user._id);
+    const got = G.achievements.filter(a => a.got).map(a => a.id);
+    const $set = {};
+    for (const k of COSMETIC_KINDS) {
+      if (req.body?.[k] === undefined) continue;
+      const r = checkEquip(k, req.body[k] === null ? '' : String(req.body[k]), got);
+      if (r.error) return res.status(400).json({ message: r.error });
+      $set[`cosmetics.${k}`] = r.value;
+    }
+    if (!Object.keys($set).length) return res.status(400).json({ message: '바꿀 꾸미기를 골라주세요.' });
+    const u = await User.findByIdAndUpdate(req.user._id, { $set }, { new: true }).select('cosmetics').lean();
+    res.json({ equipped: { ...DEFAULT_COSMETICS, ...u.cosmetics } });
   }));
 
   // ── 퀘스트(05) ──

@@ -138,3 +138,50 @@ export function questsOf(m, claimedKeys, day) {
 }
 // 받기 판정: check 퀘스트는 조건 충족이어야, event 퀘스트는 보고로 인정
 export const canClaim = (q, m) => (q.kind === 'event' ? true : !!q.check(m));
+
+// ── 09 프로필 꾸미기(2026-11-21 사용자 요청): 등급 '상' 이상 업적마다 칭호 1개, 색·사진 테두리·카드 테두리는 업적으로 해금 ──
+// 서버가 장착 요청 때 해금 여부를 확인(클라이언트는 보여주기만). 이름·해금 조건은 이 한 곳.
+const TITLE_OF = {
+  // 상(3)
+  attempts200: '시험장의 철인', perfect20: '정답 제조기', streak30: '한 달의 불꽃', learned1000: '천 단어 수호자', modes11: '만능 해결사',
+  passage30: '본문 장인', cleared200: '오답 사냥꾼', maker10: '세트 공방장', level10: '숙련 학자', level17: '영단 마스터',
+  // 최상(4)
+  attempts500: '오백 번의 수험생', perfect50: '만점 달인', streak60: '꺼지지 않는 불꽃', learned2000: '이천 어휘 탐험가', passage100: '본문 백독가',
+  cleared500: '오답 소멸자', review30: '복습의 화신', maker30: '세트 공장장', public10: '나눔 천사', friend15: '스터디 리더', level20: '고수', quests50: '퀘스트 헌터',
+  // 전설(5)
+  attempts1000: '천 번의 전설', perfect100: '완벽 그 자체', streak100: '백일의 기적', streak365: '일 년의 불사조', learned5000: '오천 어휘의 현자',
+  cleared1000: '오답 제로', level30: '전설의 영단 마스터', collector: '모든 것을 모은 자',
+};
+export const TITLE_ITEMS = ACHIEVEMENTS.filter(a => a.tier >= 3).map(a => ({ id: a.id, name: TITLE_OF[a.id] || a.title, tier: a.tier, ach: a.id }));
+// unlock: 업적 id(없으면 누구나)
+const C = (id, name, unlock = null) => ({ id, name, unlock });
+export const COSMETICS = {
+  color: [C('rose', '로즈(기본)'), C('lavender', '라벤더'), C('mint', '민트', 'first'), C('ocean', '오션', 'streak7'), C('sunset', '선셋', 'perfect5'),
+    C('forest', '포레스트', 'learned300'), C('midnight', '미드나잇', 'attempts50'), C('gold', '황금', 'level10'), C('galaxy', '은하수', 'learned2000'),
+    C('aurora', '오로라', 'streak60'), C('legend', '전설의 빛', 'level30')],
+  frame: [C('none', '없음'), C('simple', '하양 테두리'), C('rose', '로즈 링', 'first'), C('double', '이중 링', 'attempts10'), C('gold', '황금 링', 'perfect20'),
+    C('spin', '회전 점선', 'modes11'), C('flame', '불꽃', 'streak30'), C('gem', '보석', 'perfect50'), C('orbit', '궤도', 'level20'), C('rainbow', '무지개', 'streak100')],
+  border: [C('none', '없음'), C('soft', '은은한 선'), C('brand', '브랜드', 'maker1'), C('dotted', '점선', 'friend5'), C('gold', '황금', 'attempts200'),
+    C('shine', '빛 흐름', 'cleared500'), C('neon', '네온', 'quests50'), C('legend', '전설', 'collector')],
+};
+export const COSMETIC_KINDS = ['color', 'frame', 'border', 'title'];
+export const DEFAULT_COSMETICS = { color: 'rose', frame: 'none', border: 'none', title: '' };
+// 해금 목록: gotIds = 달성한 업적 id 들
+export function cosmeticsCatalog(gotIds) {
+  const got = new Set(gotIds), A_ = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
+  const info = id => (id ? { id, title: A_[id]?.title, tier: A_[id]?.tier } : null);
+  const out = {};
+  for (const k of ['color', 'frame', 'border']) out[k] = COSMETICS[k].map(c => ({ id: c.id, name: c.name, unlock: info(c.unlock), got: !c.unlock || got.has(c.unlock) }));
+  out.title = TITLE_ITEMS.map(t => ({ id: t.id, name: t.name, tier: t.tier, unlock: info(t.ach), got: got.has(t.ach) }));
+  return out;
+}
+// 장착 검증: 알려진 항목이고 해금됐는지. 반환 = 저장할 값 또는 오류 문구
+export function checkEquip(kind, id, gotIds) {
+  if (!COSMETIC_KINDS.includes(kind)) return { error: '알 수 없는 꾸미기 종류예요.' };
+  if (kind === 'title' && (id === '' || id == null)) return { value: '' };
+  const item = kind === 'title' ? TITLE_ITEMS.find(t => t.id === id) : COSMETICS[kind].find(c => c.id === id);
+  if (!item) return { error: '없는 꾸미기 아이템이에요.' };
+  const need = kind === 'title' ? item.ach : item.unlock;
+  if (need && !gotIds.includes(need)) return { error: `'${ACHIEVEMENTS.find(a => a.id === need)?.title}' 업적을 달성하면 쓸 수 있어요.` };
+  return { value: id };
+}
