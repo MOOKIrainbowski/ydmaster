@@ -2,6 +2,7 @@
 // DB 를 모르는 순수 함수. learn.js 가 소스(단어/문장)를 모아 넘겨준다.
 import { parseSentence, plainText } from '../public/js/shared/passage.js';
 import { gradeMeaning, gradeTerm, gradeSentence, normalize, normalizeKo } from '../public/js/shared/grade.js';
+import { autoKeyBlanks, autoChoiceTokens, vocabPool } from './autoquiz.js';
 
 export const MODES = [
   { id: 'mc_meaning', kind: 'vocab', label: '뜻 고르기', desc: '영어 단어를 보고 알맞은 뜻을 고릅니다.' },
@@ -9,9 +10,9 @@ export const MODES = [
   { id: 'write_meaning', kind: 'vocab', label: '뜻 쓰기', desc: '영어 단어를 보고 뜻을 직접 씁니다.' },
   { id: 'write_term', kind: 'vocab', label: '철자 쓰기', desc: '뜻을 보고 영어 철자를 씁니다.', options: ['hint'] },
   { id: 'listen_term', kind: 'vocab', label: '듣고 쓰기', desc: '발음을 듣고 철자를 씁니다.' },
-  { id: 'cloze_key', kind: 'passage', label: '핵심 표현 빈칸', desc: '본문에 표시한 핵심 표현을 채웁니다.', options: ['hint'] },
+  { id: 'cloze_key', kind: 'passage', label: '핵심 표현 빈칸', desc: '핵심 표현을 채웁니다. 표시하지 않은 문장은 자동으로 골라요.', options: ['hint'] },
   { id: 'cloze_random', kind: 'passage', label: '무작위 빈칸', desc: '본문의 내용어를 무작위로 비워 채웁니다.', options: ['ratio', 'hint'] },
-  { id: 'choice', kind: 'passage', label: '어법·어휘 고르기', desc: '문장 속 [A / B] 중 맞는 것을 고릅니다.' },
+  { id: 'choice', kind: 'passage', label: '어법·어휘 고르기', desc: '문장 속 [A / B] 중 맞는 것을 고릅니다. 표시가 없으면 자동으로 만들어요.' },
   { id: 'word_order', kind: 'passage', label: '어순 배열', desc: '해석을 보고 단어 조각을 순서대로 배열합니다.' },
   { id: 'sentence_order', kind: 'passage', label: '문장 순서', desc: '섞인 문장들을 본문 순서대로 배열합니다.', options: ['size'] },
   { id: 'translate', kind: 'passage', label: '해석 보고 영작', desc: '한글 해석을 보고 영어 문장을 씁니다.' },
@@ -86,8 +87,8 @@ export function buildQuestions(mode, src, count, options = {}, rnd = Math.random
 }
 
 const EMPTY_REASON = {
-  cloze_key: '핵심 표현 { } 이 표시된 문장이 없습니다. 본문 편집에서 핵심 표현을 표시해 주세요.',
-  choice: '어법·어휘 선택 [정답|오답] 이 표시된 문장이 없습니다.',
+  cloze_key: '핵심 표현으로 쓸 만한 단어가 있는 문장이 없습니다.',
+  choice: '어법·어휘 문제를 만들 수 있는 문장이 없습니다.',
   translate: '한글 해석이 있는 문장이 없습니다.',
   word_order: '어순 배열을 만들 수 있는 문장(3단어 이상)이 없습니다.',
   cloze_random: '빈칸을 만들 수 있는 단어가 없습니다.',
@@ -139,17 +140,24 @@ function context(all, idx) {
   return { before: idx > 0 ? plainText(all[idx - 1].en) : '', after: idx + 1 < all.length ? plainText(all[idx + 1].en) : '' };
 }
 
+// 어휘 오답 후보는 세트(문장 배열)마다 한 번만 계산
+const POOLS = new WeakMap();
+const poolOf = all => { if (!POOLS.has(all)) POOLS.set(all, vocabPool(all.map(x => plainText(x.en)))); return POOLS.get(all); };
+
 function passageQuestion(mode, sent, all, idx, options, rnd) {
-  const { tokens, plain } = parseSentence(sent.en);
+  let { tokens, plain } = parseSentence(sent.en);
   if (!plain.trim()) return null;
   const ko = sent.ko || undefined;
 
+  let auto = false; // 13: 표시 없이 자동으로 만든 문항(화면에 '자동 출제' 표시)
   if (mode === 'cloze_key' || mode === 'cloze_random') {
     let blanks; // 토큰 index 배열의 배열
     if (mode === 'cloze_key') {
       const groups = new Map();
       tokens.forEach((t, i) => { if (t.key !== undefined) { if (!groups.has(t.key)) groups.set(t.key, []); groups.get(t.key).push(i); } });
       blanks = [...groups.values()].map(ix => range(ix[0], ix[ix.length - 1]));
+      // 13: { } 표시가 없는 문장은 핵심 표현을 자동으로 고름(구동사·형용사+명사·본동사…)
+      if (!blanks.length) { blanks = autoKeyBlanks(tokens, plain, rnd); auto = true; }
     } else {
       const ratio = Math.max(0.1, Math.min(0.5, Number(options.ratio) || 0.25));
       const cand = tokens.map((t, i) => i).filter(i => {
@@ -173,12 +181,17 @@ function passageQuestion(mode, sent, all, idx, options, rnd) {
       } else cur += tokens[i].text;
     }
     if (cur) segments.push(cur);
-    return { q: { type: 'cloze', segments, ko, context: context(all, idx) }, key: { kind: 'cloze', answers } };
+    return { q: { type: 'cloze', segments, ko, context: context(all, idx), ...(auto ? { auto: true } : {}) }, key: { kind: 'cloze', answers } };
   }
 
   if (mode === 'choice') {
-    const chs = tokens.filter(t => t.kind === 'choice');
-    if (!chs.length) return null;
+    let chs = tokens.filter(t => t.kind === 'choice');
+    if (!chs.length) {
+      // 13: [정답|오답] 표시가 없으면 어법(동사 자리·수 일치·to부정사·능동/수동·관계사·형용사/부사) 또는 어휘 선택지를 자동으로
+      const made = autoChoiceTokens(tokens, plain, rnd, poolOf(all));
+      if (!made) return null;
+      tokens = made; auto = true; chs = tokens.filter(t => t.kind === 'choice');
+    }
     const segments = [], answers = [];
     let cur = '', k = 0;
     for (const t of tokens) {
@@ -189,7 +202,7 @@ function passageQuestion(mode, sent, all, idx, options, rnd) {
       segments.push({ choice: k++, options: opts });
     }
     if (cur) segments.push(cur);
-    return { q: { type: 'inline_choice', segments, ko }, key: { kind: 'indexes', answers, display: plain } };
+    return { q: { type: 'inline_choice', segments, ko, ...(auto ? { auto: true } : {}) }, key: { kind: 'indexes', answers, display: plain } };
   }
 
   if (mode === 'word_order') {

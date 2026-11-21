@@ -1110,3 +1110,11 @@ button.list-row { width: 100%; background: var(--glass-card-strong); color: var(
 .gram-tip__dl { display: grid; gap: 4px; margin: 6px 0; } .gram-tip__dl div { display: flex; gap: 8px; font-size: 13px; } .gram-tip__dl dt { flex: none; width: 52px; color: var(--text-3); } .gram-tip__dl dd { margin: 0; font-weight: 700; }
 .gram-tip__foot { margin-top: 8px !important; color: var(--text-3); font-size: 11px; }
 @media (max-width: 640px) { .ps-hint { margin-left: 0; width: 100%; } .sent-card { padding: 14px; } }
+
+/* ── 13 아이콘 버튼(사용자 요청: 뜻이 그림으로 분명한 버튼은 아이콘으로) · 문장 발음 ── */
+.btn--icon.btn--sm { width: 40px; padding: 0; }
+.btn--start { width: 56px; } /* 시험 보기: 가장 중요한 동작이라 조금 크게 */
+.btn--fav.is-on { border-color: #F59E0B; color: #D97706; } .btn--fav.is-on svg { fill: currentColor; }
+.btn--add { justify-self: center; width: 56px; border-style: dashed; border-radius: var(--r-pill); }
+.sent-card__tools { display: inline-flex; align-items: center; gap: 6px; }
+.sent-card__btn--icon { justify-content: center; width: 32px; padding: 0; }

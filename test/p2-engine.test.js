@@ -65,8 +65,10 @@ const psrc = { sets: [{ set: 'p1', setTitle: 'P', sentences: sents }] };
 
 test('본문: 핵심 빈칸', () => {
   const qs = buildQuestions('cloze_key', psrc, 10, { order: 'sequential' }, seq());
-  assert.equal(qs.length, 2);
-  assert.deepEqual(qs[0].key.answers, ['give up']);
+  assert.equal(qs.length, 4); // 13: 표시 없는 문장도 자동 출제
+  assert.deepEqual(qs[0].key.answers, ['give up']); // 표시가 있으면 표시 그대로
+  assert.equal(qs[0].q.auto, undefined);
+  assert.equal(qs[1].q.auto, true);
   assert.equal(qs[0].q.segments.filter(s => typeof s !== 'string').length, 1);
   assert.equal(grade(qs[0], ['Give up']).correct, true);
   assert.equal(grade(qs[0], ['gave up']).correct, false);
@@ -75,9 +77,9 @@ test('본문: 핵심 빈칸', () => {
 
 test('본문: 어법 선택·어순·영작·문장 순서', () => {
   const ch = buildQuestions('choice', psrc, 10, {}, seq());
-  assert.equal(ch.length, 1);
-  const seg = ch[0].q.segments.find(s => s.options);
-  assert.equal(grade(ch[0], [seg.options.indexOf('are')]).correct, true);
+  assert.equal(ch.length, 4); // 13: 표시 없는 문장도 자동 출제
+  const marked = ch.find(q => !q.q.auto), seg = marked.q.segments.find(s => s.options);
+  assert.equal(grade(marked, [seg.options.indexOf('are')]).correct, true);
 
   const wo = buildQuestions('word_order', psrc, 10, { order: 'sequential' }, seq());
   assert.equal(wo.length, 3); // "Keep trying." 은 2단어라 제외
@@ -96,7 +98,7 @@ test('본문: 어법 선택·어순·영작·문장 순서', () => {
 });
 
 test('생성 불가 조건은 이유와 함께 오류', () => {
-  assert.throws(() => buildQuestions('cloze_key', { sets: [{ set: 'x', sentences: [{ _id: 'z', en: 'No marks here.' }] }] }, 5), /핵심 표현/);
+  assert.throws(() => buildQuestions('cloze_key', { sets: [{ set: 'x', sentences: [{ _id: 'z', en: 'Hi.' }] }] }, 5), /핵심 표현/); // 13: 표시가 없어도 고를 단어가 없을 때만 오류
   assert.throws(() => buildQuestions('sentence_order', { sets: [{ set: 'x', sentences: sents.slice(0, 2) }] }, 5), /3문장/);
 });
 

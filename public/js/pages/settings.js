@@ -63,7 +63,7 @@ export default {
           ${bar({ name: 'voiceRate', label: '발음 속도', desc: '단어·문장을 읽어 주는 빠르기.', min: 0.6, max: 1.3, step: 0.1, value: voiceRate(), out: `${voiceRate().toFixed(1)}배`, ticks: ['느리게', '', '보통', '', '', '빠르게'] })}
           ${toggle('voiceGB', p.voiceLang === 'en-GB', '영국식 억양', '끄면 미국식. 기기에 영국식 음성이 없으면 기본 영어 음성으로 읽어요.')}
           ${toggle('autoSpeak', p.autoSpeak, '시험에서 영어 문제 자동 읽기', '뜻 고르기처럼 영어가 나오는 문제를 넘어갈 때마다 읽어 줘요.')}
-          <button class="btn btn--ghost btn--sm set-try" data-try>${icon('play', 16)}발음 들어보기</button>
+          <button class="btn btn--ghost btn--sm set-try btn--icon" data-try aria-label="발음 들어보기" title="발음 들어보기">${icon('volume', 18)}</button>
         </article>
 
         <article class="card set-group"><h2 class="set-group__title">${icon('info', 20)}도움말</h2>

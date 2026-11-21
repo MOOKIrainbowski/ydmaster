@@ -38,7 +38,7 @@ function show() {
     </div>
     <div class="update-toast__actions">
       <button class="btn btn--ghost btn--sm" data-later>나중에</button>
-      <button class="btn btn--primary btn--sm" data-reload>${icon('refresh', 16)}새로고침</button>
+      <button class="btn btn--primary btn--sm btn--icon" data-reload aria-label="새로고침" title="새로고침">${icon('refresh', 18)}</button>
     </div>`);
   document.body.append(el);
   const close = () => {

@@ -31,7 +31,7 @@ export default {
       <div class="tabs">${[['explore','둘러보기'],['fav','즐겨찾기'],['mine','내 세트']].map(([s,l]) => html`<button class="tabs__tab${scope === s ? ' is-active' : ''}" data-scope="${s}">${l}</button>`)}</div>
       <form class="field-row explore-controls" data-search><label class="field"><span class="field__label">세트 검색</span><input class="input" name="q" value="${term}" placeholder="세트 제목"></label>
         <label class="field"><span class="field__label">종류</span><select class="select" name="kind"><option value="">전체</option><option value="vocab" ${kind === 'vocab' ? 'selected' : ''}>단어</option><option value="passage" ${kind === 'passage' ? 'selected' : ''}>본문</option></select></label>
-        <label class="field"><span class="field__label">정렬</span><select class="select" name="sort"><option value="popular" ${sort === 'popular' ? 'selected' : ''}>인기순</option><option value="new" ${sort === 'new' ? 'selected' : ''}>최신순</option></select></label><button class="btn btn--primary">검색</button></form>
+        <label class="field"><span class="field__label">정렬</span><select class="select" name="sort"><option value="popular" ${sort === 'popular' ? 'selected' : ''}>인기순</option><option value="new" ${sort === 'new' ? 'selected' : ''}>최신순</option></select></label><button class="btn btn--primary btn--icon" aria-label="검색" title="검색">${icon('search', 20)}</button></form>
       ${items.length ? html`<div class="set-grid">${cards}</div>${more ? html`<button class="btn btn--ghost btn--block" data-more>더 보기</button>` : ''}` : empty({ icon: scope === 'fav' ? 'star' : 'compass', title: '세트가 없어요', desc: '검색 조건을 바꾸거나 새 세트를 만들어보세요.' })}
       </section></div>`);
     };

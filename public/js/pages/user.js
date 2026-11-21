@@ -40,7 +40,7 @@ export async function renderProfile(root, username, ctx, { self = false } = {}) 
         </div>
         ${game ? html`<div class="profile-level">${levelBar(game)}</div>` : ''}
         <dl class="stat-row"><div><dt>시험 횟수</dt><dd>${stats.totalAttempts}</dd></div><div><dt>평균 점수</dt><dd>${stats.avgScore}%</dd></div><div><dt>공개 세트</dt><dd>${stats.totalTests}</dd></div><div><dt>친구</dt><dd>${stats.friendCount}</dd></div></dl>
-        ${mine ? html`<div class="profile-foot"><span class="muted">사진·이름·꾸미기·비밀번호는 프로필 수정에서 바꿔요.</span><a class="btn btn--primary" href="#/me/edit">${icon('edit', 18)}프로필 수정</a></div>` : ''}
+        ${mine ? html`<div class="profile-foot"><span class="muted">사진·이름·꾸미기·비밀번호는 프로필 수정에서 바꿔요.</span><a class="btn btn--primary btn--icon" href="#/me/edit" aria-label="프로필 수정" title="프로필 수정">${icon('edit', 20)}</a></div>` : ''}
       </article>
       ${game ? html`<section class="section profile-ach"><div class="section__head"><h2 class="section__title">달성한 업적</h2><span class="muted">${ach.length} / ${game.total}</span></div>
         ${ach.length ? html`<div class="ach-grid">${ach.map((a, i) => i < ACH_ROW ? badge(a) : html`<div hidden data-ach-more>${badge(a)}</div>`)}</div>

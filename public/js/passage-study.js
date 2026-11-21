@@ -65,7 +65,8 @@ export function mountPassageStudy(host, set) {
     const ko = allKo || koOpen.has(si), ana = anaOpen.has(si);
     return html`<article class="sent-card${ana ? ' is-roles' : ''}" data-sent="${si}">
       <div class="sent-card__head"><span class="sent-card__num" data-sent-info="${si}" tabindex="0" aria-label="${si + 1}번 문장 요약">${si + 1}</span>
-        <button class="sent-card__btn${ana ? ' is-on' : ''}" type="button" data-ana="${si}" aria-expanded="${ana}">${icon('search', 15)}문장 분석</button></div>
+        <span class="sent-card__tools"><button class="sent-card__btn sent-card__btn--icon" type="button" data-speak="${parsed[si].plain}" aria-label="${si + 1}번 문장 발음 듣기" title="발음 듣기">${icon('volume', 16)}</button>
+        <button class="sent-card__btn${ana ? ' is-on' : ''}" type="button" data-ana="${si}" aria-expanded="${ana}">${icon('search', 15)}문장 분석</button></span></div>
       <p class="sent-card__en" lang="en">${line(si)}</p>
       ${s.ko ? html`<div class="sent-card__ko${ko ? ' is-open' : ''}"><div><p>${s.ko}</p></div></div>
         <button class="sent-card__toggle" type="button" data-ko="${si}" aria-expanded="${ko}">${icon(ko ? 'chevronUp' : 'chevronDown', 15)}${ko ? '해석 숨기기' : '해석 보기'}</button>` : html`<p class="muted sent-card__noko">해석이 없는 문장이에요.</p>`}

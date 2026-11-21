@@ -138,7 +138,7 @@ test('본문 세션과 종류 불일치 오류', async () => {
   const bad = await t.call('POST', '/sessions', { source: { type: 'sets', ids: [p._id] }, mode: 'mc_meaning' }, a.token);
   assert.equal(bad.status, 400);
   const ok = await t.call('POST', '/sessions', { source: { type: 'sets', ids: [p._id] }, mode: 'cloze_key', options: { feedback: 'end' } }, a.token);
-  assert.equal(ok.data.total, 2);
+  assert.equal(ok.data.total, 3); // 13: 표시 없는 문장(They [are|is]…)도 핵심 표현을 자동으로 골라 출제
   const r = await t.call('POST', `/sessions/${ok.data._id}/answers`, { i: 0, response: ['x'] }, a.token);
   assert.deepEqual(r.data, { i: 0, saved: true }); // 종료 전 정답 비공개
   const fin = await t.call('POST', `/sessions/${ok.data._id}/finish`, {}, a.token);
