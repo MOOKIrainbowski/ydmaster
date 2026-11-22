@@ -24,8 +24,17 @@ const TABS = [
   { href: '#/explore', label: '둘러보기', icon: 'compass', match: ['explore'] },
   { href: '#/wrong', label: '오답', icon: 'target', match: ['wrong'] },
   { href: '#/ranking', label: '랭킹', icon: 'trophy', match: ['ranking'] },
-  { href: '#/me', label: '내 정보', icon: 'user', match: ['me', 'history', 'friends', 'profile-edit', 'settings'] },
+  { href: '#/me', label: '내 정보', icon: 'user', match: ['me', 'history', 'profile-edit', 'settings'] },
 ];
+// 17(사용자 요청): 위 메뉴는 글자 없이 아이콘만 · 가이드 버튼 삭제 · 문의/공지사항/친구 를 위로 올리고 프로필 '내 메뉴'에서는 뺌.
+//   휴대폰에서도 위 도구 줄은 보이므로 이 셋은 어디서든 한 번에 닿는다.
+const TOOLS = [
+  { href: '#/inquiry', label: '문의', icon: 'chat', page: 'inquiry' },
+  { href: '#/notice', label: '공지사항', icon: 'megaphone', page: 'notice' },
+  { href: '#/friends', label: '친구', icon: 'users', page: 'friends' },
+  { href: '#/settings', label: '설정', icon: 'settings', page: 'settings' },
+];
+const toolLink = (t, active) => html`<a class="topbar__help${active === t.page ? ' is-active' : ''}" href="${t.href}" aria-label="${t.label}" title="${t.label}"${active === t.page ? html` aria-current="page"` : ''}>${icon(t.icon, 20)}</a>`;
 
 const app = document.getElementById('app');
 let cleanup = null;
@@ -53,17 +62,16 @@ function shell(active, mod = {}) {
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
     <header class="topbar glass">
       <a class="topbar__brand" href="#/" aria-label="영단마스터 홈">${logoMark()}<span class="topbar__name">영단마스터</span></a>
-      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.filter(t => t.href !== '#/me').map((t, i) => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span style="view-transition-name:top-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>
+      ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.filter(t => t.href !== '#/me').map((t, i) => { const on = t.match.includes(active); return html`<a class="topbar__link${on ? ' is-active' : ''}" href="${t.href}" aria-label="${t.label}" title="${t.label}"${on ? html` aria-current="page"` : ''}>${on ? pill('topbar__pill') : ''}<span class="topbar__ic" style="view-transition-name:top-label-${i};view-transition-class:navlabel">${icon(t.icon, 22)}</span></a>`; })}</nav>
         <div class="topbar__tools">
-          <a class="topbar__help${active === 'guide' ? ' is-active' : ''}" href="#/guide" aria-label="가이드" title="가이드">${icon('lightbulb', 20)}</a>
-          <a class="topbar__help topbar__settings${active === 'settings' ? ' is-active' : ''}" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a>
+          ${TOOLS.map(t => toolLink(t, active))}
           <button class="topbar__help topbar__bell" type="button" data-notif aria-label="알림" aria-haspopup="dialog" aria-expanded="false" title="알림">${icon('bell', 20)}${notifBadge()}</button>
         </div>
         <a class="topbar__me${TABS[4].match.includes(active) ? ' is-active' : ''}" href="#/me" aria-label="내 정보" title="내 정보"${TABS[4].match.includes(active) ? html` aria-current="page"` : ''}>${avatar(u, 34)}</a>`
       : active === 'login' ? '' : html`<div class="topbar__guest"><a class="topbar__help topbar__settings" href="#/settings" aria-label="설정" title="설정">${icon('settings', 20)}</a><a class="btn btn--ghost btn--sm" href="#/login">로그인</a><a class="btn btn--primary btn--sm" href="#/login?tab=register">무료로 시작</a></div>`}
     </header>
     <main class="main" id="main" tabindex="-1"></main>
-    ${u ? html`<nav class="tabbar glass" aria-label="주요 메뉴">${TABS.map((t, i) => { const on = t.match.includes(active); return html`<a class="tabbar__item${on ? ' is-active' : ''}" href="${t.href}"${on ? html` aria-current="page"` : ''}>${on ? pill('tabbar__pill') : ''}<span class="tabbar__ic" style="view-transition-name:tab-ic-${i};view-transition-class:navlabel">${icon(t.icon, 22)}</span><span style="view-transition-name:tab-label-${i};view-transition-class:navlabel">${t.label}</span></a>`; })}</nav>` : ''}`);
+    ${u ? html`<nav class="tabbar glass" aria-label="주요 메뉴">${TABS.map((t, i) => { const on = t.match.includes(active); return html`<a class="tabbar__item${on ? ' is-active' : ''}" href="${t.href}" aria-label="${t.label}" title="${t.label}"${on ? html` aria-current="page"` : ''}>${on ? pill('tabbar__pill') : ''}<span class="tabbar__ic" style="view-transition-name:tab-ic-${i};view-transition-class:navlabel">${icon(t.icon, 24)}</span></a>`; })}</nav>` : ''}`);
   app.classList.toggle('app--focus', !!mod.focus);
   app.classList.toggle('app--guest', !u);
   app.classList.toggle('app--landing', active === 'landing');

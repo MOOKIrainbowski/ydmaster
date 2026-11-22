@@ -11,6 +11,10 @@
 //  - 숨은 코드 ↑↑↓↓←→←→BA → 무지개 영이 · 입력칸 밖에서 hello / hi / love / yeongi 를 치면 대답
 //  - 비밀번호에 Caps Lock 이 켜져 있으면 알려 줌 · 로그인 3번 실패하면 비밀번호 찾기 안내
 //  - 오래 두면 잠꼬대, 주말·밤 인사
+// 17(사용자 요청: 콘셉을 슬라임으로, 슬라임에 어울리는 기믹 추가)
+//  - 쓰다듬으면 젤리처럼 출렁(is-jiggle) · 가끔 옆구리에서 방울이 똑 떨어짐
+//  - 7번째마다 작은 슬라임 둘로 분열했다가 다시 합쳐짐 · 끌었다 놓으면 철퍼덕 퍼졌다 모임(is-splat)
+//  - 졸면 바닥에 녹아 퍼짐(CSS) · 두 번 누르면 오늘의 단어를 꿀꺽 삼킴(글자가 몸속으로)
 import { html, render, speak } from './ui.js';
 import { burstAt, reduced } from './motion.js';
 import { zoomOf } from './prefs.js';
@@ -25,7 +29,10 @@ const JOKES = [
   '틀린 단어는 오답 노트가 다 기억해요.',
   '하루 10단어면 1년에 3,650단어!',
   'Knowledge is power. 저는 그냥 귀여움 담당.',
-  '끌어당겨도 돼요. 저 말랑해요.',
+  '끌어당겨도 돼요. 저 말랑말랑 슬라임이에요.',
+  '슬라임은 단어를 먹고 커져요. 꿀꺽!',
+  '끈적하게 붙어서 끝까지 같이 공부해요.',
+  '저를 계속 누르면… 분열할지도 몰라요.',
   '두 번 누르면 오늘의 단어를 알려 줘요.',
 ];
 const NIGHT = '이 시간까지 공부라니… 존경해요.';
@@ -75,6 +82,19 @@ export function mountMascot(host) {
     stop(sayT);
     sayT = later(() => bubble.classList.remove('is-on'), ms);
   };
+  // 17: 작은 슬라임 분열 · 방울 · 단어 꿀꺽 — 무대(.fun__stage)에 잠깐 붙였다 뗀다
+  const stage = host.querySelector('.fun__stage');
+  const spawn = (cls, ms, inner = '') => {
+    if (reduced()) return;
+    const el = document.createElement('span'); el.className = cls; el.setAttribute('aria-hidden', 'true'); el.innerHTML = inner;
+    stage.append(el); later(() => el.remove(), ms);
+  };
+  const split = () => {
+    play('is-split', 1400);
+    for (const side of ['l', 'r']) spawn(`slime-mini slime-mini--${side}`, 1400, '<img src="/brand/logo.svg" alt="" width="64" height="64">');
+  };
+  const drip = () => spawn('slime-drop', 1100);
+  const gulp = word => { spawn('slime-word', 1300, word.replace(/[<&>]/g, '')); later(() => play('is-gulp', 700), 900); };
   const play = (cls, ms = 900) => { // 클래스 애니메이션 1회
     if (reduced()) return;
     mascot.classList.remove(cls); void mascot.offsetWidth; mascot.classList.add(cls);
@@ -158,7 +178,8 @@ export function mountMascot(host) {
     if (drag.moved) {
       const far = Math.hypot(drag.dx, drag.dy) > 60;
       mascot.classList.remove('is-drag'); mascot.style.translate = ''; mascot.style.scale = '';
-      say(far ? '으아아— 날아갈 뻔했어요!' : '어딜 데려가요~', 2000); sfx.boing();
+      play('is-splat', 900); // 17: 놓으면 철퍼덕 퍼졌다가 다시 모임
+      say(far ? '철퍼덕! 늘어났다 돌아왔어요!' : '쭈욱~ 저 잘 늘어나요', 2000); sfx.boing();
     }
     if (mascot.classList.contains('is-puff')) { mascot.classList.remove('is-puff'); play('is-pop', 520); burstAt(mascot, 16); say('펑! 바람 빠졌어요.', 1800); sfx.pop(); }
     drag = null;
@@ -174,19 +195,20 @@ export function mountMascot(host) {
     if (taps.length >= 5) { taps = []; play('is-dizzy', 1600); say('@_@ 어지러워요… 천천히요…', 2200); sfx.wrong(); return; }
     if (pets % 7 === 0) {
       const [w, ko] = SECRETS[(pets / 7 - 1) % SECRETS.length];
-      play('is-spin');
-      say(`숨은 단어 발견! ${w} = ${ko}`, 4200);
+      split(); // 17: 분열!
+      say(`분열! 숨은 단어 발견: ${w} = ${ko}`, 4200);
       burstAt(mascot, 30); sfx.sparkle();
       return;
     }
-    play('is-pop'); sfx.chirp();
+    play('is-jiggle', 700); sfx.chirp();
+    if (Math.random() < 0.35) drip(); // 가끔 방울이 똑
     joke = (joke + 1) % JOKES.length;
     say(pets >= 4 ? `${JOKES[joke]} (${7 - (pets % 7)}번 더…?)` : JOKES[joke]);
   };
   // 두 번 누르기: 오늘의 단어(같은 날엔 같은 단어)를 읽어 줌
   const onDbl = () => {
     const d = new Date(), [en, ko] = WORDS[(d.getFullYear() * 400 + d.getMonth() * 31 + d.getDate()) % WORDS.length];
-    play('is-jump', 800); say(`오늘의 단어: ${en} = ${ko}`, 3600); speak(en);
+    gulp(en); say(`꿀꺽! 오늘의 단어: ${en} = ${ko}`, 3600); speak(en);
   };
   // 간지럼: 마스코트 위에서 좌우로 빠르게 문지르기(1.2초 안에 방향이 10번 바뀌면)
   const onRub = e => {

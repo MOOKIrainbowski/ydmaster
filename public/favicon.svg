@@ -1,13 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="영단마스터">
+  <!-- 17: 슬라임 영이(brand/logo.svg 와 같은 그림 + 연분홍 바탕). 앱 아이콘 PNG 의 원본 -->
   <defs>
-    <linearGradient id="ydm-favicon-body" x1=".12" y1="0" x2=".9" y2="1"><stop stop-color="#FB7185"/><stop offset=".55" stop-color="#D946EF"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
-    <linearGradient id="ydm-favicon-leaf" x1=".2" y1="0" x2=".8" y2="1"><stop stop-color="#FFE4E8"/><stop offset="1" stop-color="#FFF"/></linearGradient>
+    <linearGradient id="ydm-favicon-body" x1=".15" y1="0" x2=".85" y2="1"><stop stop-color="#FDA4AF"/><stop offset=".45" stop-color="#E879F9"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+    <radialGradient id="ydm-favicon-core" cx=".42" cy=".4" r=".6"><stop stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="#FFF1F4"/>
-  <path d="M32 15C16 15 4 28 4 44c0 11 10 17 28 17s28-6 28-17c0-16-12-29-28-29z" fill="url(#ydm-favicon-body)"/>
-  <path d="M31 18C23 16 17 10 16 4c8 2 14 7 17 14z" fill="url(#ydm-favicon-leaf)" stroke="#9D174D" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M33 18c3-7 9-12 17-14-1 6-7 12-16 14z" fill="url(#ydm-favicon-leaf)" stroke="#9D174D" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M31 17 19 7m14 10L46 7" fill="none" stroke="#9D174D" stroke-width="2.8" stroke-linecap="round"/>
-  <ellipse cx="21.5" cy="40" rx="8.5" ry="10" fill="#fff"/><circle cx="21.5" cy="41" r="4.5" fill="#32113D"/>
-  <ellipse cx="42.5" cy="40" rx="8.5" ry="10" fill="#fff"/><circle cx="42.5" cy="41" r="4.5" fill="#32113D"/>
+  <g transform="translate(3.5 1.5) scale(.89)">
+    <path d="M32 4C33.5 10 38 15 44.5 19.5C53.5 25.5 59 34.5 59 44C59 50 57 53.5 54.5 55.5C58.5 56 61.5 57.5 61.5 59.5C61.5 61.5 58.5 62 54.5 62H9.5C5.5 62 2.5 61.5 2.5 59.5C2.5 57.5 5.5 56 9.5 55.5C7 53.5 5 50 5 44C5 34.5 10.5 25.5 19.5 19.5C26 15 30.5 10 32 4Z" fill="url(#ydm-favicon-body)"/>
+    <path d="M32 4C33.5 10 38 15 44.5 19.5C53.5 25.5 59 34.5 59 44C59 50 57 53.5 54.5 55.5C58.5 56 61.5 57.5 61.5 59.5C61.5 61.5 58.5 62 54.5 62H9.5C5.5 62 2.5 61.5 2.5 59.5C2.5 57.5 5.5 56 9.5 55.5C7 53.5 5 50 5 44C5 34.5 10.5 25.5 19.5 19.5C26 15 30.5 10 32 4Z" fill="url(#ydm-favicon-core)"/>
+    <path d="M12 34c1-5 4-9 8-12" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".6"/>
+    <ellipse cx="22" cy="40" rx="7.5" ry="9" fill="#fff"/><circle cx="22" cy="41" r="4.2" fill="#32113D"/><circle cx="23.6" cy="38.8" r="1.4" fill="#fff"/>
+    <ellipse cx="42" cy="40" rx="7.5" ry="9" fill="#fff"/><circle cx="42" cy="41" r="4.2" fill="#32113D"/><circle cx="43.6" cy="38.8" r="1.4" fill="#fff"/>
+  </g>
 </svg>

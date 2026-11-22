@@ -5,7 +5,7 @@ import { api } from './api.js';
 import { state } from './state.js';
 import { html, render, icon, fmtDate } from './ui.js';
 
-const ICON = { friend_req: 'users', friend_ok: 'users', achievement: 'trophy', level: 'star', inquiry: 'chat', notice: 'bell', welcome: 'lightbulb' };
+const ICON = { friend_req: 'users', friend_ok: 'users', achievement: 'trophy', level: 'star', inquiry: 'chat', notice: 'megaphone', welcome: 'lightbulb' };
 let unread = 0, panel = null, items = [];
 
 const paintBadge = () => document.querySelectorAll('[data-notif-count]').forEach(b => { b.textContent = unread > 99 ? '99+' : String(unread); b.hidden = !unread; });

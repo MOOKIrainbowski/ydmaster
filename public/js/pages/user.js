@@ -48,8 +48,7 @@ export async function renderProfile(root, username, ctx, { self = false } = {}) 
         : empty({ icon: 'trophy', title: '아직 달성한 업적이 없어요' })}</section>` : ''}
       ${mine ? html`<section class="section"><div class="section__head"><h2 class="section__title">내 메뉴</h2></div>
         <nav class="profile-menu" aria-label="내 메뉴">
-          <a class="list-row" href="#/history">${icon('clock')}학습 기록</a><a class="list-row" href="#/friends">${icon('users')}친구</a>
-          <a class="list-row" href="#/notice">${icon('bell')}공지사항</a><a class="list-row" href="#/inquiry">${icon('chat')}문의하기</a>
+          <a class="list-row" href="#/history">${icon('clock')}학습 기록</a>
           <a class="list-row" href="#/settings">${icon('settings')}설정</a><a class="list-row" href="#/guide">${icon('lightbulb')}가이드</a>
           ${state.user?.isAdmin ? html`<a class="list-row" href="#/admin">${icon('shield')}관리자</a>` : ''}
           <a class="list-row" href="/privacy.html">${icon('info')}개인정보처리방침</a>

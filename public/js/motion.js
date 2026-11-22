@@ -7,6 +7,8 @@ import { zoomOf } from './prefs.js';
 // 모두 prefers-reduced-motion 을 존중한다.
 
 // 기기의 '동작 줄이기' 또는 설정 페이지의 '애니메이션 줄이기'(06, html[data-motion=reduce])
+// 17(사용자 요청: 휴대폰에서 버벅임): 좁은 화면·터치 기기는 무거운 효과를 덜어 낸다(app.css 17 휴대폰 블록과 같은 조건)
+export const lowPower = () => matchMedia('(max-width: 768px), (hover: none) and (pointer: coarse)').matches;
 export const reduced = () => document.documentElement.dataset.motion === 'reduce' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ── 등장·카운트업: #app 아래 새로 생긴 요소를 자동 처리 ──
@@ -67,6 +69,7 @@ function onPointer(e) {
 const COLORS = ['#E11D48', '#C026D3', '#7C3AED', '#FB7185', '#A78BFA', '#FDE68A'];
 export function burst(x, y, n = 18) {
   if (reduced()) return;
+  if (lowPower()) n = Math.ceil(n / 2); // 휴대폰: 파티클 절반
   const b = document.createElement('div');
   b.className = 'burst';
   const z = zoomOf(); b.style.left = `${x / z}px`; b.style.top = `${y / z}px`; // 14: 화면 좌표 → CSS 좌표
@@ -99,7 +102,8 @@ export const pop = el => replay(el, 'is-pop');
 
 // ── 화면 전환: View Transitions 지원 시 부드럽게, 아니면 그대로 ──
 export function viewTransition(update) {
-  if (!document.startViewTransition || reduced()) { const r = update(); return Promise.resolve(r); }
+  // 휴대폰: 화면 전체 스냅숏 전환은 생략(전환마다 끊기던 원인, 17)
+  if (!document.startViewTransition || reduced() || lowPower()) { const r = update(); return Promise.resolve(r); }
   const t = document.startViewTransition(update);
   t.ready.catch(() => {}); // 빠른 연속 이동으로 취소돼도 조용히
   return t.updateCallbackDone;

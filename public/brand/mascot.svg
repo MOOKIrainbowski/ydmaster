@@ -1,23 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="콩방울 영이">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="슬라임 영이">
+  <!-- 17(사용자 요청): 콘셉을 슬라임으로 — 잎사귀를 빼고, 물방울 꼭지·바닥에 퍼진 발·젤리 속 반투명 광택·기포·흘러내리는 방울을 더함.
+       클래스 이름(mascot__eyes/pupil/lid/mouth/zzz …)은 mascot.js·app.css 가 움직이는 손잡이라 그대로 유지. -->
   <defs>
-    <linearGradient id="ydm-mascot-body" x1=".12" y1=".05" x2=".9" y2=".96"><stop stop-color="#FB7185"/><stop offset=".55" stop-color="#D946EF"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
-    <linearGradient id="ydm-mascot-leaf" x1=".2" y1="0" x2=".8" y2="1"><stop stop-color="#FFE4E8"/><stop offset="1" stop-color="#FFF"/></linearGradient>
+    <linearGradient id="ydm-slime-body" x1=".15" y1="0" x2=".85" y2="1"><stop stop-color="#FDA4AF"/><stop offset=".45" stop-color="#E879F9"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+    <radialGradient id="ydm-slime-core" cx=".42" cy=".38" r=".6"><stop stop-color="#fff" stop-opacity=".55"/><stop offset=".55" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ydm-slime-rim" x1="0" y1="0" x2="0" y2="1"><stop offset=".62" stop-color="#4C1D95" stop-opacity="0"/><stop offset="1" stop-color="#4C1D95" stop-opacity=".38"/></linearGradient>
+    <path id="ydm-slime-shape" d="M100 16C104 32 118 46 138 60C166 80 182 108 182 138C182 156 176 167 168 173C179 175 189 178 189 183C189 189 180 191 168 191H32C20 191 11 189 11 183C11 178 21 175 32 173C24 167 18 156 18 138C18 108 34 80 62 60C82 46 96 32 100 16Z"/>
+    <clipPath id="ydm-slime-clip"><use href="#ydm-slime-shape"/></clipPath>
   </defs>
-  <ellipse class="mascot__shadow" cx="100" cy="188" rx="52" ry="7" fill="#32113D" opacity=".18"/>
+  <ellipse class="mascot__shadow" cx="100" cy="192" rx="86" ry="7" fill="#32113D" opacity=".16"/>
   <g class="mascot__body">
-    <path d="M100 34c-43 0-74 33-74 80 0 45 29 70 74 70s74-25 74-70c0-47-31-80-74-80z" fill="url(#ydm-mascot-body)"/>
-    <path d="M99 39C80 34 64 20 63 5c18 4 34 15 38 31z" fill="url(#ydm-mascot-leaf)" stroke="#BE185D" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M101 36c4-16 20-27 38-31-1 15-17 29-36 34z" fill="url(#ydm-mascot-leaf)" stroke="#BE185D" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M98 34 69 10m33 24 29-24" fill="none" stroke="#BE185D" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M100 34v8" fill="none" stroke="#BE185D" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M57 61c10-12 23-17 36-18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".42"/>
-    <g class="mascot__eyes">
-      <g class="mascot__eye"><ellipse cx="73" cy="93" rx="17" ry="20" fill="#fff"/><circle class="mascot__pupil" cx="73" cy="95" r="8" fill="#32113D"/><circle class="mascot__glint" cx="76" cy="91" r="2.8" fill="#fff"/></g>
-      <g class="mascot__eye"><ellipse cx="127" cy="93" rx="17" ry="20" fill="#fff"/><circle class="mascot__pupil" cx="127" cy="95" r="8" fill="#32113D"/><circle class="mascot__glint" cx="130" cy="91" r="2.8" fill="#fff"/></g>
+    <use href="#ydm-slime-shape" fill="url(#ydm-slime-body)"/>
+    <g clip-path="url(#ydm-slime-clip)">
+      <use href="#ydm-slime-shape" fill="url(#ydm-slime-core)"/>
+      <use href="#ydm-slime-shape" fill="url(#ydm-slime-rim)"/>
+      <!-- 젤리 속 기포(천천히 떠오름) -->
+      <g class="mascot__bubbles" fill="#fff" fill-opacity=".18" stroke="#fff" stroke-opacity=".55" stroke-width="1.6">
+        <circle class="mascot__bubble" cx="146" cy="150" r="6"/><circle class="mascot__bubble" cx="58" cy="162" r="4"/><circle class="mascot__bubble" cx="132" cy="170" r="3"/>
+      </g>
     </g>
-    <path class="mascot__lid" d="M56 95q17 10 34 0m20 0q17 10 34 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round" opacity="0"/>
-    <ellipse cx="56" cy="119" rx="10" ry="6" fill="#FFE4E8" opacity=".72"/><ellipse cx="144" cy="119" rx="10" ry="6" fill="#FFE4E8" opacity=".72"/>
-    <path class="mascot__mouth" d="M89 125q11 11 22 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round"/>
+    <!-- 겉면 광택: 큰 곡선 하이라이트 + 작은 반짝 점(젖은 젤리 느낌) -->
+    <path class="mascot__gloss" d="M50 100C52 82 62 68 76 58" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".55"/>
+    <circle cx="47" cy="116" r="4.5" fill="#fff" opacity=".55"/>
+    <path d="M96 30c1 6 4 11 8 15" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+    <g class="mascot__eyes">
+      <g class="mascot__eye"><ellipse cx="74" cy="112" rx="15" ry="18" fill="#fff"/><circle class="mascot__pupil" cx="74" cy="114" r="7.5" fill="#32113D"/><circle class="mascot__glint" cx="77" cy="110" r="2.6" fill="#fff"/></g>
+      <g class="mascot__eye"><ellipse cx="126" cy="112" rx="15" ry="18" fill="#fff"/><circle class="mascot__pupil" cx="126" cy="114" r="7.5" fill="#32113D"/><circle class="mascot__glint" cx="129" cy="110" r="2.6" fill="#fff"/></g>
+    </g>
+    <path class="mascot__lid" d="M59 114q15 9 30 0m22 0q15 9 30 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round" opacity="0"/>
+    <ellipse cx="56" cy="138" rx="10" ry="5.5" fill="#FFE4E8" opacity=".7"/><ellipse cx="144" cy="138" rx="10" ry="5.5" fill="#FFE4E8" opacity=".7"/>
+    <path class="mascot__mouth" d="M90 140q10 10 20 0" fill="none" stroke="#32113D" stroke-width="4" stroke-linecap="round"/>
   </g>
+  <!-- 옆구리에서 흘러내리는 방울(주기적으로 똑) -->
+  <path class="mascot__drip" d="M171 128c3 6 6 10 6 14a6 6 0 0 1-12 0c0-4 3-8 6-14z" fill="#C084FC"/>
   <g class="mascot__zzz" fill="none" stroke="#7C3AED" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0"><path d="m151 48 15 0-15 15 15 0m-5-31 13 0-13 13 13 0"/></g>
 </svg>
