@@ -1276,6 +1276,12 @@ html[data-motion="reduce"] .pf-fx i { top: var(--y); opacity: .6; animation: non
 .loader__stage { isolation: isolate; }
 .loader__shadow { z-index: 0; } .loader__letter { z-index: 1; } .loader__mascot { z-index: 3; }
 .loader-overlay { z-index: 1000; background: color-mix(in srgb, var(--bg) 92%, transparent); }
+/* 17 후속: 화면 전환(View Transition) 중에는 이름 붙은 #main·메뉴가 문서 위 전환 레이어에 그려져 z-index 와 상관없이 덮개를 가렸다
+   (프로필처럼 데이터를 기다리는 화면에서 보임). 덮개에도 이름을 주고 전환 레이어에서 맨 위로. 사라지는 중인 덮개는 이름을 빼서 중복을 막음 */
+.loader-overlay { view-transition-name: loader; }
+.loader-overlay.is-out { view-transition-name: none; }
+::view-transition-group(loader) { z-index: 50; }
+::view-transition-old(loader), ::view-transition-new(loader) { animation: none; }
 
 /* ── 슬라임 영이: 출렁·분열·철퍼덕·녹기·꿀꺽·기포·방울 ── */
 .mascot__bubble { transform-box: fill-box; transform-origin: center; animation: slime-bubble 5.5s ease-in-out infinite; }
