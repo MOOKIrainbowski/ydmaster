@@ -42,7 +42,7 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
           <div class="start__src">
             <span class="kind-tile kind-tile--${kind === 'passage' ? 'passage' : 'vocab'}">${icon(source === 'wrong' ? 'target' : kind === 'passage' ? 'text' : 'book', 22)}</span>
             <div><p class="start__src-title">${source === 'wrong' ? (setId ? info?.title || '이 세트 오답' : `틀렸던 ${kind === 'passage' ? '본문' : '단어'}만 모아서`) : info?.title || `${setIds.length}개 세트`}</p>
-              <p class="muted">${kind === 'passage' ? '본문' : '단어'} 시험${info?.count ? ` · 학습 항목 ${info.count}개` : ''}${source === 'wrong' ? ' · 두 번 연속 맞히면 오답에서 빠져요' : ''}</p></div>
+              <p class="muted">${kind === 'passage' ? '본문' : '단어'} 시험${info?.count ? ` · 학습 항목 ${info.count}개` : ''}${source === 'wrong' ? ' · 맞히면 오답에서 빠져요' : ''}</p></div>
           </div>
 
           <fieldset class="start__step">

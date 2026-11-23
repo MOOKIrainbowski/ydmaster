@@ -1,6 +1,6 @@
 // 게임 연출(04, 2026-11-20 사용자 요청: 공부가 지치지 않게 게임처럼 성취감) — 효과음·떠오르는 글자·큰 배너·별.
 // 점수·경험치·업적 판정은 서버(server/game.js)가 한다. 여기는 보여주기만.
-import { html, icon, toast } from './ui.js';
+import { html, icon, toast, modal, render, $ } from './ui.js';
 import { api } from './api.js';
 import { reduced, burst } from './motion.js';
 import { getPref, zoomOf } from './prefs.js';
@@ -209,18 +209,69 @@ export function newAchievements(userId, list) {
 
 // ── 퀘스트(05) ──
 export const GUIDE_TITLES = { start: '영단마스터 둘러보기', vocab: '단어 세트 만들기', passage: '본문 세트 만들기', test: '시험 보기', wrong: '오답 복습', cards: '학습 카드', game: '경험치·레벨·업적·퀘스트', social: '랭킹·친구·공유' };
-const GROUP = { daily: '오늘의 퀘스트', start: '첫걸음 퀘스트', guide: '가이드 퀘스트' };
+const GROUP = { daily: '오늘의 퀘스트', weekly: '주간 퀘스트', start: '첫걸음 퀘스트', guide: '가이드 퀘스트' };
 const questTitle = q => (q.group === 'guide' ? `가이드 읽기: ${GUIDE_TITLES[q.desc] || q.desc}` : q.title);
 export const questRow = (q, more = false) => html`<li class="quest quest--${q.status}"${more ? html` hidden data-more-item` : ''}>
-  <span class="quest__icon" aria-hidden="true">${icon(q.status === 'claimed' ? 'check' : q.group === 'daily' ? 'clock' : q.group === 'guide' ? 'lightbulb' : 'flame', 18)}</span>
+  <span class="quest__icon" aria-hidden="true">${icon(q.status === 'claimed' ? 'check' : q.group === 'daily' ? 'clock' : q.group === 'weekly' ? 'trophy' : q.group === 'guide' ? 'lightbulb' : 'flame', 18)}</span>
   <div class="quest__main"><p class="quest__title">${questTitle(q)}</p>
     ${q.group !== 'guide' ? html`<p class="quest__desc">${q.desc}</p>` : ''}
     ${q.progress && q.status === 'todo' ? html`<div class="quest__bar"><i style="--p:${q.progress[0] / q.progress[1]}"></i></div><span class="quest__num">${q.progress[0]} / ${q.progress[1]}</span>` : ''}</div>
   <span class="quest__xp">+${q.xp} XP</span>
   ${q.status === 'ready' ? html`<button class="btn btn--primary btn--sm" data-claim="${q.id}">보상 받기</button>`
-    : q.status === 'claimed' ? html`<span class="quest__done">받음</span>` : html`<a class="btn btn--ghost btn--sm" href="${q.go}">하러 가기</a>`}
+    : q.status === 'claimed' ? html`<span class="quest__done">받음${q.claimedAt ? html`<small>${fmtClaim(q.claimedAt)}</small>` : ''}</span>` : html`<a class="btn btn--ghost btn--sm" href="${q.go}">하러 가기</a>`}
 </li>`;
 const QUEST_PAGE = 5;
+const fmtClaim = d => new Date(d).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+// ── 19 퀘스트 창(사용자 요청: 서브 버튼 '퀘스트' → 페이지 이동 없이 창으로) ──
+// 묶음: 오늘의 · 주간 · 첫걸음(가이드 퀘스트 포함). 정렬: 기본(받을 수 있는 것 먼저) · 보상 많은/적은 순 · 최근/오래된 클리어 순
+const TABS_Q = [['daily', '오늘의 퀘스트', ['daily']], ['weekly', '주간 퀘스트', ['weekly']], ['start', '첫걸음 퀘스트', ['start', 'guide']]];
+const SORTS = [['default', '기본(받을 수 있는 것 먼저)'], ['xpDesc', '보상 많은 순'], ['xpAsc', '보상 적은 순'], ['doneDesc', '최근 클리어 순'], ['doneAsc', '오래된 클리어 순']];
+const ORDER_ST = { ready: 0, todo: 1, claimed: 2 };
+const sortQuests = (list, by) => {
+  const t = q => (q.claimedAt ? Date.parse(q.claimedAt) : null);
+  return [...list].sort((a, b) => {
+    if (by === 'xpDesc') return b.xp - a.xp || ORDER_ST[a.status] - ORDER_ST[b.status];
+    if (by === 'xpAsc') return a.xp - b.xp || ORDER_ST[a.status] - ORDER_ST[b.status];
+    if (by === 'doneDesc' || by === 'doneAsc') { // 클리어 안 한 것은 뒤로
+      const x = t(a), y = t(b);
+      if (x === null || y === null) return (x === null) - (y === null) || ORDER_ST[a.status] - ORDER_ST[b.status];
+      return by === 'doneDesc' ? y - x : x - y;
+    }
+    return ORDER_ST[a.status] - ORDER_ST[b.status];
+  });
+};
+export async function openQuests() {
+  let quests, tab = 'daily', by = 'default', onChange = null;
+  try { quests = (await api.get('/quests')).quests; } catch (e) { toast(e.message, 'bad'); return; }
+  await modal({
+    title: '퀘스트', wide: true, actions: [],
+    body: el => {
+      const draw = () => {
+        const [, , groups] = TABS_Q.find(x => x[0] === tab), list = sortQuests(quests.filter(q => groups.includes(q.group)), by);
+        render(el, html`<div class="qm">
+          <div class="qm__bar"><div class="tabs qm__tabs" role="tablist">${TABS_Q.map(([id, label, gs]) => { const all = quests.filter(q => gs.includes(q.group)), ready = all.filter(q => q.status === 'ready').length;
+            return html`<button class="tabs__tab${tab === id ? ' is-active' : ''}" type="button" role="tab" aria-selected="${tab === id ? 'true' : 'false'}" data-qtab="${id}">${label}<small>${all.filter(q => q.status === 'claimed').length}/${all.length}</small>${ready ? html`<span class="qm__dot" aria-label="받을 보상 ${ready}개">${ready}</span>` : ''}</button>`; })}</div>
+            <label class="qm__sort"><span class="sr-only">정렬</span>${icon('arrowUpDown', 16)}<select class="select" data-qsort>${SORTS.map(([v, l]) => html`<option value="${v}" ${v === by ? 'selected' : ''}>${l}</option>`)}</select></label></div>
+          <p class="qm__note muted">${tab === 'daily' ? '매일 자정(한국 시간)에 다시 열려요.' : tab === 'weekly' ? '매주 월요일 0시(한국 시간)에 다시 열려요. 조건이 까다로운 만큼 보상이 커요.' : '처음 한 번만 받을 수 있어요. 가이드 투어를 끝까지 봐도 받아요.'}</p>
+          <ul class="quest-list qm__list">${list.map(q => questRow(q))}</ul></div>`);
+      };
+      draw();
+      onChange = async (e) => {
+        const tb = e.target.closest?.('[data-qtab]');
+        if (tb) { tab = tb.dataset.qtab; draw(); return; }
+        const cl = e.target.closest?.('[data-claim]');
+        if (cl) {
+          cl.disabled = true;
+          const r = await claimQuest(cl.dataset.claim, cl);
+          if (r) { try { quests = (await api.get('/quests')).quests; } catch { /* 그대로 */ } draw(); } else cl.disabled = false;
+        }
+      };
+      el.addEventListener('click', onChange);
+      el.addEventListener('change', e => { if (e.target.matches('[data-qsort]')) { by = e.target.value; draw(); $('[data-qsort]', el)?.focus(); } });
+    },
+  });
+}
 // 그룹별 목록. groups 로 보여줄 묶음을 고름(가이드 퀘스트는 가이드 화면에서)
 export function questBoard(quests, groups = ['daily', 'start']) {
   return html`<div class="quest-board">${groups.map(gr => { const list = quests.filter(q => q.group === gr); if (!list.length) return '';

@@ -120,8 +120,8 @@ test('세션: 서버 채점·중복 답 멱등·종료 멱등·결과·오답·�
   const prof2 = await t.call('GET', '/p/' + encodeURIComponent((await t.call('GET', '/auth/me', undefined, b.token)).data.user.username), undefined, a.token);
   assert.deepEqual([prof2.data.user.cosmetics.color, prof2.data.user.cosmetics.frame, prof2.data.user.cosmetics.title], ['mint', 'rose', null]);
 
-  // 오답 복습 세션 → 2번 연속 맞히면 오답에서 빠짐
-  for (let k = 0; k < 2; k++) {
+  // 오답 복습 세션 → 맞히면 바로 오답에서 빠짐(19: 일반 시험은 2번 연속)
+  for (let k = 0; k < 1; k++) {
     const rv = await t.call('POST', '/sessions', { source: { type: 'wrong' }, mode: 'write_meaning' }, b.token);
     assert.equal(rv.data.total, 1);
     const term = rv.data.questions[0].prompt.text;

@@ -103,7 +103,8 @@ export const achievementsOf = m => ACHIEVEMENTS.map(({ test, ...a }) => ({ ...a,
 
 // ── 퀘스트: 활동마다 소소한 보상 ──
 // kind: 'check' = 서버 기록으로 판정 · 'event' = 서버가 볼 수 없는 활동(가이드 읽기·학습 카드)이라 보고만으로 인정(보상은 작게, 한 번만)
-// daily: true 면 하루(KST)에 한 번씩 다시 받을 수 있다.
+// daily: true 면 하루(KST)에 한 번씩, weekly: true 면 한 주(KST 월요일 시작)에 한 번씩 다시 받을 수 있다.
+// 19(사용자 요청: 첫걸음을 다 깨면 할 퀘스트가 너무 적음): 오늘의 퀘스트 6개 추가, 주간 퀘스트 7개 신설 — 조건은 훨씬 까다롭고 보상은 훨씬 큼.
 const Q = (id, group, title, desc, xp, opt = {}) => ({ id, group, title, desc, xp, kind: opt.check ? 'check' : 'event', ...opt });
 export const GUIDE_CHAPTERS = ['start', 'vocab', 'passage', 'test', 'wrong', 'cards', 'game', 'social'];
 export const QUESTS = [
@@ -111,6 +112,20 @@ export const QUESTS = [
   Q('daily_test', 'daily', '오늘 시험 1번 완주', '어떤 시험이든 끝까지', 10, { daily: true, check: m => m.todayAttempts >= 1, goal: m => [m.todayAttempts, 1], go: '#/explore' }),
   Q('daily_correct20', 'daily', '오늘 20문항 맞히기', '여러 시험에 걸쳐도 돼요', 15, { daily: true, check: m => m.todayCorrect >= 20, goal: m => [m.todayCorrect, 20], go: '#/explore' }),
   Q('daily_cards', 'daily', '오늘 학습 카드 한 묶음 끝내기', '알아요로 카드 더미를 비우기', 10, { daily: true, go: '#/explore' }),
+  Q('daily_tests3', 'daily', '오늘 시험 3번 완주', '짧은 시험도 괜찮아요', 20, { daily: true, check: m => m.todayAttempts >= 3, goal: m => [m.todayAttempts, 3], go: '#/explore' }),
+  Q('daily_correct50', 'daily', '오늘 50문항 맞히기', '하루 동안 맞힌 문항 합계', 25, { daily: true, check: m => m.todayCorrect >= 50, goal: m => [m.todayCorrect, 50], go: '#/explore' }),
+  Q('daily_perfect', 'daily', '오늘 만점 1번', `${XP.perfectMin}문항 이상 시험을 전부 맞히기`, 20, { daily: true, check: m => m.todayPerfects >= 1, goal: m => [m.todayPerfects, 1], go: '#/explore' }),
+  Q('daily_passage', 'daily', '오늘 본문 시험 1번', '본문 세트로 시험 완주', 15, { daily: true, check: m => m.todayPassage >= 1, goal: m => [m.todayPassage, 1], go: '#/explore' }),
+  Q('daily_review', 'daily', '오늘 오답 복습 1번', '오답 화면에서 복습 시험 완주', 15, { daily: true, check: m => m.todayReviews >= 1, goal: m => [m.todayReviews, 1], go: '#/wrong' }),
+  Q('daily_modes2', 'daily', '오늘 시험 방식 2가지', '서로 다른 방식으로 시험 보기', 15, { daily: true, check: m => m.todayModes >= 2, goal: m => [m.todayModes, 2], go: '#/explore' }),
+  // 주간 퀘스트(월~일)
+  Q('weekly_days5', 'weekly', '이번 주 5일 공부하기', '서로 다른 5일에 시험 완주', 150, { weekly: true, check: m => m.weekDays >= 5, goal: m => [m.weekDays, 5], go: '#/explore' }),
+  Q('weekly_tests15', 'weekly', '이번 주 시험 15번 완주', '하루 두세 번이면 충분해요', 120, { weekly: true, check: m => m.weekAttempts >= 15, goal: m => [m.weekAttempts, 15], go: '#/explore' }),
+  Q('weekly_correct300', 'weekly', '이번 주 300문항 맞히기', '한 주 동안 맞힌 문항 합계', 200, { weekly: true, check: m => m.weekCorrect >= 300, goal: m => [m.weekCorrect, 300], go: '#/explore' }),
+  Q('weekly_perfect5', 'weekly', '이번 주 만점 5번', `${XP.perfectMin}문항 이상 시험을 전부 맞히기`, 150, { weekly: true, check: m => m.weekPerfects >= 5, goal: m => [m.weekPerfects, 5], go: '#/explore' }),
+  Q('weekly_passage5', 'weekly', '이번 주 본문 시험 5번', '본문 세트로 시험 완주', 120, { weekly: true, check: m => m.weekPassage >= 5, goal: m => [m.weekPassage, 5], go: '#/explore' }),
+  Q('weekly_review5', 'weekly', '이번 주 오답 복습 5번', '틀린 것부터 다시', 120, { weekly: true, check: m => m.weekReviews >= 5, goal: m => [m.weekReviews, 5], go: '#/wrong' }),
+  Q('weekly_modes5', 'weekly', '이번 주 시험 방식 5가지', '서로 다른 방식으로 시험 보기', 100, { weekly: true, check: m => m.weekModes >= 5, goal: m => [m.weekModes, 5], go: '#/explore' }),
   // 첫걸음
   Q('first_set', 'start', '첫 세트 만들기', '단어나 본문 세트를 하나 만들어요', 20, { check: m => m.sets >= 1, goal: m => [m.sets, 1], go: '#/new/vocab' }),
   Q('first_test', 'start', '첫 시험 완주', '세트에서 시험 보기 → 끝까지', 20, { check: m => m.attempts >= 1, goal: m => [m.attempts, 1], go: '#/explore' }),
@@ -125,15 +140,17 @@ export const QUESTS = [
   ...GUIDE_CHAPTERS.map(c => Q(`guide_${c}`, 'guide', '가이드 읽기', c, 5, { go: `#/guide?ch=${c}` })),
 ];
 export const QUEST_BY_ID = Object.fromEntries(QUESTS.map(q => [q.id, q]));
-export const questKey = (q, day) => (q.daily ? `${q.id}:${day}` : q.id);
+// week = 그 주 월요일(KST) 날짜. 주간 퀘스트 키는 'id:W2026-11-23'
+export const questKey = (q, day, week) => (q.daily ? `${q.id}:${day}` : q.weekly ? `${q.id}:W${week}` : q.id);
 // 상태: claimed(받음) · ready(조건 충족, 받을 수 있음) · todo(아직). event 퀘스트는 보고 = 받기라 todo 로 둔다.
-export function questsOf(m, claimedKeys, day) {
+// claimedAt: { 키: 받은 시각 } — 퀘스트 창의 '클리어한 시간' 정렬용(19)
+export function questsOf(m, claimedKeys, day, week, claimedAt = {}) {
   const got = new Set(claimedKeys);
   return QUESTS.map(({ check, goal, ...q }) => {
-    const claimed = got.has(questKey(q, day));
+    const key = questKey(q, day, week), claimed = got.has(key);
     const ready = !claimed && !!check && !!check(m);
     const g = goal ? goal(m) : null;
-    return { ...q, status: claimed ? 'claimed' : ready ? 'ready' : 'todo', progress: g ? [Math.min(Number(g[0]) || 0, g[1]), g[1]] : null };
+    return { ...q, status: claimed ? 'claimed' : ready ? 'ready' : 'todo', progress: g ? [Math.min(Number(g[0]) || 0, g[1]), g[1]] : null, claimedAt: claimed ? claimedAt[key] || null : null };
   });
 }
 // 받기 판정: check 퀘스트는 조건 충족이어야, event 퀘스트는 보고로 인정

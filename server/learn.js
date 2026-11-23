@@ -387,12 +387,14 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       if (stored) return res.json({ ...answerView(fresh, stored), duplicate: true });
       return res.status(409).json({ message: '이미 끝난 시험입니다.' });
     }
-    await recordStat(req.user._id, question.ref, g.correct, s.mode);
+    await recordStat(req.user._id, question.ref, g.correct, s.mode, s.source?.type === 'wrong');
     if (s.options?.feedback === 'end') return res.json({ i, saved: true });
     res.json({ i, correct: g.correct, score: g.score, expected: g.expected, detail: g.detail });
   }));
 
-  async function recordStat(user, ref, correct, mode) {
+  // 19(사용자 요청: 오답 복습 시험을 다 맞혀도 오답 복습 버튼이 남음): 일반 시험은 2번 연속 맞혀야 졸업,
+  //   오답 복습 시험(review)에서 맞히면 바로 졸업(streak 2 이상으로). 틀리면 어디서든 0.
+  async function recordStat(user, ref, correct, mode, review = false) {
     if (!ref?.set || !ref?.item) return;
     const now = new Date();
     // 파이프라인 업데이트로 streak 증가/초기화를 원자적으로(계약 v2 #11)
@@ -400,7 +402,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       { $set: {
         wrong: { $add: [{ $ifNull: ['$wrong', 0] }, correct ? 0 : 1] },
         right: { $add: [{ $ifNull: ['$right', 0] }, correct ? 1 : 0] },
-        streak: correct ? { $add: [{ $ifNull: ['$streak', 0] }, 1] } : 0,
+        streak: correct ? (review ? { $max: [2, { $add: [{ $ifNull: ['$streak', 0] }, 1] }] } : { $add: [{ $ifNull: ['$streak', 0] }, 1] }) : 0,
         lastMode: mode, lastAt: now,
         lastWrongAt: correct ? '$lastWrongAt' : now,
       } },
@@ -477,8 +479,8 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
   // 게임 지표 한 번에 계산(05): 경험치 = 결과 경험치 + 퀘스트 보상. 홈·결과·퀘스트·프로필이 모두 이것을 씀.
   async function gameOf(userId) {
     const uid = new ObjectId(String(userId));
-    const today = kstDayStart();
-    const [user, sets, publicSets, attempts, wrongCount, days, resAgg, modes, learned, cleared, wrongReviews, claims] = await Promise.all([
+    const today = kstDayStart(), week = weekStartKST();
+    const [user, sets, publicSets, attempts, wrongCount, days, resAgg, modes, learned, cleared, wrongReviews, claims, todayModes, weekModes, todayReviews, weekReviews] = await Promise.all([
       User.findById(uid).select('friends avatarImage achSeen levelSeen').lean(),
       Test.countDocuments({ author: uid }),
       Test.countDocuments({ author: uid, ...PUBLIC_SET }),
@@ -495,13 +497,24 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
           perfects: { $sum: { $cond: [{ $and: [{ $gte: ['$totalQuestions', XP.perfectMin] }, { $eq: ['$correctAnswers', '$totalQuestions'] }] }, 1, 0] } },
           passage: { $sum: { $cond: [{ $eq: ['$kind', 'passage'] }, 1, 0] } },
           today: { $sum: { $cond: [{ $gte: ['$createdAt', today] }, 1, 0] } },
-          todayCorrect: { $sum: { $cond: [{ $gte: ['$createdAt', today] }, { $ifNull: ['$correctAnswers', 0] }, 0] } } } },
+          todayCorrect: { $sum: { $cond: [{ $gte: ['$createdAt', today] }, { $ifNull: ['$correctAnswers', 0] }, 0] } },
+          // 19 오늘·이번 주 퀘스트 지표(만점·본문·시험 수·맞힌 수)
+          todayPerfects: { $sum: { $cond: [{ $and: [{ $gte: ['$createdAt', today] }, { $gte: ['$totalQuestions', XP.perfectMin] }, { $eq: ['$correctAnswers', '$totalQuestions'] }] }, 1, 0] } },
+          todayPassage: { $sum: { $cond: [{ $and: [{ $gte: ['$createdAt', today] }, { $eq: ['$kind', 'passage'] }] }, 1, 0] } },
+          week: { $sum: { $cond: [{ $gte: ['$createdAt', week] }, 1, 0] } },
+          weekCorrect: { $sum: { $cond: [{ $gte: ['$createdAt', week] }, { $ifNull: ['$correctAnswers', 0] }, 0] } },
+          weekPerfects: { $sum: { $cond: [{ $and: [{ $gte: ['$createdAt', week] }, { $gte: ['$totalQuestions', XP.perfectMin] }, { $eq: ['$correctAnswers', '$totalQuestions'] }] }, 1, 0] } },
+          weekPassage: { $sum: { $cond: [{ $and: [{ $gte: ['$createdAt', week] }, { $eq: ['$kind', 'passage'] }] }, 1, 0] } } } },
       ]),
       Result.distinct('mode', { user: uid, mode: { $in: Object.keys(MODE_BY_ID) } }),
       learnedCount(uid, null),
       ItemStat.countDocuments({ user: uid, wrong: { $gt: 0 }, streak: { $gte: 2 } }),
       Session.countDocuments({ user: uid, 'source.type': 'wrong', status: 'done' }),
-      QuestClaim.find({ user: uid }).select('key xp').lean(),
+      QuestClaim.find({ user: uid }).select('key xp createdAt').lean(),
+      Result.distinct('mode', { user: uid, createdAt: { $gte: today } }),
+      Result.distinct('mode', { user: uid, createdAt: { $gte: week } }),
+      Session.countDocuments({ user: uid, 'source.type': 'wrong', status: 'done', finishedAt: { $gte: today } }),
+      Session.countDocuments({ user: uid, 'source.type': 'wrong', status: 'done', finishedAt: { $gte: week } }),
     ]);
     // 연속 학습일: 오늘(또는 어제)부터 거꾸로 이어진 날 수
     const set = new Set(days.map(d => d._id));
@@ -518,6 +531,9 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
       attempts, perfects: g.perfects, streakDays, bestStreak: Math.max(bestStreak, streakDays), learned, sets, publicSets, xp, modesUsed: modes.length,
       passageTests: g.passage, cleared, wrongReviews, friends: user?.friends?.length || 0, hasAvatar: !!user?.avatarImage,
       questsDone: claims.length, todayAttempts: g.today, todayCorrect: g.todayCorrect,
+      todayPerfects: g.todayPerfects || 0, todayPassage: g.todayPassage || 0, todayModes: todayModes.length, todayReviews,
+      weekAttempts: g.week || 0, weekCorrect: g.weekCorrect || 0, weekPerfects: g.weekPerfects || 0, weekPassage: g.weekPassage || 0,
+      weekModes: weekModes.length, weekReviews, weekDays: [...set].filter(d => d >= kstDay(week.getTime())).length,
     };
     const achievements = achievementsOf(m), level = levelOf(xp);
     await noteProgress(uid, user, achievements, level);
@@ -558,8 +574,7 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
   app.get('/api/stats', auth, wrap(async (req, res) => {
     const [G, weekLearned] = await Promise.all([gameOf(req.user._id), learnedCount(req.user._id, weekStartKST())]);
     const { m } = G;
-    const day = kstDay();
-    const quests = questsOf(m, G.claims.map(c => c.key), day);
+    const quests = questViews(G); // 19: 주간 퀘스트 키 포함
     const recentDoc = req.user.recentSet ? await loadViewable(req, String(req.user.recentSet)) : null;
     res.json({ recent: recentDoc ? summary(recentDoc, req.user) : null, sets: m.sets, attempts: m.attempts, wrongCount: G.wrongCount, weekLearned, streakDays: m.streakDays, learned: m.learned, perfects: m.perfects,
       game: { ...G.level, achievements: G.achievements, questsReady: quests.filter(q => q.status === 'ready').length } });
@@ -586,16 +601,19 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
   }));
 
   // ── 퀘스트(05) ──
+  // 19: 주간 퀘스트 키(그 주 월요일)와 받은 시각(정렬용)을 함께
+  const weekKey = () => kstDay(weekStartKST().getTime());
+  const questViews = G => questsOf(G.m, G.claims.map(c => c.key), kstDay(), weekKey(), Object.fromEntries(G.claims.map(c => [c.key, c.createdAt])));
   app.get('/api/quests', auth, wrap(async (req, res) => {
     const G = await gameOf(req.user._id);
-    res.json({ day: kstDay(), quests: questsOf(G.m, G.claims.map(c => c.key), kstDay()), level: G.level });
+    res.json({ day: kstDay(), quests: questViews(G), level: G.level });
   }));
   app.post('/api/quests/:id/claim', auth, wrap(async (req, res) => {
     const q = QUEST_BY_ID[req.params.id];
     if (!q) return res.status(404).json({ message: '없는 퀘스트예요.' });
     const G = await gameOf(req.user._id);
     if (!canClaim(q, G.m)) return res.status(400).json({ message: '아직 퀘스트 조건을 채우지 못했어요.' });
-    const key = questKey(q, kstDay());
+    const key = questKey(q, kstDay(), weekKey());
     try {
       await QuestClaim.create({ user: req.user._id, key, quest: q.id, xp: q.xp });
     } catch (e) {

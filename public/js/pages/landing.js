@@ -129,7 +129,7 @@ export default {
             <article class="lp-cell lp-cell--wrong spotlight reveal" style="--i:2">
               <div class="lp-cell__icon lp-cell__icon--hot">${icon('target', 24)}</div>
               <h3 class="lp-cell__title">틀린 건 저절로 다시</h3>
-              <p class="lp-cell__desc">틀린 문항은 오답 목록에 모이고, 두 번 연속 맞히면 졸업해요.</p>
+              <p class="lp-cell__desc">틀린 문항은 오답 목록에 모이고, 오답 복습에서 맞히면 졸업해요.</p>
               <div class="lp-grad-steps" aria-hidden="true"><span class="is-bad">${icon('x', 14)}</span><span class="is-ok">${icon('check', 14)}</span><span class="is-ok">${icon('check', 14)}</span><b>졸업!</b></div>
             </article>
 
@@ -181,7 +181,7 @@ export default {
             <ol class="lp-story__steps">
               <li class="lp-story__step is-active" data-step="0"><span class="lp-step__num">1</span><h3>세트 만들기</h3><p>단어는 붙여넣기·엑셀로, 본문은 문단째 붙여넣으면 문장별로 정리돼요. 핵심 표현은 단어를 눌러 표시하면 끝.</p></li>
               <li class="lp-story__step" data-step="1"><span class="lp-step__num">2</span><h3>시험 보기</h3><p>11가지 방식 중 하나를 고르면 서버가 바로 채점하고 정답을 보여줘요. 연속으로 맞히면 콤보가 쌓여요.</p></li>
-              <li class="lp-story__step" data-step="2"><span class="lp-step__num">3</span><h3>오답 복습</h3><p>틀린 것만 모아 다시. 두 번 연속 맞히면 오답 목록에서 졸업하고, 이번 주 외운 문항이 랭킹에 올라가요.</p></li>
+              <li class="lp-story__step" data-step="2"><span class="lp-step__num">3</span><h3>오답 복습</h3><p>틀린 것만 모아 다시. 오답 복습에서 맞히면 오답 목록에서 졸업하고, 이번 주 외운 문항이 랭킹에 올라가요.</p></li>
             </ol>
             <div class="lp-story__stage" aria-hidden="true">
               <div class="lp-phone glass" data-screen="0">

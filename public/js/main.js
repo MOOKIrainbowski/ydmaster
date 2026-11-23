@@ -27,11 +27,12 @@ const TABS = [
   { create: true, label: '세트 만들기', icon: 'plusSquare', match: ['editor'] },
   { href: '#/wrong', label: '오답', icon: 'target', match: ['wrong'] },
   { href: '#/ranking', label: '랭킹', icon: 'trophy', match: ['ranking'] },
-  { href: '#/notice', label: '공지사항', icon: 'megaphone', match: ['notice'] },
 ];
+// 19(사용자 요청: 메인 버튼은 세트 만들기 포함 5개, 가장 중요한 것으로): 홈 · 둘러보기 · 세트 만들기 · 오답 · 랭킹 = 공부의 흐름(고르기 → 만들기 → 복습 → 경쟁).
+//   공지사항은 서브 버튼으로 돌려보냄. 퀘스트는 서브 버튼(누르면 창).
 const ME = { href: '#/me', label: '내 정보', icon: 'user', match: ['me', 'history', 'profile-edit', 'settings'] };
 // 메인 버튼 페이지끼리 오갈 때는 로딩 화면 없이 바로(18, 사용자 요청)
-const MAIN_PAGES = new Set(['home', 'explore', 'wrong', 'ranking', 'notice']);
+const MAIN_PAGES = new Set(['home', 'explore', 'wrong', 'ranking']);
 let lastPage = '';
 // 메인 버튼 하나(위·아래 공용). i 는 화면 전환 이름(view-transition-name)용 번호
 const tabItem = (t, i, active, cls, size) => {
@@ -57,6 +58,7 @@ async function askCreate() {
 //   휴대폰에서도 위 도구 줄은 보이므로 이 셋은 어디서든 한 번에 닿는다.
 const TOOLS = [
   { href: '#/inquiry', label: '문의', icon: 'chat', page: 'inquiry' },
+  { href: '#/notice', label: '공지사항', icon: 'megaphone', page: 'notice' },
   { href: '#/friends', label: '친구', icon: 'users', page: 'friends' },
   { href: '#/settings', label: '설정', icon: 'settings', page: 'settings' },
 ];
@@ -91,6 +93,7 @@ function shell(active, mod = {}) {
       ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map((t, i) => tabItem(t, i, active, 'topbar', 22))}</nav>
         <div class="topbar__right"><div class="topbar__tools">
           ${TOOLS.map(t => toolLink(t, active))}
+          <button class="topbar__help" type="button" data-quests-open aria-label="퀘스트" title="퀘스트" aria-haspopup="dialog">${icon('flag', 20)}</button>
           <button class="topbar__help topbar__bell" type="button" data-notif aria-label="알림" aria-haspopup="dialog" aria-expanded="false" title="알림">${icon('bell', 20)}${notifBadge()}</button>
         </div>
         <a class="topbar__me${ME.match.includes(active) ? ' is-active' : ''}" href="#/me" aria-label="내 정보" title="내 정보"${ME.match.includes(active) ? html` aria-current="page"` : ''}>${avatar(u, 34)}</a></div>`
@@ -182,6 +185,7 @@ async function route() {
 on(app, 'click', '[data-retry]', () => navigate());
 on(app, 'click', '[data-home]', () => { location.hash = '#/'; });
 on(app, 'click', '[data-create-set]', () => askCreate());
+on(app, 'click', '[data-quests-open]', () => import('./game.js').then(m => m.openQuests()));
 
 // 상단바 아바타만 갱신(닉네임·사진 변경 직후)
 function refreshShellUser() {
