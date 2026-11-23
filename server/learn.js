@@ -608,6 +608,10 @@ export function mountLearn(app, { auth, User, Test, Result, WrongNote, rateLimit
     const G = await gameOf(req.user._id);
     res.json({ day: kstDay(), quests: questViews(G), level: G.level });
   }));
+  // 20: 깃발 버튼의 빨간 숫자(조건을 채웠지만 아직 안 받은 보상 수)
+  app.get('/api/quests/ready', auth, wrap(async (req, res) => {
+    res.json({ ready: questViews(await gameOf(req.user._id)).filter(q => q.status === 'ready').length });
+  }));
   app.post('/api/quests/:id/claim', auth, wrap(async (req, res) => {
     const q = QUEST_BY_ID[req.params.id];
     if (!q) return res.status(404).json({ message: '없는 퀘스트예요.' });

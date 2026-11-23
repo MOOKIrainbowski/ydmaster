@@ -241,9 +241,20 @@ const sortQuests = (list, by) => {
     return ORDER_ST[a.status] - ORDER_ST[b.status];
   });
 };
+// 20(사용자 요청): 받을 보상이 있으면 깃발 버튼에 알림처럼 빨간 숫자. 화면 이동 때(30초에 한 번까지)·시험 결과·보상 받은 뒤 갱신
+let readyN = 0, readyAt = 0;
+const paintQuestBadge = () => document.querySelectorAll('[data-quest-count]').forEach(b => { b.textContent = readyN > 99 ? '99+' : String(readyN); b.hidden = !readyN; });
+export const questBadge = () => html`<span class="notif-badge" data-quest-count ${readyN ? '' : 'hidden'}>${readyN > 99 ? '99+' : readyN}</span>`;
+export async function refreshQuestBadge(force = false) {
+  if (!force && Date.now() - readyAt < 30e3) { paintQuestBadge(); return; }
+  readyAt = Date.now();
+  try { readyN = (await api.get('/quests/ready')).ready; } catch { /* 다음에 다시 */ }
+  paintQuestBadge();
+}
 export async function openQuests() {
   let quests, tab = 'daily', by = 'default', onChange = null;
   try { quests = (await api.get('/quests')).quests; } catch (e) { toast(e.message, 'bad'); return; }
+  readyN = quests.filter(q => q.status === 'ready').length; readyAt = Date.now(); paintQuestBadge();
   await modal({
     title: '퀘스트', wide: true, actions: [],
     body: el => {
@@ -264,7 +275,7 @@ export async function openQuests() {
         if (cl) {
           cl.disabled = true;
           const r = await claimQuest(cl.dataset.claim, cl);
-          if (r) { try { quests = (await api.get('/quests')).quests; } catch { /* 그대로 */ } draw(); } else cl.disabled = false;
+          if (r) { try { quests = (await api.get('/quests')).quests; } catch { /* 그대로 */ } readyN = quests.filter(q => q.status === 'ready').length; readyAt = Date.now(); paintQuestBadge(); draw(); } else cl.disabled = false;
         }
       };
       el.addEventListener('click', onChange);

@@ -7,6 +7,7 @@ import { initUpdateCheck } from './update.js';
 import { applyPrefs } from './prefs.js';
 import { showLoader, hideLoader } from './loader.js';
 import { initNotifications, notifBadge } from './notify.js';
+import { questBadge, refreshQuestBadge } from './game.js';
 
 const ROUTES = [
   ['/', 'home'], ['/explore', 'explore'], ['/sets/:id', 'set'], ['/sets/:id/edit', 'editor'], ['/new/:kind', 'editor'],
@@ -93,7 +94,7 @@ function shell(active, mod = {}) {
       ${u ? html`<nav class="topbar__nav" aria-label="주요 메뉴">${TABS.map((t, i) => tabItem(t, i, active, 'topbar', 22))}</nav>
         <div class="topbar__right"><div class="topbar__tools">
           ${TOOLS.map(t => toolLink(t, active))}
-          <button class="topbar__help" type="button" data-quests-open aria-label="퀘스트" title="퀘스트" aria-haspopup="dialog">${icon('flag', 20)}</button>
+          <button class="topbar__help topbar__bell" type="button" data-quests-open aria-label="퀘스트" title="퀘스트" aria-haspopup="dialog">${icon('flag', 20)}${questBadge()}</button>
           <button class="topbar__help topbar__bell" type="button" data-notif aria-label="알림" aria-haspopup="dialog" aria-expanded="false" title="알림">${icon('bell', 20)}${notifBadge()}</button>
         </div>
         <a class="topbar__me${ME.match.includes(active) ? ' is-active' : ''}" href="#/me" aria-label="내 정보" title="내 정보"${ME.match.includes(active) ? html` aria-current="page"` : ''}>${avatar(u, 34)}</a></div>`
@@ -128,6 +129,7 @@ async function navigate() {
   if (!(MAIN_PAGES.has(next) && MAIN_PAGES.has(lastPage))) showLoader(); // 18: 메인 버튼끼리는 로딩 화면 없이
   lastPage = next;
   try { await route(); } finally { if (mine === navSeq) hideLoader(); }
+  if (state.user) refreshQuestBadge(next === 'result'); // 20: 깃발 배지(시험 결과 화면은 바로 다시 셈)
   // 18: 처음 로그인해 홈에 오면 '둘러보기' 튜토리얼을 한 번 자동으로(건너뛰어도 다시 뜨지 않음, 가이드에서 언제든 다시)
   if (mine === navSeq && next === 'home' && state.user) {
     let seen = true; try { seen = !!localStorage.getItem('ydm_tour_start'); if (!seen) localStorage.setItem('ydm_tour_start', '1'); } catch { /* 저장 못 하면 띄우지 않음 */ }
