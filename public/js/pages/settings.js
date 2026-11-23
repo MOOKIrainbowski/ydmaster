@@ -50,6 +50,10 @@ export default {
           ${toggle('aurora', p.aurora, '배경 오로라', '천천히 움직이는 배경 빛. 끄면 단색 배경이 되고 배터리를 조금 아껴요.')}
         </article>
 
+        <article class="card set-group"><h2 class="set-group__title">${icon('book', 20)}학습</h2>
+          ${toggle('grammarTips', p.grammarTips !== false, '문법 설명 풍선', '본문 세트에서 단어(휴대폰은 누르면)나 문장 번호에 마우스를 올리면 품사·역할·문법 설명을 보여줘요.')}
+        </article>
+
         <article class="card set-group"><h2 class="set-group__title">${icon('layers', 20)}단축키</h2>
           ${toggle('shortcuts', p.shortcuts !== false, '단축키 사용', '시험과 학습 카드에서 키보드로 빠르게 조작해요.')}
           ${toggle('choiceNumbers', p.choiceNumbers !== false, '숫자 키로 보기 고르기', '객관식에서 1~5 를 누르면 그 보기를 골라요.', p.shortcuts === false)}

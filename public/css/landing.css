@@ -113,13 +113,14 @@
 }
 .lp-card, .lp-float { position: absolute; border-radius: var(--r-xl); }
 .lp-card--main {
-  top: 50%; left: 50%; width: min(440px, 92%);
+  /* 18(사용자 요청: 각도가 바뀔 때 화질이 떨어짐): 기울기(rotate)를 움직이면 브라우저가 카드를 그림 한 장으로 굳혀 돌려서
+     글자가 흐려졌다. 기울기를 없애고 위아래로만 떠다니게, 가운데 정렬도 -50% 이동(반 픽셀 위치) 대신 margin:auto 로 */
+  inset: 0; margin: auto; height: fit-content; width: min(440px, 92%);
   padding: 22px 24px 20px;
-  transform: translate(-50%, -50%) rotate(-2.5deg);
   animation: lp-bob 7s var(--ease-in-out) infinite alternate;
   background: var(--glass-bg-strong);
 }
-@keyframes lp-bob { to { transform: translate(-50%, calc(-50% - 10px)) rotate(-1deg); } }
+@keyframes lp-bob { to { transform: translateY(-10px); } }
 .lp-card__bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .lp-dots { display: inline-flex; gap: 6px; }
 .lp-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong); }
@@ -257,7 +258,7 @@
 .lp-mode:nth-child(n + 6) .icon { color: var(--hot); }
 .reveal.is-in .lp-mode { animation: lp-mode-in var(--dur-4) var(--ease-bounce) both; animation-delay: calc(200ms + var(--k) * 40ms); }
 @keyframes lp-mode-in { from { opacity: 0; transform: scale(.7); } }
-@media (hover: hover) { .lp-mode:hover { transform: translateY(-3px) rotate(-1.5deg); } }
+@media (hover: hover) { .lp-mode:hover { transform: translateY(-3px); } } /* 18: 기울기 빼서 글자 선명하게 */
 
 .lp-demo-sentence { margin: auto 0 0; padding: 18px; border-radius: var(--r-md); background: var(--surface-2); color: var(--text); font-size: 17px; font-weight: 500; line-height: 1.9; }
 .lp-key { padding: 2px 4px; border-radius: 6px; color: var(--hot-ink); background: linear-gradient(var(--hot-soft), var(--hot-soft)) no-repeat 0 100% / 0% 100%; }
@@ -397,7 +398,7 @@
   .lp-caret { display: none; }
   .lp-card__result { opacity: 1; transform: none; }
   .lp-plus { transform: none; }
-  .lp-card--main { transform: translate(-50%, -50%) rotate(-2.5deg); }
+  .lp-card--main { transform: none; }
   .lp-key { background-size: 100% 100%; }
   .lp-bar::after { width: var(--w); }
   .lp-visual > * { translate: none; }
@@ -432,8 +433,8 @@
   .lp-hero__copy { animation: lp-hero-out linear both; animation-timeline: view(); animation-range: exit 0% exit 90%; }
   .lp-visual { animation: lp-visual-out linear both; animation-timeline: view(); animation-range: exit -10% exit 100%; }
 }
-@keyframes lp-hero-out { to { opacity: 0; transform: translateY(-80px) scale(.94); } }
-@keyframes lp-visual-out { to { opacity: .2; transform: translateY(-180px) rotate(-6deg) scale(1.08); } }
+@keyframes lp-hero-out { to { opacity: 0; transform: translateY(-80px); } } /* 18: 크기·기울기 변화 없이(글자 흐려짐 방지) */
+@keyframes lp-visual-out { to { opacity: .2; transform: translateY(-180px); } }
 
 /* ── 스크롤로 한 단어씩 밝아지는 문장(매니페스토) ── */
 .lp-manifesto { padding-block: clamp(80px, 14vw, 180px) clamp(40px, 8vw, 100px); view-timeline-name: --manifesto; }
@@ -570,3 +571,7 @@
   .lp-manifesto__w { animation: none !important; opacity: 1; }
   .lp-story__step { opacity: 1; transform: none; }
 }
+
+/* 18(사용자 요청): 예시 단어는 필기체(Instrument Serif 기울임) 대신 일반 글꼴 */
+.lp-en { font-family: inherit; font-style: normal; font-weight: 800; letter-spacing: -.02em; }
+.lp-title__serif.lp-en { font-size: 1em; }

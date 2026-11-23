@@ -60,7 +60,13 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
 
           <fieldset class="start__step">
             <legend><b>2</b>몇 문항 풀까요?</legend>
-            ${chips('count', COUNTS.map(n => [n, n === 100 ? '최대' : `${n}`, n === 100 ? '전부' : '문항']), 20)}
+            <!-- 18(사용자 요청): 설정의 '글자·화면 크기' 와 같은 바(슬라이더) 모양. 실제 값은 숨은 count 칸 -->
+            <div class="set-bar start__count">
+              <div class="set-bar__head"><span><b>문항 수</b><small>세트보다 많이 고르면 세트 전체를 풀어요.</small></span><output class="set-bar__out" data-count-out>20문항</output></div>
+              <input class="range" type="range" name="countIdx" min="0" max="${COUNTS.length - 1}" step="1" value="1" style="--v:${100 / (COUNTS.length - 1)}%" aria-label="문항 수" aria-valuetext="20문항">
+              <div class="set-bar__ticks" aria-hidden="true">${COUNTS.map(n => html`<span>${n === 100 ? '최대' : n}</span>`)}</div>
+              <input type="hidden" name="count" value="20">
+            </div>
           </fieldset>
 
           <fieldset class="start__step">
@@ -96,6 +102,13 @@ export async function startTest({ setIds = [], kind = 'vocab', source = 'sets', 
         $$('.mode-option', el).forEach(o => o.classList.toggle('is-picked', o.querySelector('input').checked));
       };
       form.addEventListener('change', e => { if (e.target.name === 'mode') sync(); else update(); });
+      form.addEventListener('input', e => {
+        if (e.target.name !== 'countIdx') return;
+        const r = e.target, n = COUNTS[Number(r.value)], label = n === 100 ? '최대(전부)' : `${n}문항`;
+        form.count.value = n; r.style.setProperty('--v', `${(r.value / (COUNTS.length - 1)) * 100}%`);
+        r.setAttribute('aria-valuetext', label); $('[data-count-out]', el).textContent = label;
+        update();
+      });
       form.addEventListener('submit', e => { e.preventDefault(); el.closest('.modal').querySelector('[data-action="start"]').click(); });
       sync();
     },

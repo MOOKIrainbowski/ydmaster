@@ -1496,6 +1496,9 @@ async function deleteUserData(user) {
     WrongNote.deleteMany({ user: userId }),
     mongoose.model('Session').deleteMany({ user: userId }),
     mongoose.model('ItemStat').deleteMany({ $or: [{ user: userId }, { set: { $in: setIds } }] }),
+    // 18: 퀘스트 보상 기록·알림도 함께(개인정보처리방침 '탈퇴 시 바로 삭제'와 맞춤 — 전에는 남아 있었음)
+    mongoose.model('QuestClaim').deleteMany({ user: userId }),
+    mongoose.model('Notification').deleteMany({ user: userId }),
     User.updateMany({ $or: [{ friends: userId }, { favorites: { $in: setIds } }] }, { $pull: { friends: userId, favorites: { $in: setIds } } }),
   ]);
   await User.deleteOne({ _id: userId });

@@ -19,6 +19,7 @@ export const DEFAULTS = {
   choiceNumbers: true, // 숫자 1~5 로 보기 고르기
   keyHints: true,      // 화면에 단축키 안내 표시
   keys: {},            // 바꾼 키만 저장(나머지는 KEY_DEFAULTS)
+  grammarTips: true,  // 18: 본문 세트 단어에 올리면 문법 설명 풍선
   autoFit: true,       // 14: 화면 크기에 맞춰 자동 배율(큰 모니터는 키우고, 낮은 노트북 화면은 살짝 줄임)
 };
 // 단축키(11, 사용자 요청: 설정에 단축키 섹션). 같은 묶음(시험/학습 카드) 안에서는 키가 겹치지 않게 설정 화면이 막는다.

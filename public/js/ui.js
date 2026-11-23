@@ -155,6 +155,11 @@ const ICONS = {
   grip: 'M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01',
   // 17(사용자 요청): 공지사항 = 확성기, 오답 복습 = 되돌이 화살표 안의 ×(틀린 것 다시)
   megaphone: 'M3 11v3a1 1 0 0 0 1 1h2l9 5V5L6 10H4a1 1 0 0 0-1 1zM7 15l1 5h3l-1-4M19 9.5a3.5 3.5 0 0 1 0 5',
+  stop: 'M7 7h10v10H7z', // 18: 발음 정지
+  list: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01', // 18: 목록 보기
+  cards: 'M3 8h13v12H3zM7 4h14v12', // 18: 학습 카드
+  plusSquare: 'M4 4h16v16H4zM12 8v8M8 12h8', // 18: 세트 만들기
+  focus: 'M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M8 12h8', // 18: 한 문장씩
   review: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4M9.5 9.5l5 5m0-5-5 5',
   arrowUpDown: 'M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3',
 };
@@ -195,11 +200,34 @@ export const logoMark = () => raw('<img class="logo-mark" src="/brand/logo.svg" 
 
 // 영어 발음(브라우저 TTS). 없는 환경은 조용히 무시.
 // 속도·억양은 설정(prefs.js, 06)을 따른다
-export function speak(text, lang) {
+// 18(사용자 요청): 누른 버튼(el)을 넘기면 읽는 동안 빨간 '발음 정지' 버튼으로 바뀌고, 다시 누르면 바로 멈춘다.
+let speakingEl = null;
+const unmark = () => {
+  const el = speakingEl; speakingEl = null;
+  if (!el) return;
+  el.classList.remove('is-speaking');
+  if (el.dataset.speakHtml !== undefined) { el.innerHTML = el.dataset.speakHtml; delete el.dataset.speakHtml; }
+  if (el.dataset.speakLabel !== undefined) { el.setAttribute('aria-label', el.dataset.speakLabel); el.title = el.dataset.speakLabel; delete el.dataset.speakLabel; }
+};
+const mark = el => {
+  speakingEl = el;
+  const size = el.querySelector('svg.icon')?.getAttribute('width') || 20;
+  el.dataset.speakHtml = el.innerHTML; el.dataset.speakLabel = el.getAttribute('aria-label') || '발음 듣기';
+  el.innerHTML = String(icon('stop', Number(size)));
+  el.setAttribute('aria-label', '발음 정지'); el.title = '발음 정지';
+  el.classList.add('is-speaking');
+};
+export function stopSpeak() {
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  unmark();
+}
+export function speak(text, lang, el) {
   if (!('speechSynthesis' in window)) return false;
-  speechSynthesis.cancel();
+  if (el && speakingEl === el) { stopSpeak(); return true; } // 정지 버튼을 누름
+  speechSynthesis.cancel(); unmark();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang || getPref('voiceLang'); u.rate = voiceRate();
+  if (el) { mark(el); u.onend = u.onerror = () => { if (speakingEl === el) unmark(); }; }
   speechSynthesis.speak(u);
   return true;
 }

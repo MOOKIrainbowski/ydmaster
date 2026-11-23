@@ -2,10 +2,13 @@
 //  - 문장마다 카드, 카드 바로 아래에서 해석 보기/숨기기(모두 보기도)
 //  - 단어에 마우스를 올리면(휴대폰은 누르면) 품사·문장 속 역할·관련 문법 설명, 번호에 올리면 문장 전체 요약
 //  - '문장 분석' 을 켜면 주어·서술어·목적어·보어·수식어를 색으로, 문법 포인트를 목록으로
+// 18(사용자 요청): 문법 설명 풍선은 설정(학습 → 문법 설명 풍선)에서 끌 수 있음 · 새 보기 '한 문장씩' — 문장 하나를 크게,
+//   발음·해석·문장 분석(성분 색)을 함께 보며 ← → 로 넘긴다.
 // 문법 분석(compromise + shared/grammar.js)은 이 화면을 처음 열 때만 불러온다(다른 화면 용량에 영향 없음).
 import { html, render, icon } from './ui.js';
 import { parseSentence } from './shared/passage.js';
-import { zoomOf } from './prefs.js';
+import { zoomOf, getPref, isKey } from './prefs.js';
+const tipsOn = () => getPref('grammarTips') !== false;
 
 let libP;
 const loadLib = () => (libP ||= Promise.all([import('/vendor/compromise-14.14.4.mjs'), import('./shared/grammar.js')]).then(([m, g]) => ({ nlp: m.default, analyze: g.analyze })));
@@ -33,6 +36,7 @@ function align(tokens, words) {
 export function mountPassageStudy(host, set) {
   const S = set.passage.sentences;
   let mode = 'cards', allKo = false, A = null, loading = true;
+  let fi = 0, fKo = false, fAna = true; // 한 문장씩: 지금 문장 · 해석 펼침 · 분석 펼침
   const koOpen = new Set(), anaOpen = new Set();
   const parsed = S.map(s => parseSentence(s.en));
 
@@ -74,13 +78,32 @@ export function mountPassageStudy(host, set) {
       ${ana ? html`<div class="sent-card__ana">${analysis(si)}</div>` : ''}
     </article>`;
   };
+  const focusView = () => {
+    const s = S[fi], ko = allKo || fKo;
+    return html`<div class="ps-focus">
+      <div class="ps-focus__top"><span class="ps-focus__count"><b>${fi + 1}</b> / ${S.length}</span><span class="ps-focus__bar" aria-hidden="true"><i style="--p:${(fi + 1) / S.length}"></i></span></div>
+      <article class="sent-card ps-focus__card${fAna ? ' is-roles' : ''}" data-sent="${fi}">
+        <div class="sent-card__head"><span class="sent-card__num" data-sent-info="${fi}" tabindex="0" aria-label="${fi + 1}번 문장 요약">${fi + 1}</span>
+          <span class="sent-card__tools"><button class="sent-card__btn sent-card__btn--icon" type="button" data-speak="${parsed[fi].plain}" aria-label="${fi + 1}번 문장 발음 듣기" title="발음 듣기">${icon('volume', 16)}</button>
+          <button class="sent-card__btn${fAna ? ' is-on' : ''}" type="button" data-fana aria-expanded="${fAna}">${icon('search', 15)}문장 분석</button></span></div>
+        <p class="sent-card__en ps-focus__en" lang="en">${line(fi)}</p>
+        ${s.ko ? html`<div class="sent-card__ko${ko ? ' is-open' : ''}"><div><p>${s.ko}</p></div></div>
+          <button class="sent-card__toggle" type="button" data-fko aria-expanded="${ko}">${icon(ko ? 'chevronUp' : 'chevronDown', 15)}${ko ? '해석 숨기기' : '해석 보기'}</button>` : html`<p class="muted sent-card__noko">해석이 없는 문장이에요.</p>`}
+        ${fAna ? html`<div class="sent-card__ana">${analysis(fi)}</div>` : ''}
+      </article>
+      <div class="ps-focus__nav">
+        <button class="btn btn--ghost btn--icon" type="button" data-fstep="-1" aria-label="이전 문장" title="이전 문장 (←)" ${fi === 0 ? 'disabled' : ''}>${icon('chevronLeft')}</button>
+        <span class="ps-focus__dots">${S.map((_, k) => html`<button type="button" class="ps-focus__dot${k === fi ? ' is-on' : ''}" data-fgo="${k}" aria-label="${k + 1}번 문장으로"></button>`)}</span>
+        <button class="btn btn--primary btn--icon" type="button" data-fstep="1" aria-label="다음 문장" title="다음 문장 (→)" ${fi === S.length - 1 ? 'disabled' : ''}>${icon('chevronRight')}</button>
+      </div></div>`;
+  };
   const draw = () => render(host, html`
     <div class="ps-bar">
-      <div class="seg seg--toggle ps-mode" role="radiogroup" aria-label="보기 방식"><label class="seg__opt"><input type="radio" name="ps-mode" value="cards" ${mode === 'cards' ? 'checked' : ''}><span>문장 카드</span></label><label class="seg__opt"><input type="radio" name="ps-mode" value="read" ${mode === 'read' ? 'checked' : ''}><span>본문 읽기</span></label></div>
+      <div class="seg seg--toggle ps-mode" role="radiogroup" aria-label="보기 방식"><label class="seg__opt"><input type="radio" name="ps-mode" value="cards" ${mode === 'cards' ? 'checked' : ''}><span>문장 카드</span></label><label class="seg__opt"><input type="radio" name="ps-mode" value="focus" ${mode === 'focus' ? 'checked' : ''}><span>한 문장씩</span></label><label class="seg__opt"><input type="radio" name="ps-mode" value="read" ${mode === 'read' ? 'checked' : ''}><span>본문 읽기</span></label></div>
       <button class="btn btn--ghost btn--sm" type="button" data-ko-all>${icon(allKo ? 'eye' : 'eye', 16)}${allKo ? '해석 모두 숨기기' : '해석 모두 보기'}</button>
-      <span class="ps-hint">${icon('lightbulb', 15)}${loading ? '문법 분석을 준비하는 중…' : '단어에 마우스를 올리면(휴대폰은 누르면) 문법 설명이 나와요'}</span>
+      <span class="ps-hint">${icon('lightbulb', 15)}${!tipsOn() ? '문법 설명 풍선이 꺼져 있어요(설정 → 학습)' : loading ? '문법 분석을 준비하는 중…' : '단어에 마우스를 올리면(휴대폰은 누르면) 문법 설명이 나와요'}</span>
     </div>
-    ${mode === 'cards' ? html`<div class="sent-list">${S.map(card)}</div>`
+    ${mode === 'focus' ? focusView() : mode === 'cards' ? html`<div class="sent-list">${S.map(card)}</div>`
       : html`<p class="passage passage--reading ps-read" lang="en">${S.map((s, si) => html`<span class="passage__sentence"><sup class="passage__num" data-sent-info="${si}" tabindex="0">${si + 1}</sup>${line(si)}${allKo && s.ko ? html` <span class="passage-ko">${s.ko}</span>` : ''} </span>`)}</p>`}`);
   draw();
 
@@ -135,15 +158,21 @@ export function mountPassageStudy(host, set) {
   };
   const hide = () => { clearTimeout(hideT); hideT = setTimeout(() => { if (!pinned) { tip.hidden = true; clearHl(); } }, 120); };
   const over = e => {
-    if (e.pointerType === 'touch') return;
+    if (e.pointerType === 'touch' || !tipsOn()) return;
     const w = e.target.closest?.('.gw[data-w]'), s = e.target.closest?.('[data-sent-info]');
     if (w && host.contains(w)) { clearTimeout(hideT); pinned = null; showWord(w); }
     else if (s && host.contains(s)) { clearTimeout(hideT); pinned = null; showSentence(s); }
   };
   const out = e => { if (e.pointerType !== 'touch' && (e.target.closest?.('.gw[data-w]') || e.target.closest?.('[data-sent-info]'))) hide(); };
-  const focusIn = e => { const s = e.target.closest?.('[data-sent-info]'); if (s && host.contains(s)) showSentence(s); };
+  const focusIn = e => { if (!tipsOn()) return; const s = e.target.closest?.('[data-sent-info]'); if (s && host.contains(s)) showSentence(s); };
   const click = e => {
     const w = e.target.closest('.gw[data-w]'), s = e.target.closest('[data-sent-info]');
+    // 한 문장씩: 넘기기·해석·분석
+    const step = e.target.closest('[data-fstep], [data-fgo]');
+    if (step) { fi = step.dataset.fgo !== undefined ? Number(step.dataset.fgo) : Math.min(S.length - 1, Math.max(0, fi + Number(step.dataset.fstep))); fKo = false; draw(); return; }
+    if (e.target.closest('[data-fko]')) { fKo = !(allKo || fKo); if (!fKo) allKo = false; draw(); return; }
+    if (e.target.closest('[data-fana]')) { fAna = !fAna; draw(); return; }
+    if ((w || s) && !tipsOn()) return;
     if (w || s) { pinned = w || s; clearTimeout(hideT); w ? showWord(w) : showSentence(s); return; } // 휴대폰: 누르면 고정
     const ko = e.target.closest('[data-ko]');
     if (ko) { const si = Number(ko.dataset.ko); koOpen.has(si) ? koOpen.delete(si) : koOpen.add(si); const c = ko.closest('.sent-card'); c.outerHTML = String(card(S[si], si)); return; }
@@ -156,6 +185,14 @@ export function mountPassageStudy(host, set) {
   const change = e => { if (e.target.name === 'ps-mode') { mode = e.target.value; draw(); } };
   const docDown = e => { if (pinned && !tip.contains(e.target) && !e.target.closest?.('.gw[data-w], [data-sent-info]')) { pinned = null; tip.hidden = true; clearHl(); } };
   const scroll = () => { if (!tip.hidden) { pinned = null; tip.hidden = true; clearHl(); } };
+  // 한 문장씩 보기에서 ← → 로 넘김(입력 중·창이 떠 있을 땐 무시)
+  const key = e => {
+    if (mode !== 'focus' || !host.isConnected || document.querySelector('.modal-backdrop') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    const d = isKey(e, 'card.next') ? 1 : isKey(e, 'card.prev') ? -1 : 0;
+    if (!d) return;
+    e.preventDefault(); const n = Math.min(S.length - 1, Math.max(0, fi + d)); if (n !== fi) { fi = n; fKo = false; draw(); }
+  };
+  document.addEventListener('keydown', key);
   host.addEventListener('pointerover', over); host.addEventListener('pointerout', out); host.addEventListener('focusin', focusIn);
   host.addEventListener('click', click); host.addEventListener('change', change);
   document.addEventListener('pointerdown', docDown, true); addEventListener('scroll', scroll, { passive: true });
@@ -163,6 +200,6 @@ export function mountPassageStudy(host, set) {
     alive = false; tip.remove();
     host.removeEventListener('pointerover', over); host.removeEventListener('pointerout', out); host.removeEventListener('focusin', focusIn);
     host.removeEventListener('click', click); host.removeEventListener('change', change);
-    document.removeEventListener('pointerdown', docDown, true); removeEventListener('scroll', scroll);
+    document.removeEventListener('pointerdown', docDown, true); removeEventListener('scroll', scroll); document.removeEventListener('keydown', key);
   };
 }

@@ -224,7 +224,7 @@ export default {
       on(root, 'click', '[data-next]', () => { i++; view(); }),
       on(root, 'click', '[data-finish]', () => finish()),
       on(root, 'click', '[data-sfx]', (e, b) => { setSfx(!sfxOn()); b.outerHTML = String(sfxBtn()); if (sfxOn()) sfx.flip(); }),
-      on(root, 'click', '[data-speak]', (e, b) => { if (!speak(b.dataset.speak)) toast('이 브라우저는 발음 듣기를 지원하지 않아요.', 'info'); }),
+      on(root, 'click', '[data-speak]', (e, b) => { if (!speak(b.dataset.speak, undefined, b)) toast('이 브라우저는 발음 듣기를 지원하지 않아요.', 'info'); }),
       on(root, 'click', '[data-quit]', async () => {
         if (await confirmDialog('지금 끝내면 안 푼 문항은 틀린 것으로 채점돼요.', { title: '시험을 끝낼까요?', ok: '끝내고 결과 보기' })) finish();
       }),

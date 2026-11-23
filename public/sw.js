@@ -1,5 +1,5 @@
 // 네트워크 우선, 실패 시 캐시(오프라인 대비). API 는 캐시하지 않는다.
-const CACHE_NAME = 'ydmaster-v5'; // 17: 슬라임 아이콘·그림 교체 → 옛 캐시 비움
+const CACHE_NAME = 'ydmaster-v6'; // 18: 개인정보처리방침·메뉴 개편 → 옛 캐시 비움
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/'])).then(() => self.skipWaiting()));

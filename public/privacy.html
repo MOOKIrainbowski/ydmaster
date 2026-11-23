@@ -1,205 +1,185 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>개인정보 처리방침 — 영단마스터</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>개인정보처리방침 · 영단마스터</title>
+  <meta name="description" content="영단마스터가 어떤 개인정보를 왜 받고, 얼마나 보관하며, 어떻게 지우는지 안내합니다.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <!-- 18(2026-11-23 사용자 요청): 지금 서비스에 맞게 내용을 구체적으로 다시 쓰고, 앱과 같은 디자인(토큰·유리 카드·오로라·테마)으로.
+       내용은 서버 코드(server/app.js 스키마·보관 기간·탈퇴 삭제 범위)와 맞춰 적었다 — 저장 항목이 바뀌면 여기도 함께. -->
+  <script>try{var t=localStorage.getItem('ydmaster_theme_v2')||'light';if(t!=='system')document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}</script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box
-    }
-
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background: #0a0a0f;
-      color: #e8e8f0;
-      line-height: 1.7;
-      padding: 40px 20px 80px
-    }
-
-    .wrap {
-      max-width: 720px;
-      margin: 0 auto
-    }
-
-    .logo {
-      font-weight: 800;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, #6c63ff, #ff6584);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px
-    }
-
-    h1 {
-      font-size: 1.8rem;
-      font-weight: 800;
-      letter-spacing: -1px;
-      margin-bottom: 8px;
-      color: #e8e8f0
-    }
-
-    .date {
-      color: #55556a;
-      font-size: .88rem;
-      margin-bottom: 32px
-    }
-
-    .intro {
-      background: #1c1c25;
-      border: 1.5px solid #2a2a38;
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
-      font-size: .92rem;
-      color: #9191a8
-    }
-
-    .section {
-      background: #1c1c25;
-      border: 1.5px solid #2a2a38;
-      border-radius: 16px;
-      padding: 24px 28px;
-      margin-bottom: 14px
-    }
-
-    .section h2 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 14px;
-      color: #e8e8f0
-    }
-
-    .section p,
-    .section li {
-      font-size: .9rem;
-      color: #9191a8;
-      line-height: 1.9
-    }
-
-    .section ul {
-      padding-left: 0;
-      list-style: none
-    }
-
-    .section ul li::before {
-      content: "- ";
-      color: #6c63ff
-    }
-
-    .btn {
-      display: inline-block;
-      margin-top: 32px;
-      padding: 13px 32px;
-      background: linear-gradient(135deg, #6c63ff, #ff6584);
-      color: white;
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: .95rem
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 48px;
-      font-size: .78rem;
-      color: #55556a
-    }
-
-    a.home {
-      color: #6c63ff;
-      text-decoration: none
-    }
+    .pp { padding-bottom: 72px; }
+    .pp-hero { display: grid; gap: 10px; margin: var(--space-8) 0 var(--space-6); } .pp-hero > .badge { justify-self: start; }
+    .pp-hero h1 { margin: 0; font-size: var(--fs-1); font-weight: 850; letter-spacing: var(--tracking-display); }
+    .pp-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pp-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: var(--space-6); }
+    .pp-sum .card { display: grid; gap: 6px; padding: 16px; border-radius: var(--r-lg); }
+    .pp-sum .card b { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+    .pp-sum .card span { color: var(--text-2); font-size: 14px; line-height: 1.6; }
+    .pp-sum .card .ic { display: inline-grid; width: 30px; height: 30px; place-items: center; border-radius: 10px; background: var(--grad-brand); color: #fff; font-size: 15px; font-weight: 800; }
+    .pp-toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-6); }
+    .pp-toc a { padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--surface); color: var(--text-2); font-size: 13px; font-weight: 700; text-decoration: none; }
+    .pp-toc a:hover { border-color: var(--accent); color: var(--accent-ink); }
+    .pp-sec { display: grid; gap: 12px; margin-bottom: 14px; padding: 22px 24px; border-radius: var(--r-xl); scroll-margin-top: calc(var(--topbar-h) + 12px); }
+    .pp-sec h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 18px; font-weight: 800; }
+    .pp-sec h2 i { display: inline-grid; width: 28px; height: 28px; flex: none; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; font-style: normal; }
+    .pp-sec p, .pp-sec li { margin: 0; color: var(--text-2); font-size: 15px; line-height: 1.8; }
+    .pp-sec ul { display: grid; gap: 4px; margin: 0; padding-left: 20px; }
+    .pp-sec b, .pp-sec strong { color: var(--text); }
+    .pp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .pp-table th, .pp-table td { padding: 10px 12px; border-top: 1px solid var(--border); text-align: left; vertical-align: top; line-height: 1.6; }
+    .pp-table th { color: var(--text); font-weight: 800; white-space: nowrap; }
+    .pp-table td { color: var(--text-2); }
+    .pp-table thead th { border-top: 0; color: var(--text-3); font-size: 12px; letter-spacing: .02em; }
+    .pp-scroll { overflow-x: auto; }
+    .pp-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: var(--space-6); color: var(--text-3); font-size: 13px; }
+    @media (max-width: 640px) { .pp-sec { padding: 18px 16px; } .pp-table th { white-space: normal; } }
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="logo">영단마스터</div>
-    <h1>개인정보 처리방침</h1>
-    <p class="date">시행일: 2025년 1월 1일 &nbsp;·&nbsp; 최종 수정: 2025년 3월</p>
+  <div class="aurora aurora--calm" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="app app--guest">
+    <header class="topbar glass">
+      <a class="topbar__brand" href="/#/" aria-label="영단마스터 홈"><img class="logo-mark" src="/brand/logo.svg" alt="" width="64" height="64"><span class="topbar__name">영단마스터</span></a>
+      <div class="topbar__guest"><a class="btn btn--ghost btn--sm" href="/#/">홈으로</a></div>
+    </header>
+    <main class="main" id="main">
+      <div class="page page--narrow pp">
+        <section class="pp-hero">
+          <span class="badge">약관 · 정책</span>
+          <h1>개인정보처리방침</h1>
+          <p class="muted">영단마스터(ydmaster.vercel.app, 이하 "서비스")가 어떤 정보를 왜 받고, 얼마나 보관하며, 어떻게 지우는지 쉽게 정리했어요. 「개인정보 보호법」 등 관련 법령을 따릅니다.</p>
+          <div class="pp-meta"><span class="badge">시행일 2026년 11월 23일</span><span class="badge">이전 판: 2025년 3월</span></div>
+        </section>
 
-    <div class="intro">
-      영단마스터(이하 "서비스")는 이용자의 개인정보를 중요시하며, 개인정보보호법 등 관련 법령을 준수합니다.
-      본 방침은 서비스가 수집하는 개인정보의 항목, 수집 목적, 보유 기간 및 처리 방법에 대해 안내합니다.
-    </div>
+        <div class="pp-sum">
+          <div class="card"><b><span class="ic">1</span>꼭 필요한 것만</b><span>가입에는 사용자명 · 이메일 · 비밀번호(또는 구글 · 네이버 계정)만 받아요.</span></div>
+          <div class="card"><b><span class="ic">2</span>팔거나 넘기지 않아요</b><span>광고 · 분석 도구를 쓰지 않고, 개인정보를 다른 회사에 제공하지 않아요.</span></div>
+          <div class="card"><b><span class="ic">3</span>탈퇴하면 바로 삭제</b><span>계정과 세트 · 시험 기록 · 오답 · 친구 · 문의 · 알림을 즉시 지워요.</span></div>
+        </div>
 
-    <div class="section">
-      <h2>1. 수집하는 개인정보 항목</h2>
-      <ul>
-        <li><b>일반 회원가입 시 (필수)</b>: 사용자명, 이메일 주소, 비밀번호(암호화 저장)</li>
-        <li><b>일반 회원가입 시 (선택)</b>: 프로필 사진, 배너 이미지</li>
-        <li><b>네이버 로그인 시</b>: 네이버 계정의 이메일, 별명, 이름</li>
-        <li><b>구글 로그인 시</b>: 구글 계정의 이메일, 이름, 프로필 사진</li>
-      </ul>
-    </div>
+        <nav class="pp-toc" aria-label="목차">
+          <a href="#p1">수집 항목</a><a href="#p2">이용 목적</a><a href="#p3">보관 기간</a><a href="#p4">공개되는 정보</a><a href="#p5">제3자 제공</a><a href="#p6">처리 위탁 · 국외 처리</a><a href="#p7">브라우저 저장</a><a href="#p8">안전 조치</a><a href="#p9">이용자 권리</a><a href="#p10">아동</a><a href="#p11">문의 · 변경</a>
+        </nav>
 
-    <div class="section">
-      <h2>2. 개인정보 수집 및 이용 목적</h2>
-      <ul>
-        <li>회원 식별 및 서비스 제공</li>
-        <li>이메일 인증 및 공지사항 전달</li>
-        <li>테스트 결과 및 성적 기록 관리</li>
-        <li>친구 기능 등 소셜 서비스 제공</li>
-      </ul>
-    </div>
+        <section class="card pp-sec" id="p1"><h2><i>1</i>수집하는 개인정보</h2>
+          <div class="pp-scroll"><table class="pp-table">
+            <thead><tr><th>언제</th><th>항목</th></tr></thead>
+            <tbody>
+              <tr><th>이메일로 가입</th><td>사용자명, 이메일 주소, 비밀번호(복원할 수 없게 암호화해 저장). 가입 확인을 위해 이메일로 인증 코드를 보내요.</td></tr>
+              <tr><th>구글로 로그인</th><td>구글 계정 고유 번호, 이메일 주소, 이름(사용자명을 만들 때 사용), 프로필 사진 주소</td></tr>
+              <tr><th>네이버로 로그인</th><td>네이버 계정 고유 번호, 이메일 주소, 별명 또는 이름(사용자명을 만들 때 사용)</td></tr>
+              <tr><th>직접 올릴 때(선택)</th><td>프로필 사진, 배너 사진, 프로필 꾸미기(색 · 테두리 · 칭호 등)</td></tr>
+              <tr><th>서비스를 쓰는 동안</th><td>만든 세트(단어 · 본문 · 해석), 시험 기록(답안 · 맞고 틀림 · 점수 · 걸린 시간), 문항별 맞힘 · 틀림 기록(오답 복습용), 경험치 · 퀘스트 · 업적, 즐겨찾기, 최근 공부한 세트, 친구 관계 · 친구 요청, 문의 내용과 답변, 알림</td></tr>
+              <tr><th>자동으로</th><td>접속 IP 주소(짧은 시간 동안 요청 횟수를 세어 무차별 로그인 · 가입 시도를 막는 데만 사용), 서버 오류 기록</td></tr>
+            </tbody></table></div>
+          <p>예전에 전화번호로 가입한 계정은 그 전화번호를 로그인용으로 계속 보관해요. 지금은 전화번호로 새로 가입받지 않아요.</p>
+        </section>
 
-    <div class="section">
-      <h2>3. 개인정보 보유 및 이용 기간</h2>
-      <ul>
-        <li>회원 탈퇴 시까지 보유 후 즉시 파기</li>
-        <li>단, 관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관</li>
-      </ul>
-    </div>
+        <section class="card pp-sec" id="p2"><h2><i>2</i>이용 목적</h2>
+          <ul>
+            <li><b>회원 식별 · 로그인</b>: 가입 확인, 로그인 유지, 비밀번호 찾기(이메일로 재설정 코드 발송)</li>
+            <li><b>학습 기능</b>: 세트 저장, 서버 채점, 오답 모으기, 학습 기록 · 경험치 · 레벨 · 랭킹 계산</li>
+            <li><b>함께 공부</b>: 친구 추가 · 친구에게만 공개한 세트 보여 주기, 친구 랭킹</li>
+            <li><b>안내 · 응대</b>: 공지사항 · 알림, 문의 답변</li>
+            <li><b>안전</b>: 비정상적인 반복 요청 차단, 오류 원인 찾기</li>
+          </ul>
+          <p>위 목적 밖으로 쓰지 않으며, 광고 · 마케팅 메일을 보내지 않아요.</p>
+        </section>
 
-    <div class="section">
-      <h2>4. 개인정보 제3자 제공</h2>
-      <p>영단마스터는 이용자의 개인정보를 원칙적으로 외부에 제공하지 않습니다.<br>
-        단, 이용자가 사전에 동의한 경우 또는 법령에 의거한 경우는 예외로 합니다.</p>
-    </div>
+        <section class="card pp-sec" id="p3"><h2><i>3</i>보관 기간 · 파기</h2>
+          <div class="pp-scroll"><table class="pp-table">
+            <thead><tr><th>정보</th><th>보관 기간</th></tr></thead>
+            <tbody>
+              <tr><th>계정 · 학습 기록 전체</th><td>탈퇴할 때까지. 탈퇴하면 즉시 삭제(내가 만든 세트, 시험 기록, 오답, 퀘스트 기록, 알림, 친구 관계 · 요청, 문의 포함)</td></tr>
+              <tr><th>가입 인증 대기 정보</th><td>1시간이 지나면 자동 삭제</td></tr>
+              <tr><th>비밀번호 재설정 코드</th><td>10분 뒤 만료되고 자동 삭제</td></tr>
+              <tr><th>끝내지 않은 시험</th><td>7일 동안 마치지 않으면 자동 삭제</td></tr>
+              <tr><th>알림</th><td>90일이 지나면 자동 삭제</td></tr>
+              <tr><th>서버 오류 기록</th><td>14일이 지나면 자동 삭제</td></tr>
+              <tr><th>요청 횟수 기록(IP)</th><td>제한 시간(최대 1시간)이 끝나면 자동 삭제</td></tr>
+            </tbody></table></div>
+          <p>전자 기록은 복구할 수 없는 방법으로 지워요. 법령이 따로 보관을 요구하는 경우에만 그 기간 동안 분리해 보관해요.</p>
+        </section>
 
-    <div class="section">
-      <h2>5. 개인정보 처리 위탁</h2>
-      <ul>
-        <li>MongoDB Atlas — 회원 데이터 저장</li>
-        <li>Google Gmail — 이메일 인증 메일 발송</li>
-        <li>Naver — 소셜 로그인 인증</li>
-        <li>Google — 소셜 로그인 인증</li>
-        <li>Render — 서버 호스팅</li>
-      </ul>
-    </div>
+        <section class="card pp-sec" id="p4"><h2><i>4</i>다른 사람에게 보이는 정보</h2>
+          <ul>
+            <li><b>누구나</b>: 사용자명, 프로필 사진 · 배너 · 꾸미기, 레벨 · 업적, 공개로 설정한 세트, 랭킹 순위</li>
+            <li><b>친구</b>: 위 내용 + "친구 공개"로 설정한 세트</li>
+            <li><b>보이지 않음</b>: 이메일 · 전화번호 · 비밀번호, 비공개 세트, 시험 답안</li>
+            <li><b>관리자</b>: 문의에 답하고 부정 이용을 막기 위해 사용자 목록(사용자명 · 이메일 · 가입일)과 문의 내용을 볼 수 있어요.</li>
+          </ul>
+        </section>
 
-    <div class="section">
-      <h2>6. 이용자 권리</h2>
-      <ul>
-        <li>개인정보 열람, 수정, 삭제 요청</li>
-        <li>계정 탈퇴 — 프로필 화면 → 계정 삭제</li>
-        <li>처리 정지 요청</li>
-      </ul>
-    </div>
+        <section class="card pp-sec" id="p5"><h2><i>5</i>제3자 제공</h2>
+          <p>개인정보를 다른 사람이나 회사에 제공하지 않아요. 법령에 따라 수사기관 등이 정당한 절차로 요구하는 경우만 예외예요.</p>
+        </section>
 
-    <div class="section">
-      <h2>7. 개인정보 보호책임자</h2>
-      <ul>
-        <li>서비스명: 영단마스터</li>
-        <li>문의: 서비스 내 문의 기능 이용</li>
-      </ul>
-    </div>
+        <section class="card pp-sec" id="p6"><h2><i>6</i>처리 위탁 · 국외 처리</h2>
+          <p>서비스를 운영하려고 아래 회사의 클라우드를 이용해요. 이 회사들은 맡긴 일 외에는 정보를 쓰지 않아요.</p>
+          <div class="pp-scroll"><table class="pp-table">
+            <thead><tr><th>회사</th><th>하는 일</th></tr></thead>
+            <tbody>
+              <tr><th>Vercel Inc.</th><td>웹사이트 · 서버 실행(호스팅)</td></tr>
+              <tr><th>MongoDB Inc. (MongoDB Atlas)</th><td>회원 · 학습 데이터 저장</td></tr>
+              <tr><th>Google LLC</th><td>인증 · 재설정 메일 발송(Gmail), 구글 로그인</td></tr>
+              <tr><th>NAVER Corp.</th><td>네이버 로그인</td></tr>
+              <tr><th>jsDelivr · Google Fonts</th><td>글꼴 파일 전달(접속할 때 IP 주소가 전달될 수 있음)</td></tr>
+            </tbody></table></div>
+          <p>위 회사의 서버는 국외(미국 등)에 있을 수 있어서, 서비스를 쓰는 동안 정보가 네트워크로 국외 서버에 저장 · 처리될 수 있어요. 국외 처리를 원하지 않으면 가입하지 않거나 탈퇴할 수 있어요.</p>
+        </section>
 
-    <div style="text-align:center">
-      <a href="/" class="btn">홈으로 돌아가기</a>
-    </div>
+        <section class="card pp-sec" id="p7"><h2><i>7</i>브라우저에 저장하는 정보(쿠키 대신)</h2>
+          <p>광고 · 추적 쿠키는 쓰지 않아요. 다음 정보만 이 기기의 브라우저 저장소(localStorage · sessionStorage)에 두며, 서버로 보내지 않는 것도 있어요.</p>
+          <ul>
+            <li><b>로그인 정보(토큰)</b>: 7일 동안 유효. "로그인 유지"를 끄면 브라우저를 닫을 때 지워져요.</li>
+            <li><b>아이디 저장</b>: 켰을 때만 이메일을 기억해요.</li>
+            <li><b>설정</b>: 테마, 글자 크기, 소리, 단축키, 문법 설명 풍선 등(이 기기에만)</li>
+            <li><b>임시 저장</b>: 세트를 만드는 중 쓰던 내용, 튜토리얼을 봤는지 여부</li>
+          </ul>
+          <p>브라우저 설정에서 사이트 데이터를 지우면 모두 사라져요.</p>
+        </section>
 
-    <div class="footer">
-      &copy; 2025 영단마스터 &nbsp;·&nbsp;
-      <a href="/" class="home">ydmaster.vercel.app</a>
-    </div>
+        <section class="card pp-sec" id="p8"><h2><i>8</i>안전 조치</h2>
+          <ul>
+            <li>비밀번호는 복원할 수 없는 방식(bcrypt)으로 암호화해 저장해요.</li>
+            <li>모든 통신은 HTTPS 로 암호화돼요.</li>
+            <li>점수 · 경험치는 서버가 직접 계산해 조작을 막아요.</li>
+            <li>로그인 · 가입 · 인증 시도 횟수를 제한해 무차별 대입을 막아요.</li>
+            <li>관리자 기능은 관리자 계정만 쓸 수 있어요.</li>
+          </ul>
+        </section>
+
+        <section class="card pp-sec" id="p9"><h2><i>9</i>이용자의 권리</h2>
+          <ul>
+            <li><b>보기 · 고치기</b>: 내 정보 → 프로필 수정에서 사용자명 · 사진 · 배너 · 비밀번호를 바꿀 수 있어요.</li>
+            <li><b>지우기(탈퇴)</b>: 내 정보 → 프로필 수정 → 위험 구역 → 계정 탈퇴. 즉시 모든 정보가 지워지고 되돌릴 수 없어요.</li>
+            <li><b>그 밖의 요청</b>: 열람 · 정정 · 삭제 · 처리 정지는 서비스 안 "문의"로 요청하면 지체 없이 처리해요.</li>
+          </ul>
+        </section>
+
+        <section class="card pp-sec" id="p10"><h2><i>10</i>만 14세 미만 아동</h2>
+          <p>만 14세 미만 아동의 개인정보를 받으려면 법정대리인(보호자)의 동의가 필요해요. 서비스에는 아직 법정대리인 동의 절차가 없어서, 만 14세 미만은 가입하지 않도록 안내해요. 만 14세 미만이 가입한 사실을 알게 되면 해당 계정을 지워요.</p>
+        </section>
+
+        <section class="card pp-sec" id="p11"><h2><i>11</i>개인정보 보호 문의 · 방침 변경</h2>
+          <ul>
+            <li><b>개인정보 보호 담당</b>: 영단마스터 운영자</li>
+            <li><b>연락 방법</b>: 로그인 후 위쪽 메뉴의 "문의"(말풍선 아이콘)</li>
+            <li><b>도움을 받을 수 있는 곳</b>: 개인정보침해신고센터(privacy.kisa.or.kr · 국번 없이 118), 개인정보분쟁조정위원회(kopico.go.kr · 1833-6972)</li>
+          </ul>
+          <p>방침이 바뀌면 시행 7일 전에 공지사항으로 알려요(이용자에게 불리한 변경은 30일 전).</p>
+        </section>
+
+        <div class="pp-foot"><span>© 2026 영단마스터 · ydmaster.vercel.app</span><a class="btn btn--primary btn--sm" href="/#/">영단마스터로 돌아가기</a></div>
+      </div>
+    </main>
   </div>
 </body>
-
 </html>

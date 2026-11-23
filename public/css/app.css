@@ -1352,3 +1352,106 @@ html[data-motion="reduce"] :is(.mascot__bubble, .mascot__drip, .mascot__gloss) {
   .pf-fx i:nth-child(n + 8) { display: none; } /* 카드 효과 입자 14 → 7 */
   :is(.card, .set-card, .bento__cell) { transition: none; }
 }
+
+/* ══ 18(2026-11-23 사용자 요청) ══ */
+
+/* ── 위 메뉴: 메인 버튼은 가운데, 메인 버튼 자리에만 배경 층(알약 모양 받침) ── */
+@media (min-width: 769px) {
+  .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .topbar__brand { justify-self: start; }
+  .topbar__nav { justify-self: center; margin: 0; padding: 5px; gap: 2px; border: 1px solid var(--border); border-radius: var(--r-pill); background: color-mix(in srgb, var(--surface) 78%, var(--accent-soft)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%), var(--shadow-1); }
+  .topbar__right { display: flex; justify-self: end; align-items: center; gap: 8px; }
+  .topbar__guest { grid-column: 3; justify-self: end; }
+  .topbar__link { width: 44px; min-height: 40px; }
+}
+@media (max-width: 768px) { .topbar__right { display: flex; align-items: center; margin-left: auto; } }
+button.topbar__link, button.tabbar__item { border: 0; background: none; font: inherit; cursor: pointer; }
+.topbar__link.is-create .topbar__ic, .tabbar__item.is-create .tabbar__ic { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 10px; background: var(--grad-brand); color: #fff; box-shadow: 0 4px 12px -4px rgb(192 38 211 / 55%); }
+@media (max-width: 768px) { .tabbar { grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 5px; } .tabbar__item { min-height: 50px; } }
+
+/* 세트 만들기: 단어/본문 고르기 창 */
+.create-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.create-pick__opt { display: grid; justify-items: center; gap: 8px; padding: 22px 14px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); box-shadow: 0 3px 0 var(--edge-neutral); color: var(--text); font: inherit; text-align: center; cursor: pointer; transition: border-color var(--dur-2), background var(--dur-2); }
+.create-pick__opt b { font-size: 17px; } .create-pick__opt small { color: var(--text-2); font-size: 13px; line-height: 1.5; }
+.create-pick__opt:hover, .create-pick__opt:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 420px) { .create-pick { grid-template-columns: 1fr; } }
+
+/* ── 발음 듣기 중: 빨간 정지 버튼 ── */
+.is-speaking, .btn.is-speaking, .sent-card__btn.is-speaking { border-color: transparent !important; background: var(--bad, #DC2626) !important; box-shadow: 0 3px 0 #991B1B !important; color: #fff !important; }
+.is-speaking .icon path { fill: currentColor; }
+
+/* ── 창(모달) 윤곽선: 내용이 길어 창 안에서 스크롤하면 유리 테두리(::after)가 함께 밀려 올라가 안쪽 박스와 겹쳤다 → 진짜 테두리로 ── */
+.modal::after { display: none !important; }
+.modal { border: 1px solid var(--glass-border) !important; }
+.start .set-bar.start__count { padding: 0; border-top: 0; }
+
+/* ── 화질(글자 흐려짐) ──
+   기울이기(rotate) · 크기(scale) · 3D 를 움직이거나, transform 으로 띄우는 동안 브라우저는 요소를 그림 한 장으로 굳혀 옮긴다.
+   화면 배율(zoom)이 1이 아닐 때 이 그림이 반 픽셀에 놓여 글자가 뿌옇게 보였다 → 버튼 · 카드의 들림/눌림은 transform 대신 top 으로,
+   기울기 효과는 없앰. 학습 카드는 뒤집기가 끝나면 3D 를 풀어 둔다(set.js flip3d · is-settled). */
+:where(.btn, .mode-option, .deco, .seg__opt > span, .create-pick__opt) { position: relative; }
+.btn, .mode-option, .deco, .seg__opt > span, .card, .set-card, .bento__cell, .podium__place, .rank-me { transition-property: top, box-shadow, background, border-color, color, opacity; }
+@media (hover: hover) {
+  .btn--primary:hover:not(:disabled), .btn--ghost:hover:not(:disabled), .btn--danger:hover:not(:disabled) { transform: none; top: -1px; }
+  .card:hover, a.card:hover, .set-card:hover, .bento__cell:hover, .podium__place:hover, .rank-me:hover { transform: none; top: -3px; }
+  .mode-option:hover { transform: none; top: -2px; }
+  .seg__opt:hover > span { transform: none; top: -1px; }
+  .deco:hover:not(.is-locked) { transform: none; top: -2px; }
+}
+.btn--primary:active:not(:disabled), .btn--ghost:active:not(:disabled), .btn--danger:active:not(:disabled) { transform: none; top: 3px; }
+.topbar__help, .topbar__help:hover, .topbar__help.is-active { transform: none; }
+.topbar__help { transition: background var(--dur-2), color var(--dur-2); }
+/* 정답 칸 등 '톡' 효과: 크기 바꾸기(scale) 대신 바깥으로 퍼지는 빛 고리 */
+.is-pop:not(.mascot):not(.ach):not(.star) { animation: pop-ring 600ms var(--ease-out); }
+@keyframes pop-ring { 0% { box-shadow: 0 0 0 0 rgb(192 38 211 / 45%); } 100% { box-shadow: 0 0 0 14px rgb(192 38 211 / 0%); } }
+/* 학습 카드: 다 뒤집힌 뒤에는 평면으로 */
+.flash-card.is-settled { perspective: none; }
+.flash-card.is-settled .flash-card__inner { transform: none; transform-style: flat; transition: none; }
+.flash-card.is-settled .flash-card__face { transform: none; backface-visibility: visible; -webkit-backface-visibility: visible; }
+.flash-card.is-settled:not(.is-flipped) .flash-card__back, .flash-card.is-settled.is-flipped .flash-card__front { visibility: hidden; }
+@keyframes flash-in-next { from { opacity: 0; transform: translateX(48px); } }
+@keyframes flash-in-prev { from { opacity: 0; transform: translateX(-48px); } }
+
+/* ── 본문 세트 '한 문장씩' ── */
+.ps-mode .seg__opt { min-width: 92px; }
+.ps-focus { display: grid; gap: 14px; margin-top: 14px; }
+.ps-focus__top { display: flex; align-items: center; gap: 12px; }
+.ps-focus__count { flex: none; color: var(--text-2); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; } .ps-focus__count b { color: var(--accent-ink); font-size: 20px; }
+.ps-focus__bar { position: relative; flex: 1; height: 6px; overflow: hidden; border-radius: var(--r-pill); background: var(--surface-2); }
+.ps-focus__bar i { position: absolute; inset: 0; width: calc(var(--p) * 100%); border-radius: inherit; background: var(--grad-brand); transition: width var(--dur-4) var(--ease-out); }
+.ps-focus__card { padding: clamp(20px, 3vw, 32px); }
+.ps-focus__card .sent-card__en, .ps-focus__en { font-size: clamp(22px, 2.6vw, 30px); line-height: 1.9; }
+.ps-focus__card .sent-card__ko p { font-size: 17px; }
+.ps-focus__nav { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.ps-focus__dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: min(520px, 70vw); }
+.ps-focus__dot { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 50%; background: var(--border-strong); cursor: pointer; transition: background var(--dur-2), width var(--dur-3) var(--ease-out); }
+.ps-focus__dot.is-on { width: 24px; border-radius: var(--r-pill); background: var(--grad-brand); }
+.ps-focus__dot:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ── 가이드 튜토리얼(tour.js): 어둡게 덮고 설명할 곳만 밝게 ── */
+.tour { position: fixed; z-index: 1100; inset: 0; }
+.tour__shade { position: absolute; inset: 0; background: rgb(17 10 24 / 55%); }
+.tour__spot { position: absolute; border-radius: 16px; box-shadow: 0 0 0 9999px rgb(17 10 24 / 55%), 0 0 0 3px var(--accent), 0 0 24px 4px rgb(192 38 211 / 45%); pointer-events: none; transition: left .35s var(--ease-out), top .35s var(--ease-out), width .35s var(--ease-out), height .35s var(--ease-out); }
+.tour__spot[hidden], .tour__shade[hidden] { display: none; }
+.tour__card { position: absolute; width: min(380px, calc(100vw / var(--z, 1) - 24px)); padding: 20px 22px 16px; border: 1px solid var(--border); border-radius: var(--r-xl); background: var(--surface); box-shadow: var(--shadow-3); color: var(--text); transition: opacity .2s, left .35s var(--ease-out), top .35s var(--ease-out); }
+.tour__card:focus { outline: none; }
+.tour__card.is-moving { opacity: 0; }
+.tour__count { margin: 0 0 6px; color: var(--text-3); font-size: 12px; font-weight: 700; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.tour__title { margin: 0 0 8px; font-size: 19px; font-weight: 850; }
+.tour__body { margin: 0; color: var(--text-2); font-size: 15px; line-height: 1.7; }
+.tour__actions { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.tour__skip { margin-right: auto; padding: 6px 4px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.tour__skip:hover { color: var(--text); }
+@media (prefers-reduced-motion: reduce) { .tour__spot, .tour__card { transition: none; } }
+
+/* ── 가이드 장 목록 ── */
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.guide-ch { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 14px; align-items: start; padding: 18px; border-radius: var(--r-lg); }
+.guide-ch__icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 14px; background: var(--grad-brand); color: #fff; }
+.guide-ch__main { display: grid; gap: 4px; }
+.guide-ch__kicker { margin: 0; color: var(--text-3); font-size: 12px; font-weight: 700; }
+.guide-ch__done { display: inline-flex; align-items: center; gap: 2px; color: var(--ok); }
+.guide-ch__title { margin: 0; font-size: 17px; font-weight: 800; }
+.guide-ch__desc { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+.guide-ch > .btn { grid-column: 1 / -1; justify-self: end; }
+.guide .g-tip { margin-top: 18px; }

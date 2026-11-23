@@ -38,7 +38,7 @@ export default {
       <p class="muted">${again ? `다시 본 카드 ${again}번 — 헷갈린 건 시험으로 한 번 더 확인해 봐요.` : '한 번도 틀리지 않고 전부 기억했어요. 완벽해요!'}</p>
       <div class="btn-row"><button class="btn btn--primary" data-test>${icon('play')}시험으로 확인하기</button><button class="btn btn--ghost" data-flash-reset>${icon('refresh', 18)}처음부터 다시</button></div></div>`;
     const flashCard = (item, i) => html`<div class="flash">
-      <button class="flash-card${flipped ? ' is-flipped' : ''}${slide ? (slide > 0 ? ' is-in-next' : ' is-in-prev') : ''}" type="button" data-flip="${i}" aria-pressed="${flipped}" aria-label="카드 뒤집기: ${item.term}">
+      <button class="flash-card is-settled${flipped ? ' is-flipped' : ''}${slide ? (slide > 0 ? ' is-in-next' : ' is-in-prev') : ''}" type="button" data-flip="${i}" aria-pressed="${flipped}" aria-label="카드 뒤집기: ${item.term}">
         <span class="flash-card__inner">
           <span class="flash-card__face flash-card__front"><span class="flash-card__tag">영어</span><span class="flash-card__term" lang="en">${item.term}</span>${item.example ? html`<span class="flash-card__ex" lang="en">${item.example}</span>` : ''}<span class="flash-card__hint">눌러서 뜻 보기</span></span>
           <span class="flash-card__face flash-card__back"><span class="flash-card__tag">뜻</span><span class="flash-card__meaning">${item.meaning}</span>${item.exampleKo ? html`<span class="flash-card__ex">${item.exampleKo}</span>` : ''}<span class="flash-card__hint">눌러서 앞면 보기</span></span>
@@ -52,6 +52,8 @@ export default {
       </div>
       <div class="flash__judge"><button class="btn btn--ghost" data-again>${icon('refresh', 18)}다시 볼래요</button><button class="btn btn--primary" data-know>${icon('check', 18)}알아요</button></div>
       ${getPref('keyHints') !== false && getPref('shortcuts') !== false ? html`<p class="field__hint flash__keys">${[['card.prev', '이전'], ['card.next', '다음'], ['card.flip', '뒤집기'], ['card.know', '알아요'], ['card.again', '다시 볼래요']].map(([a, l]) => html`<kbd>${keyLabel(keyOf(a))}</kbd> ${l} `)}</p>` : ''}</div>`;
+    // 18(사용자 요청): 목록 보기 ↔ 학습 카드 전환도 아이콘만(다음에 볼 모양의 아이콘)
+    const flashBtn = () => { const l = flashMode ? '목록 보기' : '학습 카드'; return html`<button class="btn btn--ghost btn--icon" data-flash aria-label="${l}" title="${l}">${icon(flashMode ? 'list' : 'cards')}</button>`; };
     // 11: 학습 영역만 다시 그림(페이지 전체를 다시 그리면 화면이 깜빡여 전환이 어색했음)
     const studyContent = () => {
       const items = set.items;
@@ -62,7 +64,7 @@ export default {
       const items = passage ? set.passage.sentences : set.items;
       render(root, html`<div class="page stack"><section class="section"><div class="section__head"><div><span class="badge">${passage ? '본문' : '단어'} · ${set.visibility === 'public' ? '공개' : set.visibility === 'friends' ? '친구' : '비공개'}</span><h1 class="section__title">${set.title}</h1></div>
         ${isOwner() ? html`<div class="icon-acts"><a class="icon-act" href="#/sets/${set._id}/edit" aria-label="세트 수정" title="세트 수정">${icon('edit', 17)}</a><button class="icon-act icon-act--bad" type="button" data-delete aria-label="세트 삭제" title="세트 삭제">${icon('trash', 17)}</button></div>` : ''}</div>
-        ${set.description ? html`<p class="muted">${set.description}</p>` : ''}<div class="btn-row"><button class="btn btn--primary btn--start btn--icon" data-test aria-label="시험 보기" title="시험 보기">${icon('play', 22)}</button>${wrongN ? html`<button class="btn btn--ghost btn--icon btn--wrong" data-wrong-test aria-label="이 세트 오답 복습 (${wrongN}개)" title="이 세트 오답 복습 (${wrongN}개)">${icon('review', 22)}<span class="btn__count" aria-hidden="true">${wrongN}</span></button>` : ''}${!passage ? html`<button class="btn btn--ghost" data-flash>${flashMode ? '목록 보기' : '학습 카드'}</button>` : ''}<button class="btn btn--ghost btn--icon btn--fav${set.favorited ? ' is-on' : ''}" data-favorite aria-pressed="${set.favorited ? 'true' : 'false'}" aria-label="${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}" title="${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}">${icon('star')}</button><button class="btn btn--ghost btn--icon" data-copy aria-label="내 세트로 복사" title="내 세트로 복사">${icon('copy')}</button><button class="btn btn--ghost btn--icon" data-share aria-label="공유 링크 복사" title="공유 링크 복사">${icon('link')}</button></div>
+        ${set.description ? html`<p class="muted">${set.description}</p>` : ''}<div class="btn-row"><button class="btn btn--primary btn--start btn--icon" data-test aria-label="시험 보기" title="시험 보기">${icon('play', 22)}</button>${wrongN ? html`<button class="btn btn--ghost btn--icon btn--wrong" data-wrong-test aria-label="이 세트 오답 복습 (${wrongN}개)" title="이 세트 오답 복습 (${wrongN}개)">${icon('review', 22)}<span class="btn__count" aria-hidden="true">${wrongN}</span></button>` : ''}${!passage ? flashBtn() : ''}<button class="btn btn--ghost btn--icon btn--fav${set.favorited ? ' is-on' : ''}" data-favorite aria-pressed="${set.favorited ? 'true' : 'false'}" aria-label="${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}" title="${set.favorited ? '즐겨찾기 해제' : '즐겨찾기'}">${icon('star')}</button><button class="btn btn--ghost btn--icon" data-copy aria-label="내 세트로 복사" title="내 세트로 복사">${icon('copy')}</button><button class="btn btn--ghost btn--icon" data-share aria-label="공유 링크 복사" title="공유 링크 복사">${icon('link')}</button></div>
       </section><section class="section"><div class="section__head"><h2 class="section__title">${passage ? `${items.length}개 문장` : `${items.length}개 단어`}</h2></div>
         ${passage ? html`<div data-passage-study></div>` : html`<div data-study>${studyContent()}</div>`}</section></div>`);
       // 12: 본문 공부 영역은 처음 한 번만 만들고, 페이지를 다시 그려도 같은 영역(펼친 해석·분석 상태)을 끼워 넣는다
@@ -70,6 +72,17 @@ export default {
         if (!psHost) { psHost = document.createElement('div'); psHost.className = 'ps'; psCleanup = mountPassageStudy(psHost, set); }
         $('[data-passage-study]', root)?.replaceWith(psHost);
       }
+    };
+    // 18(사용자 요청: 누르면 화질이 낮아짐): 3D 로 돈 채로 두면 브라우저가 카드를 그림(비트맵)으로 들고 있어 글자가 흐렸다.
+    // 평소에는 3D 를 끈 '멈춘' 상태(is-settled)로 그리고, 뒤집는 동안만 3D 로 돌린 뒤 다시 멈춘다.
+    const flip3d = (card, on_) => {
+      const inner = card.querySelector('.flash-card__inner');
+      if (reduced() || !inner) { card.classList.toggle('is-flipped', on_); return; }
+      inner.style.transition = 'none'; card.classList.remove('is-settled'); void inner.offsetWidth; inner.style.transition = '';
+      card.classList.toggle('is-flipped', on_);
+      clearTimeout(card._settleT);
+      const done_ = () => { clearTimeout(card._settleT); inner.removeEventListener('transitionend', done_); card.classList.add('is-settled'); };
+      inner.addEventListener('transitionend', done_); card._settleT = setTimeout(done_, 900);
     };
     const EXIT = {
       next: [{ transform: 'none', opacity: 1 }, { transform: 'translateX(-70px) rotate(-5deg)', opacity: 0 }],
@@ -132,15 +145,17 @@ export default {
       on(root, 'click', '[data-test]', () => startTest({ setIds: [id], kind: set.kind, info: { title: set.title, count: (set.kind === 'passage' ? set.passage?.sentences : set.items)?.length } })),
       on(root, 'click', '[data-flip]', (_e, el) => {
         const i = Number(el.dataset.flip);
-        if (flashMode) { flipped = !flipped; el.classList.remove('is-in-next', 'is-in-prev'); el.classList.toggle('is-flipped', flipped); el.setAttribute('aria-pressed', String(flipped)); return; }
+        if (flashMode) { flipped = !flipped; el.classList.remove('is-in-next', 'is-in-prev'); flip3d(el, flipped); el.setAttribute('aria-pressed', String(flipped)); return; }
         revealed.has(i) ? revealed.delete(i) : revealed.add(i); draw();
       }),
       on(root, 'click', '[data-flash]', async (_e, b) => {
         const el = $('[data-study]', root);
-        if (el && !reduced()) await el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).finished.catch(() => {});
+        // 18: 사라지는 애니메이션은 fill: forwards 라 끝나도 남아 있었다 → 새 목록이 나타난 뒤 다시 투명해지던 원인. 그리고 나서 꼭 취소
+        const out = el && !reduced() ? el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' }) : null;
+        await out?.finished.catch(() => {});
         flashMode = !flashMode; resetDeck(); slide = 0;
-        b.textContent = flashMode ? '목록 보기' : '학습 카드';
-        drawStudy();
+        b.outerHTML = String(flashBtn());
+        drawStudy(); out?.cancel();
         $('[data-study]', root)?.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.22, 1, .36, 1)' });
       }),
       on(root, 'click', '[data-flash-reset]', () => { resetDeck(); drawStudy(); }),
@@ -148,7 +163,7 @@ export default {
       on(root, 'click', '[data-again]', () => judge(false)),
       on(root, 'click', '[data-next]', () => turn(1)),
       on(root, 'click', '[data-prev]', () => turn(-1)),
-      on(root, 'click', '[data-speak]', (_e, el) => speak(el.dataset.speak)),
+      on(root, 'click', '[data-speak]', (_e, el) => speak(el.dataset.speak, undefined, el)), // 18: 읽는 중엔 정지 버튼
       on(root, 'click', '[data-delete]', async () => { if (!await confirmDialog('이 세트를 삭제하면 되돌릴 수 없습니다.', { danger: true, ok: '세트 삭제' })) return; try { await api.del(`/sets/${id}`); toast('세트를 삭제했어요.', 'ok'); location.hash = '#/explore?scope=mine'; } catch (e) { toast(e.message, 'bad'); } })];
     return () => { offs.forEach(fn => fn()); document.removeEventListener('keydown', onKey); psCleanup?.(); };
   },
